@@ -165,16 +165,38 @@
       animation: fadeUp 0.4s 0.2s ease both;
     }
     .history-title { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
-    .history-list { display: flex; flex-direction: column; gap: 8px; }
+    .history-list { display: flex; flex-direction: column; gap: 10px; }
     .history-row {
       display: flex; align-items: center; gap: 10px;
     }
-    .hist-date { font-size: 11px; color: var(--text-light); width: 50px; flex-shrink: 0; }
-    .hist-bar-wrap { flex: 1; height: 10px; background: rgba(79,174,224,0.12); border-radius: 99px; overflow: hidden; }
-    .hist-bar { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+    .hist-date-wrap { width: 68px; flex-shrink: 0; }
+    .hist-date { font-size: 11.5px; color: var(--text-mid); font-weight: 600; display: block; }
+    .hist-day  { font-size: 10px; color: var(--text-light); display: block; margin-top: 1px; }
+
+    /* 히스토리 바 래퍼: 목표 기준선 포함 */
+    .hist-bar-wrap {
+      flex: 1; height: 10px; background: rgba(79,174,224,0.12); border-radius: 99px;
+      overflow: visible; position: relative;
+    }
+    .hist-bar { height: 100%; border-radius: 99px; transition: width 0.6s ease; position: relative; z-index: 1; }
     .hist-bar.normal { background: linear-gradient(90deg, var(--sky3), var(--sky4)); }
-    .hist-bar.over { background: linear-gradient(90deg, var(--green2), var(--green3)); }
+    .hist-bar.over   { background: linear-gradient(90deg, var(--green2), var(--green3)); }
+
+    /* 목표 기준선 */
+    .hist-goal-line {
+      position: absolute; top: -4px; bottom: -4px; width: 2px;
+      background: rgba(224, 80, 96, 0.45); border-radius: 2px; z-index: 2;
+      pointer-events: none;
+    }
+    .hist-goal-line::after {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(224,80,96,0.6);
+    }
+
     .hist-val { font-family:'Nunito',sans-serif; font-size: 12px; font-weight: 700; color: var(--text-mid); width: 44px; text-align: right; flex-shrink: 0; }
+    .hist-val.over { color: var(--green3); }
 
     .history-empty { text-align:center; font-size:12px; color:var(--text-light); padding:12px 0; }
 
@@ -229,7 +251,6 @@
 
     <div class="wave-outer" id="waveOuter">
       <div class="wave-fill" id="waveFill"></div>
-      <!-- 거품들 (overflow 시 활성화) -->
       <div class="bubble" style="width:9px;height:9px;left:30px;bottom:20px;--delay:0s;--dur:1.7s;"></div>
       <div class="bubble" style="width:6px;height:6px;left:80px;bottom:14px;--delay:0.5s;--dur:2.1s;"></div>
       <div class="bubble" style="width:11px;height:11px;left:55px;bottom:28px;--delay:0.9s;--dur:1.9s;"></div>
@@ -271,14 +292,17 @@
     <div class="input-row">
       <select id="foodSelect" onchange="onFoodChange()">
         <option value="">음식 선택</option>
+        <option value="shake">💪 단백질 쉐이크</option>
+        <option value="rice">🍚 잡곡밥</option>
+        <option value="egg">🥚 계란</option>
         <option value="pork">🐷 돼지고기</option>
-        <option value="beef">🥩 소고기</option>
-        <option value="chicken">🍗 닭고기</option>
+        <option value="tofu">🫘 두부</option>
         <option value="fish">🐟 생선</option>
         <option value="milk">🥛 우유</option>
-        <option value="tofu">🫘 두부</option>
-        <option value="rice">🍚 잡곡밥</option>
-        <option value="shake">💪 단백질 쉐이크</option>
+        <option value="chicken">🍗 닭고기</option>
+        <option value="beef">🥩 소고기</option>
+        <option value="tuna">🐟 참치캔</option>
+        <option value="sashimi">🍣 회</option>
       </select>
       <input type="number" id="amountInput" placeholder="g" min="1" max="2000" oninput="onFoodChange()"/>
     </div>
@@ -322,7 +346,7 @@
 <script>
   // ── Supabase 설정 ──────────────────────────────
   const SUPABASE_URL = 'https://zkkhzsgaryoraytvsqbf.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpra2h6c2dhcnlvcmF5dHZzcWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5ODM5OTcsImV4cCI6MjA1MzU1OTk5N30.UJtqcka35dVssnZRuUk6zukfjF9UNX392Shd841GSQk'; // ← anon key 넣어주세요
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpra2h6c2dhcnlvcmF5dHZzcWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5ODM5OTcsImV4cCI6MjA1MzU1OTk5N30.UJtqcka35dVssnZRuUk6zukfjF9UNX392Shd841GSQk';
 
   async function sbFetch(path, options = {}) {
     const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
@@ -341,34 +365,72 @@
   }
 
   // ── 단백질 함량 (100g당) ────────────────────────
+  // shake: 입력값 = 단백질 g (직접 입력)
+  // 나머지: (내장값 / 100) × 입력 그램
   const PROTEIN_PER_100G = {
-    pork: 21, beef: 26, chicken: 23, fish: 20,
-    milk: 3.4, tofu: 8, rice: 2.7, shake: 100
+    shake: null,   // 직접 입력값 = 단백질량
+    rice: 2.7,
+    egg: 12.4,
+    pork: 21.0,
+    tofu: 8.0,
+    fish: 20.0,
+    milk: 3.4,
+    chicken: 23.0,
+    beef: 26.0,
+    tuna: 25.0,
+    sashimi: 19.0
   };
   const FOOD_NAMES = {
-    pork:'돼지고기', beef:'소고기', chicken:'닭고기', fish:'생선',
-    milk:'우유', tofu:'두부', rice:'잡곡밥', shake:'단백질 쉐이크'
+    shake:'단백질 쉐이크', rice:'잡곡밥', egg:'계란',
+    pork:'돼지고기', tofu:'두부', fish:'생선', milk:'우유',
+    chicken:'닭고기', beef:'소고기', tuna:'참치캔', sashimi:'회'
   };
   const FOOD_ICONS = {
-    pork:'🐷', beef:'🥩', chicken:'🍗', fish:'🐟',
-    milk:'🥛', tofu:'🫘', rice:'🍚', shake:'💪'
+    shake:'💪', rice:'🍚', egg:'🥚',
+    pork:'🐷', tofu:'🫘', fish:'🐟', milk:'🥛',
+    chicken:'🍗', beef:'🥩', tuna:'🐟', sashimi:'🍣'
   };
+
+  // ── 단백질 계산 헬퍼 ───────────────────────────
+  function calcProtein(key, gram) {
+    if (key === 'shake') return gram; // 쉐이크: 입력값 = 단백질 g
+    return parseFloat((PROTEIN_PER_100G[key] * gram / 100).toFixed(1));
+  }
 
   // ── 상태 ───────────────────────────────────────
   let goal = parseInt(localStorage.getItem('protein_goal') || '150');
-  let todayFoods = []; // [{key, name, icon, gram, protein}]
+  let todayFoods = [];
   let todayDbId = null;
+  let isSaving = false; // race condition 방지
 
   const todayStr = () => new Date().toISOString().slice(0, 10);
 
-  // ── 초기화 ─────────────────────────────────────
-  window.addEventListener('DOMContentLoaded', async () => {
-    // 날짜 표시
+  // ── 날짜 표시 & 자정 갱신 ──────────────────────
+  function updateDateLabel() {
     const d = new Date();
     const days = ['일','월','화','수','목','금','토'];
     document.getElementById('today-label').textContent =
       `${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
+  }
 
+  // 자정 넘어가면 자동 갱신 (날짜 체크 주기: 1분)
+  let _lastDateStr = todayStr();
+  setInterval(() => {
+    const now = todayStr();
+    if (now !== _lastDateStr) {
+      _lastDateStr = now;
+      updateDateLabel();
+      // 날짜 바뀌면 오늘 데이터 초기화 후 재로드
+      todayFoods = [];
+      todayDbId = null;
+      loadTodayData();
+      loadHistory();
+    }
+  }, 60000);
+
+  // ── 초기화 ─────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', async () => {
+    updateDateLabel();
     updateGoalUI();
     await loadTodayData();
     await loadHistory();
@@ -377,13 +439,12 @@
   // ── 오늘 데이터 로드 ───────────────────────────
   async function loadTodayData() {
     try {
-      const rows = await sbFetch(`daily_logs?log_date=eq.${todayStr()}&type=eq.protein&order=id.desc&limit=1`);
+      const rows = await sbFetch(`zdaily_logs?log_date=eq.${todayStr()}&type=eq.protein&order=id.desc&limit=1`);
       if (rows && rows.length > 0) {
         todayDbId = rows[0].id;
         todayFoods = rows[0].data.foods || [];
       }
     } catch(e) {
-      // 오프라인 fallback
       const local = localStorage.getItem('protein_today_' + todayStr());
       if (local) todayFoods = JSON.parse(local);
     }
@@ -394,7 +455,7 @@
   // ── 히스토리 로드 ──────────────────────────────
   async function loadHistory() {
     try {
-      const rows = await sbFetch(`daily_logs?type=eq.protein&order=log_date.desc&limit=14`);
+      const rows = await sbFetch(`zdaily_logs?type=eq.protein&order=log_date.desc&limit=14`);
       renderHistory(rows || []);
     } catch(e) {
       renderHistory([]);
@@ -407,7 +468,7 @@
     const gram = parseFloat(document.getElementById('amountInput').value);
     const preview = document.getElementById('proteinPreview');
     if (!key || !gram || gram <= 0) { preview.innerHTML = ''; return; }
-    const p = key === 'shake' ? gram : (PROTEIN_PER_100G[key] * gram / 100);
+    const p = calcProtein(key, gram);
     preview.innerHTML = `단백질 약 <span>${p.toFixed(1)}g</span> 추가됩니다`;
   }
 
@@ -418,45 +479,55 @@
     if (!key) { showToast('음식을 선택해주세요'); return; }
     if (!gram || gram <= 0) { showToast('그램수를 입력해주세요'); return; }
 
-    const protein = key === 'shake' ? gram : parseFloat((PROTEIN_PER_100G[key] * gram / 100).toFixed(1));
+    const protein = calcProtein(key, gram);
     todayFoods.push({ key, name: FOOD_NAMES[key], icon: FOOD_ICONS[key], gram, protein });
 
     renderFoodList();
     updateGauge();
-    await saveTodayData();
-    await loadHistory();
+
+    // 키보드 내리기
+    document.activeElement && document.activeElement.blur();
 
     document.getElementById('foodSelect').value = '';
     document.getElementById('amountInput').value = '';
     document.getElementById('proteinPreview').innerHTML = '';
-    showToast(`+${protein}g 추가됐어요!`);
-  }
 
-  // ── 음식 삭제 ──────────────────────────────────
-  async function deleteFood(idx) {
-    todayFoods.splice(idx, 1);
-    renderFoodList();
-    updateGauge();
+    showToast(`+${protein}g 추가됐어요!`);
+
     await saveTodayData();
     await loadHistory();
   }
 
+  // ── 음식 삭제 ──────────────────────────────────
+  function deleteFood(idx) {
+    todayFoods.splice(idx, 1);
+    renderFoodList();
+    updateGauge();
+    saveTodayData();
+    loadHistory();
+  }
+
   // ── 오늘 데이터 저장 ───────────────────────────
   async function saveTodayData() {
-    const payload = { log_date: todayStr(), type: 'protein', data: { foods: todayFoods } };
-    // localStorage 백업
+    if (isSaving) return; // 중복 저장 방지
+    isSaving = true;
     localStorage.setItem('protein_today_' + todayStr(), JSON.stringify(todayFoods));
     try {
       if (todayDbId) {
-        await sbFetch(`daily_logs?id=eq.${todayDbId}`, {
+        await sbFetch(`zdaily_logs?id=eq.${todayDbId}`, {
           method: 'PATCH', prefer: 'return=minimal',
           body: JSON.stringify({ data: { foods: todayFoods } })
         });
       } else {
-        const rows = await sbFetch('daily_logs', { method: 'POST', body: JSON.stringify(payload) });
+        const payload = { log_date: todayStr(), type: 'protein', data: { foods: todayFoods } };
+        const rows = await sbFetch('zdaily_logs', { method: 'POST', body: JSON.stringify(payload) });
         if (rows && rows.length > 0) todayDbId = rows[0].id;
       }
-    } catch(e) { console.warn('저장 실패, 로컬에만 저장됨', e); }
+    } catch(e) {
+      console.warn('저장 실패, 로컬에만 저장됨', e);
+    } finally {
+      isSaving = false;
+    }
   }
 
   // ── 게이지 업데이트 ────────────────────────────
@@ -471,6 +542,7 @@
     outer.classList.toggle('overflow', isOver);
     fill.style.height = fillPct + '%';
 
+    // 퍼센트: 100% 초과 시 실제값 표시
     const displayPct = Math.round(pct * 100);
     document.getElementById('wavePct').textContent = displayPct + '%';
     document.getElementById('waveSub').textContent = `${total.toFixed(1)} / ${goal}g`;
@@ -511,10 +583,15 @@
         </div>
         <div style="display:flex;align-items:center;">
           <span class="food-protein">+${f.protein}g</span>
-          <button class="food-delete" onclick="deleteFood(${i})">×</button>
+          <button class="food-delete" data-idx="${i}">×</button>
         </div>
       </div>
     `).join('');
+
+    // 이벤트 위임으로 삭제 처리 (onclick 인라인 대신)
+    list.querySelectorAll('.food-delete').forEach(btn => {
+      btn.addEventListener('click', () => deleteFood(parseInt(btn.dataset.idx)));
+    });
   }
 
   // ── 히스토리 렌더 ──────────────────────────────
@@ -524,19 +601,35 @@
       list.innerHTML = '<div class="history-empty">기록이 쌓이면 여기 보여요</div>';
       return;
     }
+
     const maxVal = Math.max(...rows.map(r => (r.data.foods||[]).reduce((s,f)=>s+f.protein,0)), goal);
+    // 목표선 위치 (%)
+    const goalLinePct = Math.min(goal / maxVal * 100, 100);
+
+    const DAYS_KO = ['일','월','화','수','목','금','토'];
+
     list.innerHTML = rows.map(r => {
       const total = (r.data.foods||[]).reduce((s,f)=>s+f.protein,0);
       const barPct = Math.min(total / maxVal * 100, 100);
       const isOver = total >= goal;
-      const dateStr = r.log_date.slice(5).replace('-','/');
+
+      // 날짜 파싱 → "4/2 (목)" 형식
+      const [y, m, d] = r.log_date.split('-').map(Number);
+      const dateObj = new Date(y, m-1, d);
+      const dateStr = `${m}/${d}`;
+      const dayStr  = DAYS_KO[dateObj.getDay()];
+
       return `
         <div class="history-row">
-          <span class="hist-date">${dateStr}</span>
+          <div class="hist-date-wrap">
+            <span class="hist-date">${dateStr}</span>
+            <span class="hist-day">(${dayStr})</span>
+          </div>
           <div class="hist-bar-wrap">
             <div class="hist-bar ${isOver?'over':'normal'}" style="width:${barPct}%"></div>
+            <div class="hist-goal-line" style="left:${goalLinePct}%"></div>
           </div>
-          <span class="hist-val">${total.toFixed(0)}g</span>
+          <span class="hist-val ${isOver?'over':''}">${total.toFixed(0)}g</span>
         </div>
       `;
     }).join('');
