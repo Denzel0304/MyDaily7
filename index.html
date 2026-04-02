@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MyDaily7</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --sky1: #dff1fb;
+      --sky2: #b8e0f7;
+      --sky3: #85c8f0;
+      --sky4: #4faee0;
+      --accent: #2e90c8;
+      --soft-green: #c8ecd8;
+      --soft-pink: #fcd5e0;
+      --soft-yellow: #fef3c2;
+      --soft-purple: #e4d8f8;
+      --text-dark: #1a2e3b;
+      --text-mid: #4a6478;
+      --text-light: #8aafc2;
+      --card-bg: rgba(255,255,255,0.82);
+      --shadow: 0 8px 32px rgba(79,174,224,0.13);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: linear-gradient(160deg, #e8f6fd 0%, #ceeaf8 40%, #d9f0fc 70%, #e4f5fb 100%);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* 배경 장식 원 */
+    .bg-blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-blob-1 { width: 280px; height: 280px; background: #aeddf5; top: -60px; left: -80px; }
+    .bg-blob-2 { width: 200px; height: 200px; background: #c5ecfb; bottom: 80px; right: -60px; }
+    .bg-blob-3 { width: 150px; height: 150px; background: #fce4ef; top: 40%; left: -50px; }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      padding: 0 18px 40px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+    }
+
+    /* 헤더 */
+    header {
+      padding: 52px 4px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .greeting {
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .app-title {
+      font-family: 'Nunito', sans-serif;
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--text-dark);
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+    }
+    .app-title span {
+      color: var(--accent);
+    }
+    .app-subtitle {
+      font-size: 13px;
+      color: var(--text-light);
+      margin-top: 2px;
+    }
+
+    /* 날짜 pill */
+    .date-pill {
+      align-self: flex-start;
+      margin-top: 12px;
+      background: white;
+      border-radius: 50px;
+      padding: 7px 16px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-mid);
+      box-shadow: 0 2px 12px rgba(79,174,224,0.12);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .date-pill .dot {
+      width: 7px; height: 7px;
+      background: var(--sky3);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* 메뉴 그리드 */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .menu-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5px solid rgba(255,255,255,0.7);
+      position: relative;
+      overflow: hidden;
+      min-height: 148px;
+    }
+    .menu-card:active {
+      transform: scale(0.95);
+      box-shadow: 0 4px 16px rgba(79,174,224,0.10);
+    }
+
+    /* 카드별 상단 포인트 색 */
+    .menu-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      border-radius: 24px 24px 0 0;
+    }
+    .card-economy::before  { background: linear-gradient(90deg, #4faee0, #85c8f0); }
+    .card-protein::before  { background: linear-gradient(90deg, #5dcf8a, #a8e6c4); }
+    .card-workout::before  { background: linear-gradient(90deg, #f87c9b, #fbc4d0); }
+    .card-tbd::before      { background: linear-gradient(90deg, #c4b5fd, #ddd6fe); }
+
+    /* 아이콘 배경 */
+    .card-icon-wrap {
+      width: 46px; height: 46px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .card-economy  .card-icon-wrap { background: #ddf1fb; }
+    .card-protein  .card-icon-wrap { background: #d4f5e3; }
+    .card-workout  .card-icon-wrap { background: #fde4ec; }
+    .card-tbd      .card-icon-wrap { background: #ede9fe; }
+
+    .card-label {
+      font-family: 'Nunito', sans-serif;
+      font-size: 15.5px;
+      font-weight: 800;
+      color: var(--text-dark);
+      line-height: 1.25;
+    }
+    .card-desc {
+      font-size: 11.5px;
+      color: var(--text-light);
+      line-height: 1.5;
+    }
+
+    /* 준비중 카드 스타일 */
+    .card-tbd {
+      opacity: 0.7;
+      cursor: default;
+    }
+    .card-tbd .card-label { color: var(--text-light); }
+    .tbd-badge {
+      align-self: flex-start;
+      margin-top: auto;
+      background: #ede9fe;
+      color: #9370db;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 50px;
+      letter-spacing: 0.05em;
+    }
+
+    /* 하단 인용 */
+    .footer-quote {
+      margin-top: auto;
+      padding-top: 36px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-light);
+      line-height: 1.7;
+    }
+    .footer-quote strong {
+      display: block;
+      font-size: 13px;
+      color: var(--text-mid);
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    /* 로드 애니메이션 */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    header       { animation: fadeUp 0.45s ease both; }
+    .menu-card:nth-child(1) { animation: fadeUp 0.45s 0.10s ease both; }
+    .menu-card:nth-child(2) { animation: fadeUp 0.45s 0.18s ease both; }
+    .menu-card:nth-child(3) { animation: fadeUp 0.45s 0.26s ease both; }
+    .menu-card:nth-child(4) { animation: fadeUp 0.45s 0.34s ease both; }
+    .footer-quote { animation: fadeUp 0.45s 0.42s ease both; }
+  </style>
+</head>
+<body>
+
+  <div class="bg-blob bg-blob-1"></div>
+  <div class="bg-blob bg-blob-2"></div>
+  <div class="bg-blob bg-blob-3"></div>
+
+  <div class="container">
+
+    <header>
+      <span class="greeting">✦ My Personal Dashboard</span>
+      <h1 class="app-title">MyDaily<span>7</span></h1>
+      <p class="app-subtitle">오늘도 기록하고, 관리하고, 성장하세요.</p>
+      <div class="date-pill">
+        <span class="dot"></span>
+        <span id="today-date">로딩중...</span>
+      </div>
+    </header>
+
+    <div class="menu-grid">
+
+      <!-- 경제지표 -->
+      <a href="economy.html" class="menu-card card-economy">
+        <div class="card-icon-wrap">📈</div>
+        <div class="card-label">경제<br>지표</div>
+        <div class="card-desc">나스닥 · 코스닥<br>달러 환율</div>
+      </a>
+
+      <!-- 단백질 트래커 -->
+      <a href="protein.html" class="menu-card card-protein">
+        <div class="card-icon-wrap">🥩</div>
+        <div class="card-label">단백질<br>트래커</div>
+        <div class="card-desc">하루 섭취량<br>습관 체크</div>
+      </a>
+
+      <!-- 헬스 기록 -->
+      <a href="workout.html" class="menu-card card-workout">
+        <div class="card-icon-wrap">🏋️</div>
+        <div class="card-label">운동<br>기록</div>
+        <div class="card-desc">요일별 루틴<br>중량 · 세트 기록</div>
+      </a>
+
+      <!-- 준비중 -->
+      <div class="menu-card card-tbd">
+        <div class="card-icon-wrap">✨</div>
+        <div class="card-label">준비<br>중</div>
+        <div class="card-desc">곧 추가될<br>새로운 메뉴</div>
+        <span class="tbd-badge">COMING SOON</span>
+      </div>
+
+    </div>
+
+    <p class="footer-quote">
+      <strong>오늘을 기록하면 내일이 보입니다.</strong>
+      작은 습관이 큰 변화를 만듭니다 💙
+    </p>
+
+  </div>
+
+  <script>
+    // 날짜 표시
+    const d = new Date();
+    const days = ['일','월','화','수','목','금','토'];
+    const str = `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
+    document.getElementById('today-date').textContent = str;
+  </script>
+
+</body>
+</html>
