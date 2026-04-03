@@ -9,6 +9,7 @@
     :root {
       --sky1: #dff1fb; --sky2: #b8e0f7; --sky3: #85c8f0; --sky4: #4faee0; --accent: #2e90c8;
       --green1: #edfaf3; --green2: #8ee8b4; --green3: #3dbe7a; --green4: #1a4d30;
+      --rose: #e8748a;
       --text-dark: #1a2e3b; --text-mid: #4a6478; --text-light: #8aafc2;
       --card-bg: rgba(255,255,255,0.88); --radius: 24px;
       --shadow: 0 8px 32px rgba(79,174,224,0.13);
@@ -40,7 +41,7 @@
     }
     @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
 
-    .date-label { font-size: 12px; color: var(--text-light); font-weight: 500; align-self: flex-start; }
+    .date-label { font-size: 17px; color: var(--text-mid); font-weight: 700; align-self: flex-start; }
 
     /* 물결 원형 */
     .wave-outer {
@@ -90,7 +91,11 @@
     }
     .stat-val { font-family:'Nunito',sans-serif; font-size: 22px; font-weight: 800; color: var(--accent); line-height: 1; }
     .stat-val.green { color: var(--green3); }
+    .stat-val.intake { color: var(--green3); }
+    .stat-val.remain { color: var(--rose); }
     .stat-lbl { font-size: 11px; color: var(--text-light); margin-top: 3px; }
+    .stat-lbl.intake-lbl { color: var(--green3); opacity: 0.85; }
+    .stat-lbl.remain-lbl { color: var(--rose); opacity: 0.85; }
 
     /* 오늘 먹은 것 목록 */
     .section-title { font-size: 13px; font-weight: 700; color: var(--text-mid); margin: 20px 0 10px; }
@@ -263,16 +268,16 @@
 
     <div class="stats-row">
       <div class="stat-box">
-        <div class="stat-val" id="statTotal">0g</div>
-        <div class="stat-lbl">오늘 섭취</div>
+        <div class="stat-val intake" id="statTotal">0g</div>
+        <div class="stat-lbl intake-lbl">오늘 섭취</div>
       </div>
       <div class="stat-box">
         <div class="stat-val" id="statGoal">150g</div>
         <div class="stat-lbl">목표량</div>
       </div>
       <div class="stat-box">
-        <div class="stat-val" id="statRemain">150g</div>
-        <div class="stat-lbl" id="statRemainLbl">남은 양</div>
+        <div class="stat-val remain" id="statRemain">150g</div>
+        <div class="stat-lbl remain-lbl" id="statRemainLbl">남은 양</div>
       </div>
     </div>
   </div>
@@ -421,7 +426,13 @@
   let todayDbId = null;
   let isSaving = false; // race condition 방지
 
-  const todayStr = () => new Date().toISOString().slice(0, 10);
+  const todayStr = () => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
 
   // ── 날짜 표시 & 자정 갱신 ──────────────────────
   function updateDateLabel() {
@@ -431,20 +442,9 @@
       `${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
   }
 
-  // 자정 넘어가면 자동 갱신 (날짜 체크 주기: 1분)
+  // 새로고침 시 날짜 체크 (setInterval 제거 - 리소스 절약)
+  // 페이지 로드할 때마다 날짜를 확인하여 처리하므로 실시간 타이머 불필요
   let _lastDateStr = todayStr();
-  setInterval(() => {
-    const now = todayStr();
-    if (now !== _lastDateStr) {
-      _lastDateStr = now;
-      updateDateLabel();
-      // 날짜 바뀌면 오늘 데이터 초기화 후 재로드
-      todayFoods = [];
-      todayDbId = null;
-      loadTodayData();
-      loadHistory();
-    }
-  }, 60000);
 
   // ── 초기화 ─────────────────────────────────────
   window.addEventListener('DOMContentLoaded', async () => {
@@ -569,7 +569,7 @@
     document.getElementById('waveSub').textContent = `${total.toFixed(1)} / ${goal}g`;
 
     document.getElementById('statTotal').textContent = total.toFixed(1) + 'g';
-    document.getElementById('statTotal').className = 'stat-val' + (isOver ? ' green' : '');
+    document.getElementById('statTotal').className = 'stat-val intake';
     document.getElementById('statGoal').textContent = goal + 'g';
 
     const remain = goal - total;
@@ -577,11 +577,13 @@
     const remainLbl = document.getElementById('statRemainLbl');
     if (remain > 0) {
       remainEl.textContent = remain.toFixed(1) + 'g';
-      remainEl.className = 'stat-val';
+      remainEl.className = 'stat-val remain';
+      remainLbl.className = 'stat-lbl remain-lbl';
       remainLbl.textContent = '남은 양';
     } else {
       remainEl.textContent = '+' + Math.abs(remain).toFixed(1) + 'g';
       remainEl.className = 'stat-val green';
+      remainLbl.className = 'stat-lbl';
       remainLbl.textContent = '초과량';
     }
   }
