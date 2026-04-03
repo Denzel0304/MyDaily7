@@ -73,6 +73,13 @@
       font-size: 28px; font-weight: 900;
       color: var(--text-dark); letter-spacing: -0.5px;
       text-align: center;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .page-title-icon {
+      width: 32px; height: 32px; border-radius: 9px;
+      background: #ede9fe;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
     }
     .page-title span { color: var(--purple-mid); }
     .page-subtitle { font-size: 13px; color: var(--text-light); margin-top: 4px; text-align: center; }
@@ -530,7 +537,7 @@
     <div class="header-top">
       <a href="index.html" class="back-btn">← 홈</a>
       <div class="header-title-wrap">
-        <h1 class="page-title">습관 <span>트래커</span></h1>
+        <h1 class="page-title"><div class="page-title-icon">✅</div>습관 <span>트래커</span></h1>
       </div>
       <!-- 오른쪽 균형용 여백 -->
       <div style="width:60px;flex-shrink:0;"></div>
