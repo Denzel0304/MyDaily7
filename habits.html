@@ -61,7 +61,8 @@
       font-size: 13px; font-weight: 600; color: var(--accent);
       text-decoration: none; flex-shrink: 0;
       background: white; border-radius: 50px;
-      padding: 6px 14px;
+      padding: 10px 16px;
+      min-height: 42px;
       box-shadow: 0 2px 10px rgba(79,174,224,0.12);
     }
     .header-title-wrap {
@@ -572,6 +573,15 @@
           placeholder="단위 (예: L, 분, 페이지)"
           style="display:none;" maxlength="10" />
       </div>
+      <!-- 하루 N회 선택 시 추가로 주 며칠 할지 -->
+      <div id="daily-days-row" style="display:none; margin-top:10px;">
+        <label class="form-label" style="margin-bottom:6px;">주 며칠 실천할까요?</label>
+        <div class="goal-num-row">
+          <input class="num-input" id="goal-days-per-week" type="number" min="1" max="7" placeholder="?" oninput="validateDaysPerWeek()" />
+          <span class="num-unit">일 / 주 (1~7)</span>
+        </div>
+        <div id="goal-days-error" style="display:none; color:#ef4444; font-size:12px; margin-top:6px; font-weight:600;">1~7 사이 숫자만 입력 가능해요.</div>
+      </div>
       <div id="goal-num-error" style="display:none; color:#ef4444; font-size:12px; margin-top:6px; font-weight:600;">주 N회는 1~7 사이 숫자만 입력 가능해요.</div>
     </div>
 
@@ -657,8 +667,12 @@ function selectGoalType(el, type) {
   const unitLabel = document.getElementById('goal-unit-label');
   const unitCustom = document.getElementById('goal-unit-custom');
   const errMsg = document.getElementById('goal-num-error');
+  const dailyDaysRow = document.getElementById('daily-days-row');
   numInput.value = '';
   errMsg.style.display = 'none';
+  dailyDaysRow.style.display = 'none';
+  document.getElementById('goal-days-per-week').value = '';
+  document.getElementById('goal-days-error').style.display = 'none';
   if (type === 'weekly') {
     unitLabel.textContent = '회 / 주'; unitLabel.style.display=''; unitCustom.style.display='none';
     numInput.min = 1; numInput.max = 7;
@@ -666,22 +680,25 @@ function selectGoalType(el, type) {
   } else if (type === 'daily_count') {
     unitLabel.textContent = '회 / 일'; unitLabel.style.display=''; unitCustom.style.display='none';
     numInput.min = 1; numInput.max = 99;
+    dailyDaysRow.style.display = 'block';
   } else {
     unitLabel.style.display='none'; unitCustom.style.display='';
     numInput.min = 1; numInput.max = 9999;
+    dailyDaysRow.style.display = 'block';
   }
 }
 
 function validateGoalNum() {
-  const type = selectedGoalType;
-  if (type !== 'weekly') return;
+  if (selectedGoalType !== 'weekly') return;
   const val = parseInt(document.getElementById('goal-num').value);
   const err = document.getElementById('goal-num-error');
-  if (isNaN(val) || val < 1 || val > 7) {
-    err.style.display = 'block';
-  } else {
-    err.style.display = 'none';
-  }
+  err.style.display = (isNaN(val) || val < 1 || val > 7) ? 'block' : 'none';
+}
+
+function validateDaysPerWeek() {
+  const val = parseInt(document.getElementById('goal-days-per-week').value);
+  const err = document.getElementById('goal-days-error');
+  err.style.display = (isNaN(val) || val < 1 || val > 7) ? 'block' : 'none';
 }
 
 // ─── 모달 ─────────────────────────────────────────────────
@@ -699,6 +716,9 @@ function openModal() {
   document.getElementById('goal-unit-label').style.display = '';
   document.getElementById('goal-unit-custom').style.display = 'none';
   document.getElementById('goal-num-error').style.display = 'none';
+  document.getElementById('daily-days-row').style.display = 'none';
+  document.getElementById('goal-days-per-week').value = '';
+  document.getElementById('goal-days-error').style.display = 'none';
   document.getElementById('modal').classList.add('open');
   setTimeout(() => document.getElementById('habit-name-input').focus(), 300);
 }
@@ -714,6 +734,12 @@ async function saveHabit() {
   if (selectedGoalType === 'weekly' && (num < 1 || num > 7)) {
     alert('주 N회는 1~7 사이 숫자만 입력 가능해요.'); return;
   }
+  let daysPerWeek = 7;
+  if (selectedGoalType === 'daily_count' || selectedGoalType === 'daily_amount') {
+    const dpw = parseInt(document.getElementById('goal-days-per-week').value);
+    if (isNaN(dpw) || dpw < 1 || dpw > 7) { alert('주 며칠 실천할지 1~7 사이로 입력해주세요.'); return; }
+    daysPerWeek = dpw;
+  }
   const customUnit = document.getElementById('goal-unit-custom').value.trim() || '';
 
   const habitId = 'h_' + Date.now();
@@ -721,9 +747,10 @@ async function saveHabit() {
     habit_id: habitId,
     name,
     icon: selectedIcon,
-    goal_type: selectedGoalType,   // weekly | daily_count | daily_amount
+    goal_type: selectedGoalType,
     goal_value: num,
     goal_unit: customUnit,
+    days_per_week: daysPerWeek,
     created_at: new Date().toISOString()
   };
 
@@ -888,14 +915,7 @@ function renderWeek() {
 
     const checks = dates.map(d => {
       const ds = dateStr(d);
-      // 미래: 오늘 이후, 과거: 오늘 이전
-      const isPast = d < today;   // 과거 (오늘 미포함) → 비활성
-      const isFuture = d > today; // 미래 → 비활성
-      const isDisabled = isPast || isFuture; // 오늘만 활성화 (현재 주 기준)
-      // 현재 주가 아니면 모두 활성 (과거 주는 편집 가능)
-      const isCurrentWeek = weekOffset === 0;
-      const canClick = !isFuture && (!isCurrentWeek || !isPast);
-      // 실제로는 과거도 클릭 가능, 미래만 불가
+      const isFuture = d > today;
       const clickable = !isFuture;
 
       const log = habitLogs.find(l => l.data.habit_id === h.habit_id && l.log_date === ds);
@@ -954,23 +974,25 @@ function renderWeek() {
 }
 
 function goalWeeklyTarget(h) {
-  if (h.goal_type === 'weekly') return h.goal_value;       // 주 N회 → N
-  if (h.goal_type === 'daily_count') return 7 * h.goal_value; // 하루 N회 → 7*N
-  if (h.goal_type === 'daily_amount') return 7;            // 하루 N량 → 7칸
+  const dpw = h.days_per_week || 7;
+  if (h.goal_type === 'weekly') return h.goal_value;
+  if (h.goal_type === 'daily_count') return dpw * h.goal_value; // e.g. 5일 * 2회 = 10
+  if (h.goal_type === 'daily_amount') return dpw; // N량 → dpw칸
   return 7;
 }
 
-// 하루 기준 몇 번 탭해야 1칸이 채워지는지 (daily_count용)
 function clicksPerDay(h) {
   if (h.goal_type === 'daily_count') return h.goal_value;
   return 1;
 }
 
 function goalLabel(h) {
+  const dpw = h.days_per_week || 7;
   if (h.goal_type === 'weekly') return `주 ${h.goal_value}회 목표`;
-  if (h.goal_type === 'daily_count') return `하루 ${h.goal_value}회 목표`;
-  return `하루 ${h.goal_value}${h.goal_unit || ''} 목표`;
+  if (h.goal_type === 'daily_count') return `하루 ${h.goal_value}회 · 주 ${dpw}일 목표`;
+  return `하루 ${h.goal_value}${h.goal_unit || ''} · 주 ${dpw}일 목표`;
 }
+
 
 // ─── 월간 렌더 ────────────────────────────────────────────
 function renderMonth() {
