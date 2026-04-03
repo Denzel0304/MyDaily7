@@ -66,16 +66,10 @@
       padding: 52px 4px 24px;
       display: flex;
       flex-direction: column;
+      align-items: center;
       gap: 4px;
     }
-    .greeting {
-      font-family: 'Nunito', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--accent);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
+
     .app-title {
       font-family: 'Nunito', sans-serif;
       font-size: 32px;
@@ -83,33 +77,42 @@
       color: var(--text-dark);
       line-height: 1.1;
       letter-spacing: -0.5px;
+      text-align: center;
     }
     .app-title span {
       color: var(--accent);
     }
+
+    /* 부제목 + 날짜 한 줄 */
+    .subtitle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 4px;
+    }
     .app-subtitle {
       font-size: 13px;
       color: var(--text-light);
-      margin-top: 2px;
     }
 
     /* 날짜 pill */
     .date-pill {
-      align-self: flex-start;
-      margin-top: 12px;
       background: white;
       border-radius: 50px;
-      padding: 7px 16px;
-      font-size: 12.5px;
+      padding: 5px 13px;
+      font-size: 12px;
       font-weight: 600;
       color: var(--text-mid);
       box-shadow: 0 2px 12px rgba(79,174,224,0.12);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
+      white-space: nowrap;
     }
     .date-pill .dot {
-      width: 7px; height: 7px;
+      width: 6px; height: 6px;
       background: var(--sky3);
       border-radius: 50%;
       animation: pulse 2s infinite;
@@ -131,7 +134,7 @@
       background: var(--card-bg);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: 22px 18px 20px;
+      padding: 18px 16px 16px;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -143,7 +146,7 @@
       border: 1.5px solid rgba(255,255,255,0.7);
       position: relative;
       overflow: hidden;
-      min-height: 148px;
+      min-height: 140px;
     }
     .menu-card:active {
       transform: scale(0.95);
@@ -161,20 +164,27 @@
     .card-economy::before  { background: linear-gradient(90deg, #4faee0, #85c8f0); }
     .card-protein::before  { background: linear-gradient(90deg, #5dcf8a, #a8e6c4); }
     .card-workout::before  { background: linear-gradient(90deg, #f87c9b, #fbc4d0); }
-    .card-tbd::before      { background: linear-gradient(90deg, #c4b5fd, #ddd6fe); }
+    .card-habit::before    { background: linear-gradient(90deg, #c4b5fd, #ddd6fe); }
 
-    /* 아이콘 배경 */
+    /* 카드 상단 행: 아이콘 + 라벨 */
+    .card-top-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* 아이콘 배경 - 조금 작게 */
     .card-icon-wrap {
-      width: 46px; height: 46px;
-      border-radius: 14px;
+      width: 38px; height: 38px;
+      border-radius: 11px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 24px;
+      font-size: 20px;
       flex-shrink: 0;
     }
     .card-economy  .card-icon-wrap { background: #ddf1fb; }
     .card-protein  .card-icon-wrap { background: #d4f5e3; }
     .card-workout  .card-icon-wrap { background: #fde4ec; }
-    .card-tbd      .card-icon-wrap { background: #ede9fe; }
+    .card-habit    .card-icon-wrap { background: #ede9fe; }
 
     .card-label {
       font-family: 'Nunito', sans-serif;
@@ -183,28 +193,11 @@
       color: var(--text-dark);
       line-height: 1.25;
     }
+
     .card-desc {
       font-size: 11.5px;
       color: var(--text-light);
       line-height: 1.5;
-    }
-
-    /* 준비중 카드 스타일 */
-    .card-tbd {
-      opacity: 0.7;
-      cursor: default;
-    }
-    .card-tbd .card-label { color: var(--text-light); }
-    .tbd-badge {
-      align-self: flex-start;
-      margin-top: auto;
-      background: #ede9fe;
-      color: #9370db;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 9px;
-      border-radius: 50px;
-      letter-spacing: 0.05em;
     }
 
     /* 하단 인용 */
@@ -246,12 +239,13 @@
   <div class="container">
 
     <header>
-      <span class="greeting">✦ My Personal Dashboard</span>
       <h1 class="app-title">MyDaily<span>7</span></h1>
-      <p class="app-subtitle">오늘도 기록하고, 관리하고, 성장하세요.</p>
-      <div class="date-pill">
-        <span class="dot"></span>
-        <span id="today-date">로딩중...</span>
+      <div class="subtitle-row">
+        <p class="app-subtitle">오늘도 기록하고, 관리하고, 성장하세요.</p>
+        <div class="date-pill">
+          <span class="dot"></span>
+          <span id="today-date">로딩중...</span>
+        </div>
       </div>
     </header>
 
@@ -259,32 +253,39 @@
 
       <!-- 경제지표 -->
       <a href="economy.html" class="menu-card card-economy">
-        <div class="card-icon-wrap">📈</div>
-        <div class="card-label">경제<br>지표</div>
-        <div class="card-desc">나스닥 · 코스닥<br>달러 환율</div>
+        <div class="card-top-row">
+          <div class="card-icon-wrap">📈</div>
+          <div class="card-label">경제 지표</div>
+        </div>
+        <div class="card-desc">나스닥 · 코스닥 · 달러환율</div>
       </a>
 
       <!-- 단백질 트래커 -->
       <a href="protein.html" class="menu-card card-protein">
-        <div class="card-icon-wrap">🥩</div>
-        <div class="card-label">단백질<br>트래커</div>
-        <div class="card-desc">하루 섭취량<br>습관 체크</div>
+        <div class="card-top-row">
+          <div class="card-icon-wrap">🥩</div>
+          <div class="card-label">단백질<br>트래커</div>
+        </div>
+        <div class="card-desc">하루 섭취량 · 습관 체크</div>
       </a>
 
       <!-- 헬스 기록 -->
       <a href="workout.html" class="menu-card card-workout">
-        <div class="card-icon-wrap">🏋️</div>
-        <div class="card-label">운동<br>기록</div>
-        <div class="card-desc">요일별 루틴<br>중량 · 세트 기록</div>
+        <div class="card-top-row">
+          <div class="card-icon-wrap">🏋️</div>
+          <div class="card-label">운동 기록</div>
+        </div>
+        <div class="card-desc">요일별 루틴 · 중량 · 세트</div>
       </a>
 
-      <!-- 준비중 -->
-      <div class="menu-card card-tbd">
-        <div class="card-icon-wrap">✨</div>
-        <div class="card-label">준비<br>중</div>
-        <div class="card-desc">곧 추가될<br>새로운 메뉴</div>
-        <span class="tbd-badge">COMING SOON</span>
-      </div>
+      <!-- 습관 트래커 -->
+      <a href="habit.html" class="menu-card card-habit">
+        <div class="card-top-row">
+          <div class="card-icon-wrap">✅</div>
+          <div class="card-label">습관<br>트래커</div>
+        </div>
+        <div class="card-desc">매일 반복 습관 · 달성 현황</div>
+      </a>
 
     </div>
 
@@ -296,7 +297,6 @@
   </div>
 
   <script>
-    // 날짜 표시
     const d = new Date();
     const days = ['일','월','화','수','목','금','토'];
     const str = `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
