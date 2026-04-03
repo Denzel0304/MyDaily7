@@ -494,10 +494,27 @@
   // 페이지 로드할 때마다 날짜를 확인하여 처리하므로 실시간 타이머 불필요
   let _lastDateStr = todayStr();
 
+  // ── 시간에 따른 기본 끼니 선택 ─────────────────
+  function setDefaultMealByTime() {
+    const hour = new Date().getHours();
+    const min  = new Date().getMinutes();
+    const totalMin = hour * 60 + min;
+    let defaultMeal;
+    if (totalMin <= 10 * 60 + 59) {          // ~10:59 → 아침
+      defaultMeal = 'breakfast';
+    } else if (totalMin <= 15 * 60 + 60) {   // 11:00~16:00 → 점심
+      defaultMeal = 'lunch';
+    } else {                                  // 16:01~ → 저녁
+      defaultMeal = 'dinner';
+    }
+    selectMeal(defaultMeal);
+  }
+
   // ── 초기화 ─────────────────────────────────────
   window.addEventListener('DOMContentLoaded', async () => {
     updateDateLabel();
     updateGoalUI();
+    setDefaultMealByTime();
     await loadTodayData();
     await loadHistory();
   });
