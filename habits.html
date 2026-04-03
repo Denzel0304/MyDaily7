@@ -271,19 +271,6 @@
       font-size: 10px; font-weight: 600;
       color: var(--text-light); text-align: center; padding-bottom: 4px;
     }
-    .month-dot {
-      width: 100%; aspect-ratio: 1;
-      border-radius: 6px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 10px; font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .month-dot.empty { background: transparent; cursor: default; }
-    .month-dot.future { background: #f0f4f8; color: var(--text-light); cursor: default; opacity: 0.5; }
-    .month-dot.miss { background: #f0f4f8; color: var(--text-light); }
-    .month-dot.done { background: linear-gradient(135deg, #c4b5fd, #9370db); color: white; }
-    .month-dot.today-dot { box-shadow: 0 0 0 2px var(--purple-mid); }
 
     /* 습관 추가 버튼 */
     .add-fab {
@@ -447,17 +434,49 @@
     @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
     @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
 
-    /* 삭제 버튼 */
-    .habit-row-header .del-btn {
+    /* 삭제/수정/순서 버튼 */
+    .habit-row-header .del-btn,
+    .habit-row-header .edit-btn,
+    .habit-row-header .sort-btn {
       background: none; border: none; font-size: 15px;
-      color: #c8d8e4; cursor: pointer; padding: 4px 5px;
+      cursor: pointer; padding: 4px 5px;
       border-radius: 8px; transition: all 0.15s;
       display: flex; align-items: center; justify-content: center;
       width: 28px; height: 28px; flex-shrink: 0;
     }
+    .habit-row-header .del-btn { color: #c8d8e4; }
     .habit-row-header .del-btn:hover { background: #fee2e2; color: #ef4444; }
+    .habit-row-header .edit-btn { color: #b0c8d8; font-size: 13px; }
+    .habit-row-header .edit-btn:hover { background: var(--soft-purple); color: var(--purple-mid); }
+    .habit-row-header .sort-btn { color: #c8d8e4; font-size: 11px; display: flex; flex-direction: column; gap: 1px; align-items: center; justify-content: center; width: 22px; }
+    .habit-row-header .sort-btn span { line-height: 1; font-size: 10px; color: #b0c4d4; }
+    .habit-row-header .sort-btn:hover span { color: var(--purple-mid); }
 
-    /* 섹션 구분 (월간) */
+    /* 배터리 셀 (월간) */
+    .month-dot {
+      width: 100%; aspect-ratio: 1;
+      border-radius: 6px;
+      position: relative; overflow: hidden;
+      display: flex; align-items: flex-end; justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .month-dot-label {
+      position: relative; z-index: 2;
+      font-size: 9px; font-weight: 700;
+      line-height: 1; padding-bottom: 2px;
+      color: var(--text-mid);
+    }
+    .month-dot-fill {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(180deg, #c4b5fd, #9370db);
+      transition: height 0.3s ease;
+    }
+    .month-dot.empty { background: transparent; cursor: default; }
+    .month-dot.future { background: #f0f4f8; cursor: default; opacity: 0.45; }
+    .month-dot.miss { background: #f0f4f8; }
+    .month-dot.miss .month-dot-label { color: var(--text-light); }
+    .month-dot.today-dot { box-shadow: 0 0 0 2px var(--purple-mid); }
     .month-nav {
       display: flex; align-items: center; justify-content: space-between;
       margin-top: 18px; margin-bottom: 4px;
@@ -567,7 +586,7 @@
       </div>
 
       <div class="goal-num-row">
-        <input class="num-input" id="goal-num" type="number" min="1" max="7" placeholder="?" oninput="validateGoalNum()" />
+        <input class="num-input" id="goal-num" type="number" min="1" max="7" placeholder="" oninput="validateGoalNum()" />
         <span class="num-unit" id="goal-unit-label">회 / 주</span>
         <input class="num-unit-input" id="goal-unit-custom" type="text"
           placeholder="단위 (예: L, 분, 페이지)"
@@ -577,7 +596,7 @@
       <div id="daily-days-row" style="display:none; margin-top:10px;">
         <label class="form-label" style="margin-bottom:6px;">주 며칠 실천할까요?</label>
         <div class="goal-num-row">
-          <input class="num-input" id="goal-days-per-week" type="number" min="1" max="7" placeholder="?" oninput="validateDaysPerWeek()" />
+          <input class="num-input" id="goal-days-per-week" type="number" min="1" max="7" placeholder="" oninput="validateDaysPerWeek()" />
           <span class="num-unit">일 / 주 (1~7)</span>
         </div>
         <div id="goal-days-error" style="display:none; color:#ef4444; font-size:12px; margin-top:6px; font-weight:600;">1~7 사이 숫자만 입력 가능해요.</div>
@@ -642,6 +661,7 @@ const ICONS = [
 
 let selectedIcon = ICONS[0];
 let selectedGoalType = 'weekly';
+let editingHabitId = null; // null=신규, habitId=수정모드
 
 function buildIconPicker() {
   const grid = document.getElementById('icon-picker');
@@ -703,6 +723,9 @@ function validateDaysPerWeek() {
 
 // ─── 모달 ─────────────────────────────────────────────────
 function openModal() {
+  editingHabitId = null;
+  document.querySelector('.modal-title').textContent = '✨ 새 습관 추가';
+  document.querySelector('.save-btn').textContent = '저장하기';
   buildIconPicker();
   selectedIcon = ICONS[0];
   selectedGoalType = 'weekly';
@@ -721,6 +744,51 @@ function openModal() {
   document.getElementById('goal-days-error').style.display = 'none';
   document.getElementById('modal').classList.add('open');
   setTimeout(() => document.getElementById('habit-name-input').focus(), 300);
+}
+
+function openEditModal(habitId) {
+  const def = habitDefs.find(d => d.data.habit_id === habitId);
+  if (!def) return;
+  const h = def.data;
+  editingHabitId = habitId;
+  document.querySelector('.modal-title').textContent = '✏️ 습관 수정';
+  document.querySelector('.save-btn').textContent = '수정 완료';
+
+  selectedIcon = h.icon;
+  selectedGoalType = h.goal_type;
+  buildIconPicker();
+
+  document.querySelectorAll('.goal-type-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector(`[data-type="${h.goal_type}"]`).classList.add('selected');
+  document.getElementById('habit-name-input').value = h.name;
+
+  const unitLabel = document.getElementById('goal-unit-label');
+  const unitCustom = document.getElementById('goal-unit-custom');
+  const dailyDaysRow = document.getElementById('daily-days-row');
+  document.getElementById('goal-num-error').style.display = 'none';
+  document.getElementById('goal-days-error').style.display = 'none';
+
+  if (h.goal_type === 'weekly') {
+    document.getElementById('goal-num').value = h.goal_value;
+    document.getElementById('goal-num').min = 1; document.getElementById('goal-num').max = 7;
+    unitLabel.textContent = '회 / 주'; unitLabel.style.display = ''; unitCustom.style.display = 'none';
+    dailyDaysRow.style.display = 'none';
+  } else if (h.goal_type === 'daily_count') {
+    document.getElementById('goal-num').value = h.goal_value;
+    document.getElementById('goal-num').min = 1; document.getElementById('goal-num').max = 99;
+    unitLabel.textContent = '회 / 일'; unitLabel.style.display = ''; unitCustom.style.display = 'none';
+    dailyDaysRow.style.display = 'block';
+    document.getElementById('goal-days-per-week').value = h.days_per_week || 7;
+  } else {
+    document.getElementById('goal-num').value = h.goal_value;
+    document.getElementById('goal-num').min = 1; document.getElementById('goal-num').max = 9999;
+    unitLabel.style.display = 'none'; unitCustom.style.display = '';
+    unitCustom.value = h.goal_unit || '';
+    dailyDaysRow.style.display = 'block';
+    document.getElementById('goal-days-per-week').value = h.days_per_week || 7;
+  }
+
+  document.getElementById('modal').classList.add('open');
 }
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
 function handleOverlayClick(e) { if (e.target.id === 'modal') closeModal(); }
@@ -742,25 +810,46 @@ async function saveHabit() {
   }
   const customUnit = document.getElementById('goal-unit-custom').value.trim() || '';
 
+  if (editingHabitId) {
+    // 수정 모드
+    const def = habitDefs.find(d => d.data.habit_id === editingHabitId);
+    if (!def) return;
+    const updatedData = { ...def.data, name, icon: selectedIcon, goal_type: selectedGoalType, goal_value: num, goal_unit: customUnit, days_per_week: daysPerWeek };
+    try {
+      await sbFetch('PATCH', { data: updatedData }, `?id=eq.${def.id}`);
+      closeModal(); await loadAll();
+    } catch(e) { alert('수정 실패: ' + e.message); }
+    return;
+  }
+
+  // 신규 모드
+  const maxOrder = habitDefs.reduce((mx, d) => Math.max(mx, d.data.sort_order || 0), 0);
   const habitId = 'h_' + Date.now();
   const data = {
-    habit_id: habitId,
-    name,
-    icon: selectedIcon,
-    goal_type: selectedGoalType,
-    goal_value: num,
-    goal_unit: customUnit,
-    days_per_week: daysPerWeek,
+    habit_id: habitId, name, icon: selectedIcon,
+    goal_type: selectedGoalType, goal_value: num,
+    goal_unit: customUnit, days_per_week: daysPerWeek,
+    sort_order: maxOrder + 1,
     created_at: new Date().toISOString()
   };
-
   try {
     await sbFetch('POST', { type: 'habit_def', log_date: todayStr(), data });
-    closeModal();
+    closeModal(); await loadAll();
+  } catch(e) { alert('저장 실패: ' + e.message); }
+}
+
+// ─── 순서 이동 ────────────────────────────────────────────
+async function moveHabit(habitId, dir) {
+  const idx = habitDefs.findIndex(d => d.data.habit_id === habitId);
+  const swapIdx = idx + dir;
+  if (swapIdx < 0 || swapIdx >= habitDefs.length) return;
+  const a = habitDefs[idx], b = habitDefs[swapIdx];
+  const aOrder = a.data.sort_order ?? idx, bOrder = b.data.sort_order ?? swapIdx;
+  try {
+    await sbFetch('PATCH', { data: { ...a.data, sort_order: bOrder } }, `?id=eq.${a.id}`);
+    await sbFetch('PATCH', { data: { ...b.data, sort_order: aOrder } }, `?id=eq.${b.id}`);
     await loadAll();
-  } catch(e) {
-    alert('저장 실패: ' + e.message);
-  }
+  } catch(e) { console.error(e); }
 }
 
 // ─── 날짜 유틸 ────────────────────────────────────────────
@@ -804,7 +893,8 @@ async function loadAll() {
         if (!acc[id] || r.id > acc[id].id) acc[id] = r;
         return acc;
       }, {});
-    habitDefs = Object.values(habitDefs).filter(r => !r.data.deleted);
+    habitDefs = Object.values(habitDefs).filter(r => !r.data.deleted)
+      .sort((a, b) => (a.data.sort_order ?? 999) - (b.data.sort_order ?? 999));
 
     habitLogs = (rows || []).filter(r => r.type === 'habit_log');
     renderWeek();
@@ -961,6 +1051,9 @@ function renderWeek() {
           <div class="habit-goal-label">${goalLabel(h)}</div>
         </div>
         <div class="habit-progress-text">${doneCount}/${target}</div>
+        <button class="sort-btn" onclick="moveHabit('${h.habit_id}',-1)" title="위로" style="font-size:10px;color:#b0c4d4;">▲</button>
+        <button class="sort-btn" onclick="moveHabit('${h.habit_id}',1)" title="아래로" style="font-size:10px;color:#b0c4d4;">▼</button>
+        <button class="edit-btn" onclick="openEditModal('${h.habit_id}')" title="수정">✏️</button>
         <button class="del-btn" onclick="deleteHabit('${h.habit_id}')" title="삭제">🗑️</button>
       </div>
       <div class="habit-week-checks">${checks}</div>
@@ -994,69 +1087,87 @@ function goalLabel(h) {
 }
 
 
+// ─── 하루 달성도(0~100%) 계산 헬퍼 ──────────────────────
+function dayAchievePct(h, ds) {
+  const log = habitLogs.find(l => l.data.habit_id === h.habit_id && l.log_date === ds);
+  const val = log ? (log.data.value || 0) : 0;
+  if (h.goal_type === 'weekly') return val >= 1 ? 100 : 0;
+  if (h.goal_type === 'daily_count') return val === 0 ? 0 : Math.min(100, Math.round(val / h.goal_value * 100));
+  if (h.goal_type === 'daily_amount') return val; // 이미 0~100 퍼센트로 저장
+  return 0;
+}
+
+// 10단계 근사 (0,10,20,...,100)
+function toStep10(pct) { return Math.round(pct / 10) * 10; }
+
 // ─── 월간 렌더 ────────────────────────────────────────────
 function renderMonth() {
   const today = new Date(); today.setHours(0,0,0,0);
   const base = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
   const y = base.getFullYear(), m = base.getMonth();
   const daysInMonth = new Date(y, m+1, 0).getDate();
-  const firstDow = new Date(y, m, 1).getDay(); // 0=일
+  const firstDow = new Date(y, m, 1).getDay();
 
-  document.getElementById('month-label').textContent =
-    `${y}년 ${m+1}월`;
+  document.getElementById('month-label').textContent = `${y}년 ${m+1}월`;
 
   const list = document.getElementById('month-habits-list');
 
   if (habitDefs.length === 0) {
-    list.innerHTML = `<div class="empty-state">
-      <div class="empty-icon">📆</div>
-      <p>등록된 습관이 없어요.</p>
-    </div>`;
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📆</div><p>등록된 습관이 없어요.</p></div>`;
     return;
   }
 
   list.innerHTML = habitDefs.map(def => {
     const h = def.data;
-    let doneCount = 0, totalDays = 0;
+    let totalPctSum = 0, totalDays = 0;
 
-    const dayHeaders = DAY_NAMES.map(n =>
-      `<div class="month-day-header">${n}</div>`).join('');
-
-    const blanks = Array.from({length: firstDow}, () =>
-      `<div class="month-dot empty"></div>`).join('');
+    const dayHeaders = DAY_NAMES.map(n => `<div class="month-day-header">${n}</div>`).join('');
+    const blanks = Array.from({length: firstDow}, () => `<div class="month-dot empty"></div>`).join('');
 
     const dayCells = Array.from({length: daysInMonth}, (_, i) => {
       const day = i + 1;
       const d = new Date(y, m, day); d.setHours(0,0,0,0);
       const ds = dateStr(d);
       const isFuture = d > today;
-      const isDone = habitLogs.some(l => l.data.habit_id === h.habit_id && l.log_date === ds);
       const isToday = ds === dateStr(today);
 
-      if (!isFuture) totalDays++;
-      if (isDone) doneCount++;
+      if (!isFuture) {
+        totalDays++;
+        const pct = dayAchievePct(h, ds);
+        totalPctSum += pct;
+      }
 
-      let cls = 'month-dot';
-      if (isFuture) cls += ' future';
-      else if (isDone) cls += ' done';
-      else cls += ' miss';
-      if (isToday) cls += ' today-dot';
+      if (isFuture) {
+        return `<div class="month-dot future"><div class="month-dot-label" style="color:var(--text-light)">${day}</div></div>`;
+      }
 
-      const click = isFuture ? '' : `onclick="toggleLog('${h.habit_id}','${ds}')"`;
+      const rawPct = dayAchievePct(h, ds);
+      const stepPct = toStep10(rawPct);
+      const click = `onclick="toggleLog('${h.habit_id}','${ds}')"`;
 
-      return `<div class="${cls}" ${click}>${day}</div>`;
+      // 배터리 fill 높이 = stepPct%
+      const fillHeight = stepPct;
+      // 날짜 텍스트 색: 채워진 정도에 따라
+      const labelColor = stepPct >= 60 ? 'white' : (stepPct > 0 ? 'var(--purple-dark)' : 'var(--text-light)');
+      let cls = 'month-dot' + (rawPct === 0 ? ' miss' : '') + (isToday ? ' today-dot' : '');
+
+      return `<div class="${cls}" ${click}>
+        <div class="month-dot-fill" style="height:${fillHeight}%"></div>
+        <div class="month-dot-label" style="color:${labelColor}">${day}</div>
+      </div>`;
     }).join('');
 
-    const pct = totalDays > 0 ? Math.round(doneCount / totalDays * 100) : 0;
+    // 전체 달성률: 각 날 달성도 합 / (totalDays * 100) * 100
+    const overallPct = totalDays > 0 ? Math.round(totalPctSum / (totalDays * 100) * 100) : 0;
 
     return `<div class="month-habit-card">
       <div class="month-habit-header">
         <div class="month-habit-icon">${h.icon}</div>
         <div class="month-habit-meta">
           <div class="month-habit-name">${h.name}</div>
-          <div class="month-habit-rate">${goalLabel(h)} · ${doneCount}/${totalDays}일 달성</div>
+          <div class="month-habit-rate">${goalLabel(h)}</div>
         </div>
-        <div class="month-rate-badge">${pct}%</div>
+        <div class="month-rate-badge">${overallPct}%</div>
       </div>
       <div class="month-dot-grid">
         ${dayHeaders}${blanks}${dayCells}
