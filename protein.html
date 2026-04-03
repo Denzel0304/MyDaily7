@@ -469,7 +469,7 @@
   }
 
   // ── 상태 ───────────────────────────────────────
-  let goal = 150; // Supabase에서 로드됨
+  let goal = parseInt(localStorage.getItem('protein_goal') || '150');
   let todayFoods = [];
   let todayDbId = null;
   let isSaving = false; // race condition 방지
@@ -520,23 +520,10 @@
   }
 
   // ── 초기화 ─────────────────────────────────────
-  // ── 목표 로드 (Supabase) ───────────────────────
-  async function loadGoal() {
-    try {
-      const rows = await sbFetch('zdaily_logs?type=eq.protein_goal&log_date=eq.config&limit=1');
-      if (rows && rows.length > 0) {
-        goal = rows[0].data.goal || 150;
-      }
-    } catch(e) {
-      goal = parseInt(localStorage.getItem('protein_goal') || '150'); // fallback
-    }
-    updateGoalUI();
-  }
-
   window.addEventListener('DOMContentLoaded', async () => {
     updateDateLabel();
+    updateGoalUI();
     setDefaultMealByTime();
-    await loadGoal();
     await loadTodayData();
     await loadHistory();
   });
@@ -825,31 +812,15 @@
   function closeGoalModal() {
     document.getElementById('goalModal').classList.remove('show');
   }
-  async function saveGoal() {
+  function saveGoal() {
     const v = parseInt(document.getElementById('goalInput').value);
     if (!v || v < 50 || v > 500) { showToast('50~500g 사이로 입력해주세요'); return; }
     goal = v;
+    localStorage.setItem('protein_goal', v);
     updateGoalUI();
     updateGauge();
     closeGoalModal();
     showToast(`목표 ${v}g으로 설정됐어요!`);
-    // Supabase에 저장 (type=protein_goal, log_date=config 고정 row)
-    try {
-      const existing = await sbFetch('zdaily_logs?type=eq.protein_goal&log_date=eq.config&limit=1');
-      if (existing && existing.length > 0) {
-        await sbFetch(`zdaily_logs?id=eq.${existing[0].id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ data: { goal: v } })
-        });
-      } else {
-        await sbFetch('zdaily_logs', {
-          method: 'POST',
-          body: JSON.stringify({ type: 'protein_goal', log_date: 'config', data: { goal: v } })
-        });
-      }
-    } catch(e) {
-      localStorage.setItem('protein_goal', v); // 네트워크 오류 시 fallback
-    }
   }
   function updateGoalUI() {
     document.getElementById('goalDisplay').textContent = goal + 'g';
