@@ -408,9 +408,20 @@
   /* 로딩 */
   .loading { text-align: center; padding: 40px; color: var(--gray-400); font-size: 14px; }
 
-  /* ══════════════════════════════
-     모바일 최적화
-  ══════════════════════════════ */
+  /* 운동 카드 액션 버튼 (휴지통/전송) */
+  .ex-action-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: none; background: var(--gray-100);
+    font-size: 17px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: background .2s, transform .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ex-action-btn:active { transform: scale(.88); }
+  .ex-trash-btn:hover, .ex-trash-btn:active { background: #ffe0e0; }
+  .ex-send-btn:hover, .ex-send-btn:active { background: #e0f0ff; }
+
+  /* 모바일 최적화 */
 
   /* 탭을 하단 고정 네비로 이동 */
   .header { padding-bottom: 0; }
@@ -602,14 +613,37 @@ function todayStr() {
 }
 function todayDow() { return new Date().getDay(); } // 0=일
 
-// ── localStorage 설정 ──────────────────────────
-function getSchedule() {
+// ── localStorage + Supabase 스케줄 동기화 ──────
+const SCHEDULE_TYPE = 'workout_schedule';
+
+async function getSchedule() {
+  // Supabase에서 최신 스케줄 가져오기
+  try {
+    const rows = await sbFetch('GET', `?type=eq.${SCHEDULE_TYPE}&order=id.desc&limit=1`);
+    if (rows && rows.length > 0) {
+      const remote = rows[0].data;
+      localStorage.setItem('workout_schedule', JSON.stringify(remote));
+      return remote;
+    }
+  } catch(e) {}
+  // 실패시 로컬 fallback
   const raw = localStorage.getItem('workout_schedule');
   if (raw) return JSON.parse(raw);
-  // 기본값
   return { sun:[], mon:[], tue:[], wed:[], thu:[], fri:[], sat:[] };
 }
-function saveSchedule(s) { localStorage.setItem('workout_schedule', JSON.stringify(s)); }
+
+async function saveSchedule(s) {
+  localStorage.setItem('workout_schedule', JSON.stringify(s));
+  try {
+    // 기존 스케줄 레코드 삭제 후 최신 저장
+    await sbFetch('DELETE', `?type=eq.${SCHEDULE_TYPE}`);
+    await sbFetch('POST', '', {
+      log_date: todayStr(),
+      type: SCHEDULE_TYPE,
+      data: s
+    });
+  } catch(e) { /* 오프라인이면 로컬에만 저장됨 */ }
+}
 
 // ── 상태 ──────────────────────────────────────
 let todayExercises = []; // [{id, name, emoji, sets:[{weight,unit,reps,done}]}]
@@ -618,27 +652,29 @@ let activeSettingDay = DAYS_EN[todayDow()];
 
 // ── 초기화 ────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  // 헤더 날짜
   const now = new Date();
   document.getElementById('headerDate').textContent =
     `${now.getMonth()+1}월 ${now.getDate()}일 (${DAYS[now.getDay()]})`;
   document.getElementById('todayDayBadge').textContent = DAYS_FULL[now.getDay()];
 
-  buildTodayList();
-  buildSettingDayTabs();
-  renderSettingList();
+  await buildTodayList();
+  await buildSettingDayTabs();
+  await renderSettingList();
   await loadHistory();
   renderHeatmap();
   renderRecentLogs();
   populateChartSelect();
 });
 
+// ── 전송 완료된 운동 인덱스 추적 (progress 유지용) ──
+let sentExerciseIds = new Set();
+
 // ══════════════════════════════
 // TAB: 오늘 운동
 // ══════════════════════════════
-function buildTodayList() {
+async function buildTodayList() {
   const dow = DAYS_EN[todayDow()];
-  const schedule = getSchedule();
+  const schedule = await getSchedule();
   const exercises = schedule[dow] || [];
 
   // 이미 오늘 완료된 세트 체크 (로컬 스냅샷)
@@ -656,6 +692,7 @@ function buildTodayList() {
     }))
   }));
 
+  sentExerciseIds = new Set();
   renderTodayList();
 }
 
@@ -682,6 +719,8 @@ function renderTodayList() {
           <div class="ex-name">${ex.name}</div>
           <div class="ex-meta">${ex.sets.filter(s=>s.done).length}/${ex.sets.length} 세트 완료</div>
         </div>
+        <button class="ex-action-btn ex-trash-btn" onclick="deleteExerciseFromToday(event,${ei})" title="삭제">🗑️</button>
+        <button class="ex-action-btn ex-send-btn" onclick="sendExercise(event,${ei})" title="기록으로 전송">📤</button>
         <div class="ex-expand">▾</div>
       </div>
       <div class="set-list">
@@ -724,7 +763,7 @@ function renderTodayList() {
   if (todayExercises.length > 0) toggleExCard(0);
 
   updateProgress();
-  btn.style.display = 'block';
+  btn.style.display = 'none';
 }
 
 function toggleExCard(ei) {
@@ -767,12 +806,77 @@ function toggleSetDone(ei, si) {
 }
 
 function updateProgress() {
-  const total = todayExercises.reduce((a,ex) => a + ex.sets.length, 0);
-  const done  = todayExercises.reduce((a,ex) => a + ex.sets.filter(s=>s.done).length, 0);
+  let total = 0, done = 0;
+  todayExercises.forEach((ex, ei) => {
+    total += ex.sets.length;
+    if (sentExerciseIds.has(ei)) {
+      done += ex.sets.length;
+    } else {
+      done += ex.sets.filter(s=>s.done).length;
+    }
+  });
   const pct = total ? Math.round(done/total*100) : 0;
   document.getElementById('progressBar').style.width = pct + '%';
   document.getElementById('progressText').textContent = `${pct}% (${done}/${total} 세트)`;
   document.getElementById('todaySubtitle').textContent = `${done} / ${total} 세트 완료`;
+}
+
+function deleteExerciseFromToday(event, ei) {
+  event.stopPropagation();
+  todayExercises.splice(ei, 1);
+  sentExerciseIds = new Set([...sentExerciseIds].map(id => id > ei ? id - 1 : id).filter(id => id !== ei));
+  saveTodayLocal();
+  renderTodayList();
+}
+
+async function sendExercise(event, ei) {
+  event.stopPropagation();
+  const ex = todayExercises[ei];
+  const doneSets = ex.sets.filter(s=>s.done);
+  if (doneSets.length === 0) { showToast('완료된 세트가 없어요!'); return; }
+
+  const today = todayStr();
+  const newSets = doneSets.map((set, si) => ({
+    name: ex.name, emoji: ex.emoji,
+    setNum: si+1, weight: set.weight, unit: set.unit, reps: set.reps,
+    volume: parseFloat((set.weight * set.reps).toFixed(1))
+  }));
+
+  try {
+    const existing = await sbFetch('GET', `?log_date=eq.${today}&type=eq.workout_log&limit=1`);
+    const existingSets = existing?.[0]?.data?.sets || [];
+    const merged = existingSets.filter(s => s.name !== ex.name).concat(newSets);
+
+    await sbFetch('DELETE', `?log_date=eq.${today}&type=eq.workout_log`);
+    await sbFetch('POST', '', {
+      log_date: today, type: 'workout_log',
+      data: { sets: merged, savedAt: new Date().toISOString() }
+    });
+
+    sentExerciseIds.add(ei);
+
+    const card = document.getElementById(`exCard_${ei}`);
+    if (card) {
+      card.style.transition = 'opacity .3s, transform .3s';
+      card.style.opacity = '0';
+      card.style.transform = 'translateX(40px)';
+      setTimeout(() => card.remove(), 300);
+    }
+
+    updateProgress();
+    await loadHistory();
+    renderHeatmap();
+    renderRecentLogs();
+    populateChartSelect();
+
+    showToast(`📤 ${ex.name} 기록 전송!`);
+    setTimeout(() => {
+      const histBtn = document.getElementById('bnav-history');
+      if (histBtn) switchTab('history', histBtn);
+    }, 700);
+  } catch(e) {
+    showToast('전송 오류: ' + e.message);
+  }
 }
 
 function saveTodayLocal() {
@@ -975,25 +1079,24 @@ function renderRecentLogs() {
 // ══════════════════════════════
 // TAB: 설정
 // ══════════════════════════════
-function buildSettingDayTabs() {
+async function buildSettingDayTabs() {
   const container = document.getElementById('dayTabs');
-  // 월~일 순서로 표시 (월=1, 화=2, ..., 일=0)
-  const MON_FIRST_IDX = [1,2,3,4,5,6,0]; // DAYS/DAYS_EN 인덱스 순서
+  const MON_FIRST_IDX = [1,2,3,4,5,6,0];
   container.innerHTML = MON_FIRST_IDX.map(i => `
     <button class="day-tab ${DAYS_EN[i]===activeSettingDay?'active':''}"
       onclick="selectSettingDay('${DAYS_EN[i]}',this)">${DAYS[i]}</button>
   `).join('');
 }
 
-function selectSettingDay(day, el) {
+async function selectSettingDay(day, el) {
   activeSettingDay = day;
   document.querySelectorAll('.day-tab').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  renderSettingList();
+  await renderSettingList();
 }
 
-function renderSettingList() {
-  const schedule = getSchedule();
+async function renderSettingList() {
+  const schedule = await getSchedule();
   const list = schedule[activeSettingDay] || [];
   const container = document.getElementById('settingExList');
 
@@ -1022,7 +1125,7 @@ function renderSettingList() {
     </div>`;
 }
 
-function addExercise() {
+async function addExercise() {
   const nameEl   = document.getElementById('fName');
   const setsEl   = document.getElementById('fSets');
   const weightEl = document.getElementById('fWeight');
@@ -1036,45 +1139,42 @@ function addExercise() {
   // 검증
   [nameEl, setsEl, weightEl, repsEl].forEach(el => el.classList.remove('error'));
   const errors = [];
-  if (!name)          { nameEl.classList.add('error');   errors.push('운동 이름'); }
-  if (!sets || sets < 1)   { setsEl.classList.add('error');   errors.push('세트 수'); }
-  if (isNaN(weight))  { weightEl.classList.add('error'); errors.push('기본 중량'); }
-  if (!reps || reps < 1)  { repsEl.classList.add('error');   errors.push('기본 횟수'); }
+  if (!name)             { nameEl.classList.add('error');   errors.push('운동 이름'); }
+  if (!sets || sets < 1) { setsEl.classList.add('error');   errors.push('세트 수'); }
+  if (isNaN(weight))     { weightEl.classList.add('error'); errors.push('기본 중량'); }
+  if (!reps || reps < 1) { repsEl.classList.add('error');   errors.push('기본 횟수'); }
 
   if (errors.length > 0) {
     showToast(`❗ ${errors.join(', ')}을(를) 입력하세요`);
     return;
   }
 
-  const emoji  = '💪';
-  const unit   = document.getElementById('fUnit').value;
+  const emoji = '💪';
+  const unit  = document.getElementById('fUnit').value;
 
-  const schedule = getSchedule();
+  const schedule = await getSchedule();
   if (!schedule[activeSettingDay]) schedule[activeSettingDay] = [];
   schedule[activeSettingDay].push({ name, emoji, sets, defaultWeight: weight, defaultUnit: unit, defaultReps: reps });
-  saveSchedule(schedule);
+  await saveSchedule(schedule);
 
-  // 폼 초기화
   ['fName','fSets','fWeight','fReps'].forEach(id => document.getElementById(id).value='');
   [nameEl, setsEl, weightEl, repsEl].forEach(el => el.classList.remove('error'));
-  renderSettingList();
-  // 오늘 요일과 같은 요일에 추가된 경우 오늘 운동 탭도 갱신
-  // 로컬 스냅샷 초기화 → 설정값(defaultWeight/Unit/Reps)이 그대로 반영되도록
+  await renderSettingList();
   if (activeSettingDay === DAYS_EN[todayDow()]) {
     localStorage.removeItem(`workout_today_${todayStr()}`);
-    buildTodayList();
+    await buildTodayList();
   }
   showToast(`✅ ${name} 추가됨`);
 }
 
-function deleteExercise(idx) {
-  const schedule = getSchedule();
+async function deleteExercise(idx) {
+  const schedule = await getSchedule();
   schedule[activeSettingDay].splice(idx, 1);
-  saveSchedule(schedule);
-  renderSettingList();
+  await saveSchedule(schedule);
+  await renderSettingList();
   if (activeSettingDay === DAYS_EN[todayDow()]) {
     localStorage.removeItem(`workout_today_${todayStr()}`);
-    buildTodayList();
+    await buildTodayList();
   }
 }
 
