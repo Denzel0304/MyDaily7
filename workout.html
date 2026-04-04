@@ -112,8 +112,10 @@
   .ex-name { font-weight: 700; font-size: 15px; color: var(--gray-800); }
   .ex-meta { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
   .ex-expand {
-    margin-left: auto; font-size: 18px; color: var(--gray-400);
+    margin-left: auto; font-size: 26px; color: var(--gray-400);
     transition: transform .3s;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
   }
   .exercise-card.open .ex-expand { transform: rotate(180deg); }
 
@@ -334,35 +336,43 @@
   .form-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
   .form-group { display: flex; flex-direction: column; gap: 4px; }
   .form-group.flex-1 { flex: 1; min-width: 120px; }
-  .form-label { font-size: 11px; font-weight: 700; color: var(--gray-400); }
+  .form-label { font-size: 11px; font-weight: 700; color: var(--gray-400); height: 16px; display: flex; align-items: center; }
   .form-input {
-    padding: 10px 12px; border: 1.5px solid var(--gray-200);
+    padding: 10px 8px; border: 1.5px solid var(--gray-200);
     border-radius: 10px; font-size: 14px; font-weight: 700;
     color: var(--gray-800); outline: none;
     transition: border-color .2s;
     font-family: 'Noto Sans KR', sans-serif;
+    height: 44px; box-sizing: border-box;
   }
   .form-input:focus { border-color: var(--pink-btn); }
+  .form-input.error { border-color: #e07070; background: #fff5f5; }
   .form-select {
-    padding: 10px 12px; border: 1.5px solid var(--gray-200);
+    padding: 10px 6px; border: 1.5px solid var(--gray-200);
     border-radius: 10px; font-size: 13px; font-weight: 700;
     color: var(--gray-800); outline: none; background: white;
+    height: 44px; box-sizing: border-box;
   }
   .form-select:focus { border-color: var(--pink-btn); }
   .form-input-sm {
-    width: 58px !important; padding: 10px 6px; text-align: center;
+    width: 62px !important; text-align: center;
   }
   .form-select-sm {
-    width: 54px !important; padding: 10px 4px; text-align: center;
+    width: 62px !important; text-align: center;
   }
-    width: 100%; padding: 12px; border-radius: var(--radius-sm);
-    background: linear-gradient(135deg, var(--pink-btn), var(--pink-dark));
-    color: white; font-size: 14px; font-weight: 800;
-    border: none; cursor: pointer; margin-top: 4px;
+  .add-btn {
+    width: 100%; padding: 0; height: 52px;
+    border-radius: var(--radius-sm);
+    background: var(--pink-btn);
+    color: white; font-size: 16px; font-weight: 800;
+    border: none; cursor: pointer; margin-top: 6px;
     font-family: 'Nunito', sans-serif;
-    transition: opacity .2s;
+    letter-spacing: .3px;
+    box-shadow: 0 4px 16px rgba(240,128,128,.4);
+    transition: opacity .2s, transform .15s;
   }
-  .add-btn:hover { opacity: .9; }
+  .add-btn:hover { opacity: .92; }
+  .add-btn:active { transform: scale(.98); }
 
   /* 탭 전환 */
   .tab-content { display: none; }
@@ -1013,14 +1023,31 @@ function renderSettingList() {
 }
 
 function addExercise() {
-  const name    = document.getElementById('fName').value.trim();
-  const emoji   = '💪';
-  const sets    = parseInt(document.getElementById('fSets').value) || 3;
-  const weight  = parseFloat(document.getElementById('fWeight').value) || 0;
-  const unit    = document.getElementById('fUnit').value;
-  const reps    = parseInt(document.getElementById('fReps').value) || 10;
+  const nameEl   = document.getElementById('fName');
+  const setsEl   = document.getElementById('fSets');
+  const weightEl = document.getElementById('fWeight');
+  const repsEl   = document.getElementById('fReps');
 
-  if (!name) { showToast('운동 이름을 입력하세요'); return; }
+  const name   = nameEl.value.trim();
+  const sets   = parseInt(setsEl.value);
+  const weight = parseFloat(weightEl.value);
+  const reps   = parseInt(repsEl.value);
+
+  // 검증
+  [nameEl, setsEl, weightEl, repsEl].forEach(el => el.classList.remove('error'));
+  const errors = [];
+  if (!name)          { nameEl.classList.add('error');   errors.push('운동 이름'); }
+  if (!sets || sets < 1)   { setsEl.classList.add('error');   errors.push('세트 수'); }
+  if (isNaN(weight))  { weightEl.classList.add('error'); errors.push('기본 중량'); }
+  if (!reps || reps < 1)  { repsEl.classList.add('error');   errors.push('기본 횟수'); }
+
+  if (errors.length > 0) {
+    showToast(`❗ ${errors.join(', ')}을(를) 입력하세요`);
+    return;
+  }
+
+  const emoji  = '💪';
+  const unit   = document.getElementById('fUnit').value;
 
   const schedule = getSchedule();
   if (!schedule[activeSettingDay]) schedule[activeSettingDay] = [];
@@ -1029,6 +1056,7 @@ function addExercise() {
 
   // 폼 초기화
   ['fName','fSets','fWeight','fReps'].forEach(id => document.getElementById(id).value='');
+  [nameEl, setsEl, weightEl, repsEl].forEach(el => el.classList.remove('error'));
   renderSettingList();
   // 오늘 요일과 같은 요일에 추가된 경우 오늘 운동 탭도 갱신
   if (activeSettingDay === DAYS_EN[todayDow()]) buildTodayList();
