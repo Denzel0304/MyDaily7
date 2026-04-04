@@ -477,9 +477,9 @@
     <div class="header-date" id="headerDate"></div>
   </div>
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('today', this)">오늘 운동</button>
-    <button class="tab" onclick="switchTab('history', this)">기록 보기</button>
-    <button class="tab" onclick="switchTab('settings', this)">설정</button>
+    <button class="tab active" onclick="switchTab('today')">오늘 운동</button>
+    <button class="tab" onclick="switchTab('history')">기록 보기</button>
+    <button class="tab" onclick="switchTab('settings')">설정</button>
   </div>
 </div>
 
@@ -565,13 +565,13 @@
 
 <!-- 하단 네비게이션 -->
 <nav class="bottom-nav">
-  <button class="bottom-nav-btn active" id="bnav-today" onclick="switchTab('today', this)">
+  <button class="bottom-nav-btn active" id="bnav-today" onclick="switchTab('today')">
     <span class="bnav-icon">🏋️</span>오늘 운동
   </button>
-  <button class="bottom-nav-btn" id="bnav-history" onclick="switchTab('history', this)">
+  <button class="bottom-nav-btn" id="bnav-history" onclick="switchTab('history')">
     <span class="bnav-icon">📊</span>기록
   </button>
-  <button class="bottom-nav-btn" id="bnav-settings" onclick="switchTab('settings', this)">
+  <button class="bottom-nav-btn" id="bnav-settings" onclick="switchTab('settings')">
     <span class="bnav-icon">⚙️</span>설정
   </button>
 </nav>
@@ -668,6 +668,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ── 전송 완료된 운동 인덱스 추적 (progress 유지용) ──
 let sentExerciseIds = new Set();
+let sentTotalSets = 0; // 전송된 운동의 세트 수 누적
 
 // ══════════════════════════════
 // TAB: 오늘 운동
@@ -693,6 +694,7 @@ async function buildTodayList() {
   }));
 
   sentExerciseIds = new Set();
+  sentTotalSets = 0;
   renderTodayList();
 }
 
@@ -719,8 +721,8 @@ function renderTodayList() {
           <div class="ex-name">${ex.name}</div>
           <div class="ex-meta">${ex.sets.filter(s=>s.done).length}/${ex.sets.length} 세트 완료</div>
         </div>
-        <button class="ex-action-btn ex-trash-btn" onclick="deleteExerciseFromToday(event,${ei})" title="삭제">🗑️</button>
         <button class="ex-action-btn ex-send-btn" onclick="sendExercise(event,${ei})" title="기록으로 전송">📤</button>
+        <button class="ex-action-btn ex-trash-btn" onclick="deleteExerciseFromToday(event,${ei})" title="삭제">🗑️</button>
         <div class="ex-expand">▾</div>
       </div>
       <div class="set-list">
@@ -806,15 +808,14 @@ function toggleSetDone(ei, si) {
 }
 
 function updateProgress() {
-  let total = 0, done = 0;
-  todayExercises.forEach((ex, ei) => {
-    total += ex.sets.length;
-    if (sentExerciseIds.has(ei)) {
-      done += ex.sets.length;
-    } else {
-      done += ex.sets.filter(s=>s.done).length;
-    }
+  // 현재 남아있는 운동의 세트 수 + 전송된 세트 수
+  let remaining = 0, doneInRemaining = 0;
+  todayExercises.forEach(ex => {
+    remaining += ex.sets.length;
+    doneInRemaining += ex.sets.filter(s=>s.done).length;
   });
+  const total = remaining + sentTotalSets;
+  const done  = doneInRemaining + sentTotalSets;
   const pct = total ? Math.round(done/total*100) : 0;
   document.getElementById('progressBar').style.width = pct + '%';
   document.getElementById('progressText').textContent = `${pct}% (${done}/${total} 세트)`;
@@ -853,8 +854,21 @@ async function sendExercise(event, ei) {
       data: { sets: merged, savedAt: new Date().toISOString() }
     });
 
-    sentExerciseIds.add(ei);
+    // progress 유지를 위해 전송 전 세트수 기록
+    const sentSetCount = ex.sets.length;
 
+    // todayExercises 배열에서 제거 (재렌더링 시 다시 나타나지 않도록)
+    todayExercises.splice(ei, 1);
+    // sentExerciseIds는 이제 배열 인덱스 대신 "전송된 세트 수 합계"를 별도 변수로 관리
+    sentTotalSets += sentSetCount;
+    // 인덱스가 바뀌므로 sentExerciseIds 재조정
+    sentExerciseIds = new Set([...sentExerciseIds]
+      .map(id => id > ei ? id - 1 : id)
+      .filter(id => id !== ei));
+
+    saveTodayLocal();
+
+    // 카드 애니메이션 후 DOM에서 제거
     const card = document.getElementById(`exCard_${ei}`);
     if (card) {
       card.style.transition = 'opacity .3s, transform .3s';
@@ -870,10 +884,8 @@ async function sendExercise(event, ei) {
     populateChartSelect();
 
     showToast(`📤 ${ex.name} 기록 전송!`);
-    setTimeout(() => {
-      const histBtn = document.getElementById('bnav-history');
-      if (histBtn) switchTab('history', histBtn);
-    }, 700);
+    setTimeout(() => switchTab('history'), 700);
+
   } catch(e) {
     showToast('전송 오류: ' + e.message);
   }
@@ -1179,18 +1191,17 @@ async function deleteExercise(idx) {
 }
 
 // ── 탭 전환 ──────────────────────────────────
-function switchTab(name, el) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.bottom-nav-btn').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  // 상단 탭도 동기화 (숨겨져 있지만 active 상태 유지)
-  document.querySelectorAll('.tab').forEach(t => {
-    if (t.getAttribute('onclick') && t.getAttribute('onclick').includes(`'${name}'`)) t.classList.add('active');
-  });
-  document.getElementById(`tab-${name}`).classList.add('active');
+function switchTab(tabName) {
+  document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
-  if (name === 'history') {
+  const navBtn = document.getElementById(`bnav-${tabName}`);
+  if (navBtn) navBtn.classList.add('active');
+
+  const content = document.getElementById(`tab-${tabName}`);
+  if (content) content.classList.add('active');
+
+  if (tabName === 'history') {
     renderHeatmap();
     renderRecentLogs();
     populateChartSelect();
