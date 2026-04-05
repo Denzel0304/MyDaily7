@@ -47,7 +47,6 @@
       display: flex; flex-direction: column;
     }
 
-    /* 헤더 */
     header {
       padding: 30px 4px 20px;
       animation: fadeUp 0.4s ease both;
@@ -84,7 +83,6 @@
     .page-title span { color: var(--purple-mid); }
     .page-subtitle { font-size: 13px; color: var(--text-light); margin-top: 4px; text-align: center; }
 
-    /* 주/월 탭 */
     .view-tabs {
       display: flex; gap: 8px;
       margin-top: 20px;
@@ -106,7 +104,6 @@
       box-shadow: 0 2px 8px rgba(79,174,224,0.1);
     }
 
-    /* 주간 네비게이션 */
     .week-nav {
       display: flex; align-items: center; justify-content: space-between;
       margin-top: 18px;
@@ -126,7 +123,6 @@
       font-size: 14px; font-weight: 700; color: var(--text-mid);
     }
 
-    /* 주간 요일 헤더 */
     .week-days {
       display: grid; grid-template-columns: repeat(7, 1fr);
       gap: 4px; margin-top: 14px;
@@ -149,7 +145,6 @@
       box-shadow: 0 2px 8px rgba(147,112,219,0.4);
     }
 
-    /* 습관 리스트 (주간) */
     .habits-list {
       display: flex; flex-direction: column; gap: 12px;
       margin-top: 16px;
@@ -190,7 +185,6 @@
       flex-shrink: 0;
     }
 
-    /* 주간 체크 그리드 */
     .habit-week-checks {
       display: grid; grid-template-columns: repeat(7, 1fr);
       gap: 4px; padding: 0 14px 13px;
@@ -219,7 +213,6 @@
     .check-dot.future { opacity: 0.25; cursor: default; background: #f0f4f8; border-color: #e0eaf2; }
     .check-dot:not(.future):not(.done):active { transform: scale(0.85); }
 
-    /* 진행 바 */
     .habit-prog-bar-wrap {
       padding: 0 14px 13px; margin-top: -4px;
       display: flex; align-items: center; gap: 8px;
@@ -240,7 +233,6 @@
       width: 38px; text-align: right; flex-shrink: 0;
     }
 
-    /* 월간 뷰 */
     .month-view { display: none; margin-top: 16px; }
     .month-view.active { display: block; animation: fadeUp 0.35s ease both; }
 
@@ -275,7 +267,6 @@
       font-size: 18px; font-weight: 900; color: var(--purple-mid);
     }
 
-    /* 월간 캘린더 도트 그리드 */
     .month-dot-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -286,7 +277,6 @@
       color: var(--text-light); text-align: center; padding-bottom: 4px;
     }
 
-    /* 습관 추가 버튼 */
     .add-fab {
       position: fixed; bottom: 28px; right: calc(50% - 210px + 18px);
       width: 56px; height: 56px; border-radius: 50%;
@@ -300,7 +290,6 @@
     }
     .add-fab:active { transform: scale(0.9); }
 
-    /* 모달 오버레이 */
     .modal-overlay {
       display: none; position: fixed; inset: 0;
       background: rgba(20,40,60,0.45); backdrop-filter: blur(6px);
@@ -326,7 +315,6 @@
       color: var(--text-dark); margin-bottom: 20px;
     }
 
-    /* 폼 */
     .form-label {
       font-size: 12px; font-weight: 700;
       color: var(--text-mid); letter-spacing: 0.06em;
@@ -345,7 +333,6 @@
     }
     .form-input:focus { border-color: var(--purple-mid); }
 
-    /* 아이콘 피커 */
     .icon-picker-grid {
       display: grid; grid-template-columns: repeat(8, 1fr);
       gap: 6px; max-height: 220px; overflow-y: auto;
@@ -367,7 +354,6 @@
       box-shadow: 0 2px 8px rgba(147,112,219,0.3);
     }
 
-    /* 목표 타입 선택 */
     .goal-type-row {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
     }
@@ -385,7 +371,6 @@
     }
     .goal-type-btn .type-emoji { font-size: 18px; display: block; margin-bottom: 4px; }
 
-    /* 목표 수치 입력 */
     .goal-num-row {
       display: flex; align-items: center; gap: 10px; margin-top: 12px;
     }
@@ -409,7 +394,6 @@
     }
     .num-unit-input:focus { border-color: var(--purple-mid); }
 
-    /* 저장 버튼 */
     .save-btn {
       width: 100%; padding: 15px;
       background: linear-gradient(135deg, #b39ddb, #7c4ddb);
@@ -422,7 +406,6 @@
     }
     .save-btn:active { transform: scale(0.97); box-shadow: none; }
 
-    /* 빈 상태 */
     .empty-state {
       text-align: center; padding: 48px 20px;
       animation: fadeUp 0.4s 0.2s ease both;
@@ -430,25 +413,10 @@
     .empty-state .empty-icon { font-size: 52px; margin-bottom: 14px; }
     .empty-state p { font-size: 14px; color: var(--text-light); line-height: 1.7; }
 
-    /* 로딩 */
-    .loading-wrap {
-      text-align: center; padding: 40px;
-      color: var(--text-light); font-size: 13px;
-    }
-    .spinner {
-      width: 28px; height: 28px; border-radius: 50%;
-      border: 3px solid #dde8f0;
-      border-top-color: var(--purple-mid);
-      animation: spin 0.7s linear infinite;
-      margin: 0 auto 12px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
     @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
     @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
 
-    /* 삭제/수정/순서 버튼 */
     .habit-row-header .del-btn,
     .habit-row-header .edit-btn,
     .habit-row-header .drag-handle {
@@ -469,7 +437,6 @@
     .drag-handle-lines { display: flex; flex-direction: column; gap: 3px; pointer-events: none; }
     .drag-handle-lines span { display: block; width: 16px; height: 2px; border-radius: 2px; background: currentColor; }
 
-    /* 드래그 중인 카드 */
     .habit-row.dragging {
       opacity: 0.4; transform: scale(0.98);
       box-shadow: none; transition: none;
@@ -479,7 +446,6 @@
       box-shadow: 0 0 0 2px rgba(147,112,219,0.3);
     }
 
-    /* 배터리 셀 (월간) */
     .month-dot {
       width: 100%; aspect-ratio: 1;
       border-radius: 6px;
@@ -539,13 +505,11 @@
       <div class="header-title-wrap">
         <h1 class="page-title"><div class="page-title-icon">✅</div>습관 <span>트래커</span></h1>
       </div>
-      <!-- 오른쪽 균형용 여백 -->
       <div style="width:60px;flex-shrink:0;"></div>
     </div>
     <p class="page-subtitle">작은 반복이 큰 변화를 만듭니다.</p>
   </header>
 
-  <!-- 주/월 탭 -->
   <div class="view-tabs">
     <button class="tab-btn active" id="tab-week" onclick="switchTab('week')">📅 이번 주</button>
     <button class="tab-btn" id="tab-month" onclick="switchTab('month')">📆 이번 달</button>
@@ -555,34 +519,28 @@
   <div id="view-week">
     <div class="week-nav">
       <button class="week-nav-btn" onclick="shiftWeek(-1)">‹</button>
-      <span class="week-label" id="week-label">로딩중...</span>
+      <span class="week-label" id="week-label"></span>
       <button class="week-nav-btn" onclick="shiftWeek(1)">›</button>
     </div>
-
     <div class="week-days" id="week-days-header"></div>
-
-    <div class="habits-list" id="week-habits-list">
-      <div class="loading-wrap"><div class="spinner"></div>불러오는 중...</div>
-    </div>
+    <div class="habits-list" id="week-habits-list"></div>
   </div>
 
   <!-- 월간 뷰 -->
   <div id="view-month" style="display:none;">
     <div class="month-nav">
       <button class="month-nav-btn" onclick="shiftMonth(-1)">‹</button>
-      <span class="month-nav-label" id="month-label">로딩중...</span>
+      <span class="month-nav-label" id="month-label"></span>
       <button class="month-nav-btn" onclick="shiftMonth(1)">›</button>
     </div>
-    <div id="month-habits-list" class="month-view active">
-      <div class="loading-wrap"><div class="spinner"></div>불러오는 중...</div>
-    </div>
+    <div id="month-habits-list" class="month-view active"></div>
   </div>
 </div>
 
 <!-- FAB -->
 <button class="add-fab" onclick="openModal()" title="습관 추가">＋</button>
 
-<!-- 추가 모달 -->
+<!-- 추가/수정 모달 -->
 <div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -619,7 +577,6 @@
           placeholder="단위 (예: L, 분, 페이지)"
           style="display:none;" maxlength="10" />
       </div>
-      <!-- 하루 N회 선택 시 추가로 주 며칠 할지 -->
       <div id="daily-days-row" style="display:none; margin-top:10px;">
         <label class="form-label" style="margin-bottom:6px;">주 며칠 실천할까요?</label>
         <div class="goal-num-row">
@@ -636,60 +593,73 @@
 </div>
 
 <script>
-// ─── Supabase 설정 ───────────────────────────────────────
-const SUPABASE_URL = 'https://zkkhzsgaryoraytvsqbf.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpra2h6c2dhcnlvcmF5dHZzcWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5ODM5OTcsImV4cCI6MjA1MzU1OTk5N30.UJtqcka35dVssnZRuUk6zukfjF9UNX392Shd841GSQk';
-const TABLE = 'zdaily_logs';
+// ─── localStorage 키 ──────────────────────────────────────
+const LS_DEFS = 'habit_defs';   // 습관 정의 배열
+const LS_LOGS = 'habit_logs';   // 날짜별 로그 객체 { 'h_xxx|2025-01-01': {value:1, ts:...} }
 
-async function sbFetch(method, body, params = '') {
-  const url = `${SUPABASE_URL}/rest/v1/${TABLE}${params}`;
-  const res = await fetch(url, {
-    method,
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
-      'Content-Type': 'application/json',
-      'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
-    },
-    body: body ? JSON.stringify(body) : undefined
-  });
-  if (!res.ok) throw new Error(await res.text());
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
+// ─── 저장소 헬퍼 ──────────────────────────────────────────
+function loadDefs() {
+  try { return JSON.parse(localStorage.getItem(LS_DEFS) || '[]'); } catch { return []; }
 }
+function saveDefs(arr) {
+  localStorage.setItem(LS_DEFS, JSON.stringify(arr));
+}
+function loadLogs() {
+  try { return JSON.parse(localStorage.getItem(LS_LOGS) || '{}'); } catch { return {}; }
+}
+function saveLogs(obj) {
+  localStorage.setItem(LS_LOGS, JSON.stringify(obj));
+}
+
+function logKey(habitId, dateS) { return `${habitId}|${dateS}`; }
+
+// 12개월 초과 오래된 로그 자동 정리
+function pruneOldLogs(logs) {
+  const keys = Object.keys(logs);
+  if (keys.length === 0) return logs;
+  // 달 집합 추출
+  const months = [...new Set(keys.map(k => k.split('|')[1].slice(0,7)))].sort();
+  if (months.length <= 12) return logs;
+  // 가장 오래된 달 제거
+  const oldest = months[0];
+  const pruned = {};
+  for (const k of keys) {
+    if (!k.split('|')[1].startsWith(oldest)) pruned[k] = logs[k];
+  }
+  return pruned;
+}
+
+// ─── 상태 ─────────────────────────────────────────────────
+let habitDefs = [];
+let habitLogs = {};
+let weekOffset = 0;
+let monthOffset = 0;
+let editingHabitId = null;
 
 // ─── 아이콘 목록 ─────────────────────────────────────────
 const ICONS = [
-  // 운동/스포츠
   '🏃','🏋️','🧘','🚴','🏊','🤸','💪','🧗',
   '⛹️','🤾','🏌️','🏇','🥊','🤼','🏂','🎿',
-  // 음식/음료
   '💧','🥤','🍎','🥗','🥩','🥦','☕','🍵',
   '🧃','🥛','🍳','🥑','🍇','🫖','🍱','🥕',
-  // 공부/업무
   '📖','📝','💻','🎯','🧠','📚','✏️','🔬',
   '🖊️','📐','🗒️','🔭','💼','🗂️','📊','⌨️',
-  // 수면/회복
   '😴','🛌','🌙','⏰','🧸','🛁','🪥','💊',
   '🩺','🩹','🧴','🪞','🌡️','🧹','🛏️','🫧',
-  // 마음/명상
   '🌿','🌸','🌻','❤️','🙏','✨','🕯️','🪷',
   '🫶','🌬️','🧩','🎋','🪴','🌊','☁️','🫐',
-  // 취미/창작
   '🎵','🎨','📷','🌱','🐾','🎸','🎭','🖌️',
   '📸','🎬','🎹','✂️','🧶','🪆','🎲','🎻',
-  // 이동/일상
   '🚶','🚗','✈️','🚲','🛴','🐶','🐱','🌍',
   '🏠','🛒','🌅','🚌','⛵','🎒','🧳','🚿',
-  // 동기/성취
   '⭐','🔥','💡','🏆','🎉','🪄','🌈','💎',
   '🚀','🎖️','🥇','🎗️','📌','🔑','🪙','⚡'
 ];
 
 let selectedIcon = ICONS[0];
 let selectedGoalType = 'weekly';
-let editingHabitId = null; // null=신규, habitId=수정모드
 
+// ─── 아이콘 피커 ──────────────────────────────────────────
 function buildIconPicker() {
   const grid = document.getElementById('icon-picker');
   grid.innerHTML = '';
@@ -753,9 +723,9 @@ function openModal() {
   editingHabitId = null;
   document.querySelector('.modal-title').textContent = '✨ 새 습관 추가';
   document.querySelector('.save-btn').textContent = '저장하기';
-  buildIconPicker();
   selectedIcon = ICONS[0];
   selectedGoalType = 'weekly';
+  buildIconPicker();
   document.querySelectorAll('.goal-type-btn').forEach(b => b.classList.remove('selected'));
   document.querySelector('[data-type="weekly"]').classList.add('selected');
   document.getElementById('habit-name-input').value = '';
@@ -774,9 +744,8 @@ function openModal() {
 }
 
 function openEditModal(habitId) {
-  const def = habitDefs.find(d => d.data.habit_id === habitId);
-  if (!def) return;
-  const h = def.data;
+  const h = habitDefs.find(d => d.habit_id === habitId);
+  if (!h) return;
   editingHabitId = habitId;
   document.querySelector('.modal-title').textContent = '✏️ 습관 수정';
   document.querySelector('.save-btn').textContent = '수정 완료';
@@ -817,11 +786,12 @@ function openEditModal(habitId) {
 
   document.getElementById('modal').classList.add('open');
 }
+
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
 function handleOverlayClick(e) { if (e.target.id === 'modal') closeModal(); }
 
-// ─── 데이터 저장 ──────────────────────────────────────────
-async function saveHabit() {
+// ─── 습관 저장/수정 ───────────────────────────────────────
+function saveHabit() {
   const name = document.getElementById('habit-name-input').value.trim();
   if (!name) { alert('습관 이름을 입력해주세요.'); return; }
   const num = parseInt(document.getElementById('goal-num').value);
@@ -837,65 +807,85 @@ async function saveHabit() {
   }
   const customUnit = document.getElementById('goal-unit-custom').value.trim() || '';
 
+  const defs = loadDefs();
+
   if (editingHabitId) {
-    // 수정 모드
-    const def = habitDefs.find(d => d.data.habit_id === editingHabitId);
-    if (!def) return;
-    const updatedData = { ...def.data, name, icon: selectedIcon, goal_type: selectedGoalType, goal_value: num, goal_unit: customUnit, days_per_week: daysPerWeek };
-    try {
-      await sbFetch('PATCH', { data: updatedData }, `?id=eq.${def.id}`);
-      closeModal(); await loadAll();
-    } catch(e) { alert('수정 실패: ' + e.message); }
-    return;
+    const idx = defs.findIndex(d => d.habit_id === editingHabitId);
+    if (idx < 0) return;
+    defs[idx] = { ...defs[idx], name, icon: selectedIcon, goal_type: selectedGoalType, goal_value: num, goal_unit: customUnit, days_per_week: daysPerWeek };
+    saveDefs(defs);
+  } else {
+    const maxOrder = defs.reduce((mx, d) => Math.max(mx, d.sort_order || 0), 0);
+    const newHabit = {
+      habit_id: 'h_' + Date.now(),
+      name, icon: selectedIcon,
+      goal_type: selectedGoalType,
+      goal_value: num,
+      goal_unit: customUnit,
+      days_per_week: daysPerWeek,
+      sort_order: maxOrder + 1,
+      created_at: new Date().toISOString()
+    };
+    defs.push(newHabit);
+    saveDefs(defs);
   }
 
-  // 신규 모드
-  const maxOrder = habitDefs.reduce((mx, d) => Math.max(mx, d.data.sort_order || 0), 0);
-  const habitId = 'h_' + Date.now();
-  const data = {
-    habit_id: habitId, name, icon: selectedIcon,
-    goal_type: selectedGoalType, goal_value: num,
-    goal_unit: customUnit, days_per_week: daysPerWeek,
-    sort_order: maxOrder + 1,
-    created_at: new Date().toISOString()
-  };
-  try {
-    await sbFetch('POST', { type: 'habit_def', log_date: todayStr(), data });
-    closeModal(); await loadAll();
-  } catch(e) { alert('저장 실패: ' + e.message); }
+  closeModal();
+  loadAll();
+  renderWeek();
 }
 
-// ─── 순서 이동 (드래그) ──────────────────────────────────
-async function moveHabit(habitId, dir) {
-  const idx = habitDefs.findIndex(d => d.data.habit_id === habitId);
-  const swapIdx = idx + dir;
-  if (swapIdx < 0 || swapIdx >= habitDefs.length) return;
-  const a = habitDefs[idx], b = habitDefs[swapIdx];
-  const aOrder = a.data.sort_order ?? idx, bOrder = b.data.sort_order ?? swapIdx;
-  try {
-    await sbFetch('PATCH', { data: { ...a.data, sort_order: bOrder } }, `?id=eq.${a.id}`);
-    await sbFetch('PATCH', { data: { ...b.data, sort_order: aOrder } }, `?id=eq.${b.id}`);
-    await loadAll();
-  } catch(e) { console.error(e); }
+// ─── 습관 삭제 ────────────────────────────────────────────
+function deleteHabit(habitId) {
+  if (!confirm('이 습관을 삭제할까요?')) return;
+  const defs = loadDefs().filter(d => d.habit_id !== habitId);
+  saveDefs(defs);
+  loadAll();
+  renderWeek();
 }
 
-// ─── 드래그 앤 드롭 순서 변경 ────────────────────────────
-let dragState = null; // { habitId, startY, clone, origEl }
+// ─── 로그 토글 ────────────────────────────────────────────
+function toggleLog(habitId, dateS) {
+  const h = habitDefs.find(d => d.habit_id === habitId);
+  if (!h) return;
+
+  const k = logKey(habitId, dateS);
+  const currentVal = habitLogs[k] ? (habitLogs[k].value || 1) : 0;
+
+  let nextVal;
+  if (h.goal_type === 'daily_count') {
+    nextVal = currentVal >= h.goal_value ? 0 : currentVal + 1;
+  } else if (h.goal_type === 'daily_amount') {
+    const steps = [0, 25, 50, 75, 100];
+    const idx = steps.indexOf(currentVal);
+    nextVal = steps[(idx + 1) % steps.length];
+  } else {
+    nextVal = currentVal >= 1 ? 0 : 1;
+  }
+
+  const logs = loadLogs();
+  if (nextVal === 0) {
+    delete logs[k];
+  } else {
+    logs[k] = { value: nextVal, ts: new Date().toISOString() };
+  }
+  const pruned = pruneOldLogs(logs);
+  saveLogs(pruned);
+  habitLogs = pruned;
+
+  renderWeek();
+}
+
+// ─── 드래그 앤 드롭 ───────────────────────────────────────
+let dragState = null;
 
 function initDragHandles() {
   document.getElementById('week-habits-list').addEventListener('touchstart', onDragTouchStart, { passive: false });
   document.getElementById('week-habits-list').addEventListener('mousedown', onDragMouseDown);
 }
 
-function getHabitRow(el) {
-  return el.closest('.habit-row');
-}
+function getHandle(el) { return el.closest('.drag-handle'); }
 
-function getHandle(el) {
-  return el.closest('.drag-handle');
-}
-
-// ── 터치 ──
 function onDragTouchStart(e) {
   const handle = getHandle(e.target);
   if (!handle) return;
@@ -903,112 +893,75 @@ function onDragTouchStart(e) {
   const row = handle.closest('.habit-row');
   if (!row) return;
   startDrag(row, e.touches[0].clientY);
-
   document.addEventListener('touchmove', onDragTouchMove, { passive: false });
   document.addEventListener('touchend', onDragTouchEnd, { once: true });
 }
+function onDragTouchMove(e) { if (!dragState) return; e.preventDefault(); moveDrag(e.touches[0].clientY); }
+function onDragTouchEnd() { document.removeEventListener('touchmove', onDragTouchMove); endDrag(); }
 
-function onDragTouchMove(e) {
-  if (!dragState) return;
-  e.preventDefault();
-  moveDrag(e.touches[0].clientY);
-}
-
-function onDragTouchEnd() {
-  document.removeEventListener('touchmove', onDragTouchMove);
-  endDrag();
-}
-
-// ── 마우스 ──
 function onDragMouseDown(e) {
   const handle = getHandle(e.target);
   if (!handle) return;
   const row = handle.closest('.habit-row');
   if (!row) return;
   startDrag(row, e.clientY);
-
   document.addEventListener('mousemove', onDragMouseMove);
   document.addEventListener('mouseup', onDragMouseUp, { once: true });
 }
+function onDragMouseMove(e) { if (!dragState) return; moveDrag(e.clientY); }
+function onDragMouseUp() { document.removeEventListener('mousemove', onDragMouseMove); endDrag(); }
 
-function onDragMouseMove(e) {
-  if (!dragState) return;
-  moveDrag(e.clientY);
-}
-
-function onDragMouseUp() {
-  document.removeEventListener('mousemove', onDragMouseMove);
-  endDrag();
-}
-
-// ── 공통 드래그 로직 ──
 function startDrag(row, clientY) {
-  const habitId = row.dataset.habitId;
   row.classList.add('dragging');
-
-  // 유령 클론 생성
   const rect = row.getBoundingClientRect();
   const clone = row.cloneNode(true);
-  clone.style.cssText = `
-    position: fixed; z-index: 999; pointer-events: none;
-    width: ${rect.width}px; left: ${rect.left}px; top: ${rect.top}px;
-    opacity: 0.85; box-shadow: 0 12px 32px rgba(147,112,219,0.35);
-    transform: scale(1.02); border-radius: 14px;
-    background: rgba(255,255,255,0.95);
-    transition: none;
-  `;
+  clone.style.cssText = `position:fixed;z-index:999;pointer-events:none;width:${rect.width}px;left:${rect.left}px;top:${rect.top}px;opacity:0.85;box-shadow:0 12px 32px rgba(147,112,219,0.35);transform:scale(1.02);border-radius:14px;background:rgba(255,255,255,0.95);transition:none;`;
   document.body.appendChild(clone);
-
-  dragState = { habitId, startY: clientY, cloneTop: rect.top, clone, origEl: row };
+  dragState = { habitId: row.dataset.habitId, startY: clientY, cloneTop: rect.top, clone, origEl: row };
 }
 
 function moveDrag(clientY) {
   if (!dragState) return;
   const dy = clientY - dragState.startY;
   dragState.clone.style.top = (dragState.cloneTop + dy) + 'px';
-
-  // 어느 row 위에 있는지 감지
   const list = document.getElementById('week-habits-list');
   const rows = [...list.querySelectorAll('.habit-row:not(.dragging)')];
   let overRow = null;
   for (const r of rows) {
     const rect = r.getBoundingClientRect();
-    const midY = rect.top + rect.height / 2;
     if (clientY >= rect.top && clientY <= rect.bottom) { overRow = r; break; }
   }
   rows.forEach(r => r.classList.remove('drag-over'));
   if (overRow) overRow.classList.add('drag-over');
 }
 
-async function endDrag() {
+function endDrag() {
   if (!dragState) return;
   const { habitId, clone, origEl } = dragState;
   clone.remove();
   origEl.classList.remove('dragging');
-
   const list = document.getElementById('week-habits-list');
   const overRow = list.querySelector('.habit-row.drag-over');
   if (overRow) {
     overRow.classList.remove('drag-over');
     const targetId = overRow.dataset.habitId;
-    if (targetId && targetId !== habitId) {
-      await swapHabits(habitId, targetId);
-    }
+    if (targetId && targetId !== habitId) swapHabits(habitId, targetId);
   }
   dragState = null;
 }
 
-async function swapHabits(idA, idB) {
-  const a = habitDefs.find(d => d.data.habit_id === idA);
-  const b = habitDefs.find(d => d.data.habit_id === idB);
+function swapHabits(idA, idB) {
+  const defs = loadDefs();
+  const a = defs.find(d => d.habit_id === idA);
+  const b = defs.find(d => d.habit_id === idB);
   if (!a || !b) return;
-  const aOrder = a.data.sort_order ?? 0;
-  const bOrder = b.data.sort_order ?? 0;
-  try {
-    await sbFetch('PATCH', { data: { ...a.data, sort_order: bOrder } }, `?id=eq.${a.id}`);
-    await sbFetch('PATCH', { data: { ...b.data, sort_order: aOrder } }, `?id=eq.${b.id}`);
-    await loadAll();
-  } catch(e) { console.error(e); }
+  const aOrder = a.sort_order ?? 0;
+  const bOrder = b.sort_order ?? 0;
+  a.sort_order = bOrder;
+  b.sort_order = aOrder;
+  saveDefs(defs);
+  loadAll();
+  renderWeek();
 }
 
 // ─── 날짜 유틸 ────────────────────────────────────────────
@@ -1019,168 +972,31 @@ function todayStr() {
 function pad(n) { return String(n).padStart(2,'0'); }
 function dateStr(d) { return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate()+n); return r; }
-
 const DAY_NAMES = ['일','월','화','수','목','금','토'];
-
-// 주 오프셋 (0 = 이번 주)
-let weekOffset = 0;
-let monthOffset = 0;
 
 function getWeekDates(offset = 0) {
   const today = new Date(); today.setHours(0,0,0,0);
-  const dow = today.getDay(); // 0=일
+  const dow = today.getDay();
   const monday = addDays(today, -dow + (dow === 0 ? -6 : 1) + offset * 7);
   return Array.from({length:7}, (_,i) => addDays(monday, i));
 }
 
-async function shiftWeek(dir) {
-  if (dir > 0 && weekOffset >= 0) return; // 이번 주 이후로는 이동 불가
+// ─── 전체 로드 ────────────────────────────────────────────
+function loadAll() {
+  habitDefs = loadDefs().sort((a,b) => (a.sort_order ?? 999) - (b.sort_order ?? 999));
+  habitLogs = loadLogs();
+}
+
+// ─── 주간 네비게이션 ──────────────────────────────────────
+function shiftWeek(dir) {
+  if (dir > 0 && weekOffset >= 0) return;
   weekOffset += dir;
-  await loadWeekLogs();
   renderWeek();
 }
-async function shiftMonth(dir) {
+
+function shiftMonth(dir) {
   monthOffset += dir;
-  monthLogsKey = null; // 캐시 초기화 → 새 달 강제 로드
-  await loadMonthLogs();
   renderMonth();
-}
-
-// ─── 전체 데이터 로드 ─────────────────────────────────────
-let habitDefs = [];
-let habitLogs = [];       // 주간용 로그 (현재 주 기준으로 필요한 범위)
-let monthLogs = [];       // 월간용 로그 (현재 보고 있는 달 캐시)
-let monthLogsKey = null;  // 캐시된 달 키 'YYYY-MM'
-
-async function loadAll() {
-  try {
-    // habit_def만 불러옴 (habit_log는 주간/월간 각각 따로 로드)
-    const rows = await sbFetch('GET', null,
-      `?type=eq.habit_def&order=created_at.asc&select=*`
-    );
-    habitDefs = (rows || []).reduce((acc, r) => {
-      const id = r.data.habit_id;
-      if (!acc[id] || r.id > acc[id].id) acc[id] = r;
-      return acc;
-    }, {});
-    habitDefs = Object.values(habitDefs).filter(r => !r.data.deleted)
-      .sort((a, b) => (a.data.sort_order ?? 999) - (b.data.sort_order ?? 999));
-
-    await loadWeekLogs();
-    renderWeek();
-    // 월간 탭은 탭 전환 시 로드하므로 초기에는 렌더만 (데이터 없어도 구조 표시)
-  } catch(e) {
-    console.error(e);
-    document.getElementById('week-habits-list').innerHTML =
-      `<div class="empty-state"><div class="empty-icon">⚠️</div><p>연결 오류: Supabase URL/KEY를 확인해주세요.</p></div>`;
-  }
-}
-
-// 주간 로그 로드 (현재 weekOffset 기준 ±1주 범위)
-async function loadWeekLogs() {
-  const dates = getWeekDates(weekOffset);
-  const from = dateStr(dates[0]);
-  const to = dateStr(dates[6]);
-  const rows = await sbFetch('GET', null,
-    `?type=eq.habit_log&log_date=gte.${from}&log_date=lte.${to}&select=*`
-  );
-  habitLogs = rows || [];
-}
-
-// 월간 로그 로드 (monthOffset 기준, 캐시 활용)
-async function loadMonthLogs() {
-  const today = new Date();
-  const base = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
-  const y = base.getFullYear(), m = base.getMonth();
-  const key = `${y}-${pad(m+1)}`;
-  if (monthLogsKey === key) return; // 이미 캐시됨
-
-  const from = `${y}-${pad(m+1)}-01`;
-  const lastDay = new Date(y, m+1, 0).getDate();
-  const to = `${y}-${pad(m+1)}-${pad(lastDay)}`;
-
-  const rows = await sbFetch('GET', null,
-    `?type=eq.habit_log&log_date=gte.${from}&log_date=lte.${to}&select=*`
-  );
-  monthLogs = rows || [];
-  monthLogsKey = key;
-
-  // 12달 초과 시 가장 오래된 달 로그 삭제
-  await pruneOldMonths();
-}
-
-// 13번째 달이 추가되면 가장 오래된 달 로그 삭제
-async function pruneOldMonths() {
-  try {
-    // 전체 habit_log의 distinct log_date 중 가장 오래된 달 확인
-    const rows = await sbFetch('GET', null,
-      `?type=eq.habit_log&select=log_date&order=log_date.asc`
-    );
-    if (!rows || rows.length === 0) return;
-
-    // 달(YYYY-MM) 집합 추출
-    const months = [...new Set(rows.map(r => r.log_date.slice(0,7)))].sort();
-    if (months.length <= 12) return;
-
-    // 13달 이상이면 가장 오래된 달 삭제
-    const oldest = months[0];
-    const from = `${oldest}-01`;
-    const [oy, om] = oldest.split('-').map(Number);
-    const lastDay = new Date(oy, om, 0).getDate();
-    const to = `${oldest}-${pad(lastDay)}`;
-    await sbFetch('DELETE', null,
-      `?type=eq.habit_log&log_date=gte.${from}&log_date=lte.${to}`
-    );
-    console.log(`[prune] 오래된 달 삭제: ${oldest}`);
-  } catch(e) {
-    console.warn('[prune] 삭제 실패:', e);
-  }
-}
-
-// ─── 로그 토글 ────────────────────────────────────────────
-async function toggleLog(habitId, dateS) {
-  const def = habitDefs.find(d => d.data.habit_id === habitId);
-  if (!def) return;
-  const h = def.data;
-  const existing = habitLogs.find(l => l.data.habit_id === habitId && l.log_date === dateS);
-  const currentVal = existing ? (existing.data.value || 1) : 0;
-
-  let nextVal;
-  if (h.goal_type === 'daily_count') {
-    // 0 → 1 → 2 → ... → goal_value → 0
-    nextVal = currentVal >= h.goal_value ? 0 : currentVal + 1;
-  } else if (h.goal_type === 'daily_amount') {
-    // 0 → 25 → 50 → 75 → 100 → 0 (퍼센트)
-    const steps = [0, 25, 50, 75, 100];
-    const idx = steps.indexOf(currentVal);
-    nextVal = steps[(idx + 1) % steps.length];
-  } else {
-    // weekly: 0 → 1 → 0
-    nextVal = currentVal >= 1 ? 0 : 1;
-  }
-
-  if (existing) {
-    if (nextVal === 0) {
-      await sbFetch('DELETE', null, `?id=eq.${existing.id}`);
-      habitLogs = habitLogs.filter(l => l.id !== existing.id);
-    } else {
-      const updated = { ...existing, data: { ...existing.data, value: nextVal } };
-      await sbFetch('PATCH', { data: updated.data }, `?id=eq.${existing.id}`);
-      const idx = habitLogs.findIndex(l => l.id === existing.id);
-      if (idx >= 0) habitLogs[idx] = updated;
-    }
-  } else if (nextVal > 0) {
-    const body = {
-      type: 'habit_log',
-      log_date: dateS,
-      data: { habit_id: habitId, done: true, value: nextVal, ts: new Date().toISOString() }
-    };
-    const saved = await sbFetch('POST', body);
-    if (saved && saved[0]) habitLogs.push(saved[0]);
-  }
-  renderWeek();
-  // 이번달 캐시 무효화 (주간에서 수정한 날짜가 현재 달일 수 있으므로)
-  monthLogsKey = null;
 }
 
 // ─── 주간 렌더 ────────────────────────────────────────────
@@ -1189,10 +1005,8 @@ function renderWeek() {
   const today = new Date(); today.setHours(0,0,0,0);
 
   const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
-  document.getElementById('week-label').textContent =
-    `${fmt(dates[0])} – ${fmt(dates[6])}`;
+  document.getElementById('week-label').textContent = `${fmt(dates[0])} – ${fmt(dates[6])}`;
 
-  // 미래 이동 버튼 비활성화 스타일
   const nextBtn = document.querySelector('.week-nav-btn:last-child');
   if (nextBtn) {
     nextBtn.style.opacity = weekOffset >= 0 ? '0.25' : '1';
@@ -1218,26 +1032,20 @@ function renderWeek() {
     return;
   }
 
-  list.innerHTML = habitDefs.map(def => {
-    const h = def.data;
-
-    // 총 달성 계산
+  list.innerHTML = habitDefs.map(h => {
     let doneCount = 0;
     if (h.goal_type === 'daily_count') {
       dates.forEach(d => {
-        const log = habitLogs.find(l => l.data.habit_id === h.habit_id && l.log_date === dateStr(d));
-        if (log) doneCount += (log.data.value || 1);
+        const v = (habitLogs[logKey(h.habit_id, dateStr(d))] || {}).value || 0;
+        doneCount += v;
       });
     } else if (h.goal_type === 'daily_amount') {
-      // partial 포함: 100% 기준으로 비율 합산
       dates.forEach(d => {
-        const log = habitLogs.find(l => l.data.habit_id === h.habit_id && l.log_date === dateStr(d));
-        if (log) doneCount += Math.min(100, log.data.value || 0) / 100;
+        const v = (habitLogs[logKey(h.habit_id, dateStr(d))] || {}).value || 0;
+        doneCount += Math.min(100, v) / 100;
       });
     } else {
-      doneCount = dates.filter(d => {
-        return habitLogs.some(l => l.data.habit_id === h.habit_id && l.log_date === dateStr(d));
-      }).length;
+      doneCount = dates.filter(d => habitLogs[logKey(h.habit_id, dateStr(d))]).length;
     }
 
     const target = goalWeeklyTarget(h);
@@ -1245,17 +1053,14 @@ function renderWeek() {
     const checks = dates.map(d => {
       const ds = dateStr(d);
       const isFuture = d > today;
-      const clickable = !isFuture;
-
-      const log = habitLogs.find(l => l.data.habit_id === h.habit_id && l.log_date === ds);
-      const val = log ? (log.data.value || 1) : 0;
+      const val = (habitLogs[logKey(h.habit_id, ds)] || {}).value || 0;
 
       let dotContent = '';
       let dotCls = 'check-dot';
       if (isFuture) {
         dotCls += ' future';
       } else if (h.goal_type === 'daily_count') {
-        const cpd = clicksPerDay(h);
+        const cpd = h.goal_value;
         if (val === 0) { /* empty */ }
         else if (val >= cpd) { dotCls += ' done'; dotContent = '✓'; }
         else {
@@ -1278,14 +1083,13 @@ function renderWeek() {
         if (val >= 1) { dotCls += ' done'; dotContent = '✓'; }
       }
 
-      const click = clickable ? `onclick="toggleLog('${h.habit_id}','${ds}')"` : '';
+      const click = !isFuture ? `onclick="toggleLog('${h.habit_id}','${ds}')"` : '';
       return `<div class="check-cell"><div class="${dotCls}" ${click} style="position:relative;display:flex;align-items:center;justify-content:center">${dotContent}</div></div>`;
     }).join('');
 
     const pctRaw = Math.min(100, doneCount / target * 100);
-    const pctStr = (pctRaw * 10) % 10 === 0
-      ? Math.round(pctRaw) + '%'
-      : pctRaw.toFixed(1) + '%';
+    const pctStr = (pctRaw * 10) % 10 === 0 ? Math.round(pctRaw) + '%' : pctRaw.toFixed(1) + '%';
+
     return `<div class="habit-row" id="row-${h.habit_id}" data-habit-id="${h.habit_id}">
       <div class="habit-row-header">
         <div class="drag-handle" data-habit-id="${h.habit_id}" title="꾹 누르고 드래그">
@@ -1296,15 +1100,13 @@ function renderWeek() {
           <div class="habit-name">${h.name}</div>
           <div class="habit-goal-label">${goalLabel(h)}</div>
         </div>
-        <div class="habit-progress-text">${doneCount}/${target}</div>
+        <div class="habit-progress-text">${h.goal_type === 'daily_amount' ? Math.round(doneCount) + '/' + target : doneCount + '/' + target}</div>
         <button class="edit-btn" onclick="openEditModal('${h.habit_id}')" title="수정">✏️</button>
         <button class="del-btn" onclick="deleteHabit('${h.habit_id}')" title="삭제">🗑️</button>
       </div>
       <div class="habit-week-checks">${checks}</div>
       <div class="habit-prog-bar-wrap">
-        <div class="prog-bar-bg">
-          <div class="prog-bar-fill" style="width:${pctRaw}%"></div>
-        </div>
+        <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:${pctRaw}%"></div></div>
         <div class="prog-bar-pct">${pctStr}</div>
       </div>
     </div>`;
@@ -1314,14 +1116,9 @@ function renderWeek() {
 function goalWeeklyTarget(h) {
   const dpw = h.days_per_week || 7;
   if (h.goal_type === 'weekly') return h.goal_value;
-  if (h.goal_type === 'daily_count') return dpw * h.goal_value; // e.g. 5일 * 2회 = 10
-  if (h.goal_type === 'daily_amount') return dpw; // N량 → dpw칸
+  if (h.goal_type === 'daily_count') return dpw * h.goal_value;
+  if (h.goal_type === 'daily_amount') return dpw;
   return 7;
-}
-
-function clicksPerDay(h) {
-  if (h.goal_type === 'daily_count') return h.goal_value;
-  return 1;
 }
 
 function goalLabel(h) {
@@ -1331,19 +1128,14 @@ function goalLabel(h) {
   return `하루 ${h.goal_value}${h.goal_unit || ''} · 주 ${dpw}일`;
 }
 
-
-// ─── 하루 달성도(0~100%) 계산 헬퍼 ──────────────────────
-function dayAchievePct(h, ds, logs) {
-  const src = logs || habitLogs;
-  const log = src.find(l => l.data.habit_id === h.habit_id && l.log_date === ds);
-  const val = log ? (log.data.value || 0) : 0;
+// ─── 하루 달성도 헬퍼 ────────────────────────────────────
+function dayAchievePct(h, ds) {
+  const val = (habitLogs[logKey(h.habit_id, ds)] || {}).value || 0;
   if (h.goal_type === 'weekly') return val >= 1 ? 100 : 0;
   if (h.goal_type === 'daily_count') return val === 0 ? 0 : Math.min(100, Math.round(val / h.goal_value * 100));
-  if (h.goal_type === 'daily_amount') return val; // 이미 0~100 퍼센트로 저장
+  if (h.goal_type === 'daily_amount') return val;
   return 0;
 }
-
-// 10단계 근사 (0,10,20,...,100)
 function toStep10(pct) { return Math.round(pct / 10) * 10; }
 
 // ─── 월간 렌더 ────────────────────────────────────────────
@@ -1363,12 +1155,11 @@ function renderMonth() {
     return;
   }
 
-  list.innerHTML = habitDefs.map(def => {
-    const h = def.data;
-    let totalPctSum = 0, totalDays = 0;
+  const dayHeaders = DAY_NAMES.map(n => `<div class="month-day-header">${n}</div>`).join('');
+  const blanks = Array.from({length: firstDow}, () => `<div class="month-dot empty"></div>`).join('');
 
-    const dayHeaders = DAY_NAMES.map(n => `<div class="month-day-header">${n}</div>`).join('');
-    const blanks = Array.from({length: firstDow}, () => `<div class="month-dot empty"></div>`).join('');
+  list.innerHTML = habitDefs.map(h => {
+    let totalPctSum = 0, totalDays = 0;
 
     const dayCells = Array.from({length: daysInMonth}, (_, i) => {
       const day = i + 1;
@@ -1379,35 +1170,26 @@ function renderMonth() {
 
       if (!isFuture) {
         totalDays++;
-        const pct = dayAchievePct(h, ds, monthLogs);
-        totalPctSum += pct;
+        totalPctSum += dayAchievePct(h, ds);
       }
 
       if (isFuture) {
-        return `<div class="month-dot future" style="cursor:default"><div class="month-dot-label" style="color:var(--text-light)">${day}</div></div>`;
+        return `<div class="month-dot future"><div class="month-dot-label" style="color:var(--text-light)">${day}</div></div>`;
       }
 
-      const rawPct = dayAchievePct(h, ds, monthLogs);
+      const rawPct = dayAchievePct(h, ds);
       const stepPct = toStep10(rawPct);
-      // 클릭 없음 — 달력은 읽기 전용
-
-      // 배터리 fill 높이 = stepPct%
-      const fillHeight = stepPct;
-      // 날짜 텍스트 색: 채워진 정도에 따라
       const labelColor = stepPct >= 60 ? 'white' : (stepPct > 0 ? 'var(--purple-dark)' : 'var(--text-light)');
       let cls = 'month-dot' + (rawPct === 0 ? ' miss' : '') + (isToday ? ' today-dot' : '');
 
-      return `<div class="${cls}" style="cursor:default">
-        <div class="month-dot-fill" style="height:${fillHeight}%"></div>
+      return `<div class="${cls}">
+        <div class="month-dot-fill" style="height:${stepPct}%"></div>
         <div class="month-dot-label" style="color:${labelColor}">${day}</div>
       </div>`;
     }).join('');
 
-    // 전체 달성률: 각 날 달성도 합 / (지나간 날수 * 100) — 소수점 1자리
     const overallRaw = totalDays > 0 ? totalPctSum / (totalDays * 100) * 100 : 0;
-    const overallPct = overallRaw % 1 < 0.05 && overallRaw % 1 > -0.05
-      ? Math.round(overallRaw) + '%'
-      : overallRaw.toFixed(1) + '%';
+    const overallPct = Math.abs(overallRaw % 1) < 0.05 ? Math.round(overallRaw) + '%' : overallRaw.toFixed(1) + '%';
 
     return `<div class="month-habit-card">
       <div class="month-habit-header">
@@ -1425,30 +1207,18 @@ function renderMonth() {
   }).join('');
 }
 
-// ─── 습관 삭제 ────────────────────────────────────────────
-async function deleteHabit(habitId) {
-  if (!confirm('이 습관을 삭제할까요?')) return;
-  // habit_def 행 data에 deleted:true 업데이트 방식 대신 직접 삭제
-  const def = habitDefs.find(d => d.data.habit_id === habitId);
-  if (!def) return;
-  await sbFetch('DELETE', null, `?id=eq.${def.id}`);
-  await loadAll();
-}
-
 // ─── 탭 전환 ─────────────────────────────────────────────
-async function switchTab(tab) {
+function switchTab(tab) {
   document.getElementById('tab-week').classList.toggle('active', tab === 'week');
   document.getElementById('tab-month').classList.toggle('active', tab === 'month');
   document.getElementById('view-week').style.display = tab === 'week' ? '' : 'none';
   document.getElementById('view-month').style.display = tab === 'month' ? '' : 'none';
-  if (tab === 'month') {
-    await loadMonthLogs();
-    renderMonth();
-  }
+  if (tab === 'month') renderMonth();
 }
 
-// ─── 초기 로드 ────────────────────────────────────────────
+// ─── 초기화 ───────────────────────────────────────────────
 loadAll();
+renderWeek();
 initDragHandles();
 </script>
 </body>
