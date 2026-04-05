@@ -41,11 +41,11 @@
   .header {
     background: var(--sky);
     padding: 16px 20px 0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     position: sticky; top: 0; z-index: 100;
   }
   .header-top {
     display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+    justify-content: space-between;
   }
   /* 홈으로 버튼 — 흰색 배경 */
   .back-btn {
@@ -61,7 +61,7 @@
   .header-title {
     font-family: 'Nunito', sans-serif;
     font-size: 22px; font-weight: 900; color: var(--gray-800);
-    flex: 1;
+    flex: 1; text-align: center;
   }
   .header-date {
     font-size: 13px; color: var(--gray-600); font-weight: 500;
@@ -88,6 +88,12 @@
   .today-header {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 16px;
+  }
+  .today-date-day {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .today-date-label {
+    font-size: 13px; font-weight: 700; color: var(--gray-600);
   }
   .today-day-badge {
     background: var(--pink); color: white;
@@ -126,19 +132,6 @@
   .done-btn:hover { border-color: var(--pink-btn); background: var(--pink-light); }
   .done-btn.done { border-color: var(--pink-btn); background: var(--pink-btn); color: white; }
   .done-btn:active { transform: scale(.88); }
-
-  /* 전체 완료 버튼 */
-  .complete-all-btn {
-    width: 100%; padding: 14px; border-radius: var(--radius);
-    background: linear-gradient(135deg, var(--pink-btn), var(--pink-dark));
-    color: white; font-size: 15px; font-weight: 800;
-    border: none; cursor: pointer; margin-top: 8px;
-    font-family: 'Nunito', sans-serif; letter-spacing: .3px;
-    box-shadow: 0 4px 16px rgba(240,128,128,.4);
-    transition: transform .15s, box-shadow .15s;
-  }
-  .complete-all-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(240,128,128,.5); }
-  .complete-all-btn:active { transform: translateY(0) scale(.98); }
 
   /* 빈 상태 */
   .empty-state {
@@ -315,7 +308,7 @@
     color: var(--gray-800); outline: none;
     transition: border-color .2s;
     font-family: 'Noto Sans KR', sans-serif;
-    height: 44px; box-sizing: border-box;
+    height: 44px; box-sizing: border-box; width: 100%;
   }
   .form-input:focus { border-color: var(--pink-btn); }
   .form-input.error { border-color: #e07070; background: #fff5f5; }
@@ -323,11 +316,15 @@
     padding: 10px 6px; border: 1.5px solid var(--gray-200);
     border-radius: 10px; font-size: 13px; font-weight: 700;
     color: var(--gray-800); outline: none; background: white;
-    height: 44px; box-sizing: border-box;
+    height: 44px; box-sizing: border-box; width: 62px;
   }
   .form-select:focus { border-color: var(--pink-btn); }
-  .form-input-sm { width: 62px !important; text-align: center; }
-  .form-select-sm { width: 62px !important; text-align: center; }
+  /* 세트수·기본중량·단위 행 */
+  .form-row-swu {
+    display: flex; gap: 8px; margin-bottom: 10px; align-items: flex-end;
+  }
+  .form-group-sw { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .form-group-unit { display: flex; flex-direction: column; gap: 4px; margin-left: auto; }
   .add-btn {
     width: 100%; padding: 0; height: 52px;
     border-radius: var(--radius-sm);
@@ -396,7 +393,7 @@
     <div>
       <div class="header-title">💪 운동 기록</div>
     </div>
-    <div class="header-date" id="headerDate"></div>
+    <div style="width:36px"></div>
   </div>
 </div>
 
@@ -405,7 +402,10 @@
   <!-- ── TAB: 오늘 운동 ── -->
   <div class="tab-content active" id="tab-today">
     <div class="today-header">
-      <div class="today-day-badge" id="todayDayBadge">토요일</div>
+      <div class="today-date-day">
+        <div class="today-date-label" id="todayDateLabel"></div>
+        <div class="today-day-badge" id="todayDayBadge">토요일</div>
+      </div>
       <div class="today-subtitle" id="todaySubtitle">0 / 0 완료</div>
     </div>
     <div class="progress-text" id="progressText">0%</div>
@@ -413,9 +413,6 @@
       <div class="progress-bar" id="progressBar" style="width:0%"></div>
     </div>
     <div id="todayExerciseList"></div>
-    <button class="complete-all-btn" id="completeAllBtn" onclick="completeAll()" style="display:none">
-      ✅ 오늘 운동 완료 저장
-    </button>
   </div>
 
   <!-- ── TAB: 인바디 ── -->
@@ -454,7 +451,7 @@
 
     <!-- 선 그래프 -->
     <div class="inbody-chart-card" id="inbodyChartCard">
-      <div class="section-title">📊 체성분 추이 (최근 12개)</div>
+      <div class="section-title">📊 체성분 추이 (최근 12개월)</div>
       <div class="chart-legend">
         <div class="legend-item"><div class="legend-dot" style="background:#4a90d9"></div>체중</div>
         <div class="legend-item"><div class="legend-dot" style="background:#e07070"></div>골격근</div>
@@ -482,18 +479,18 @@
           <input class="form-input" id="fName" placeholder="" />
         </div>
       </div>
-      <div class="form-row" style="align-items:flex-end;">
-        <div class="form-group">
+      <div class="form-row-swu">
+        <div class="form-group-sw">
           <div class="form-label">세트 수</div>
-          <input class="form-input form-input-sm" id="fSets" type="number" placeholder="" min="1" max="10" inputmode="numeric" />
+          <input class="form-input" id="fSets" type="number" placeholder="" min="1" max="10" inputmode="numeric" />
         </div>
-        <div class="form-group">
+        <div class="form-group-sw">
           <div class="form-label">기본 중량</div>
-          <input class="form-input form-input-sm" id="fWeight" type="number" placeholder="" step="0.5" inputmode="decimal" />
+          <input class="form-input" id="fWeight" type="number" placeholder="" step="0.5" inputmode="decimal" />
         </div>
-        <div class="form-group">
+        <div class="form-group-unit">
           <div class="form-label">단위</div>
-          <select class="form-select form-select-sm" id="fUnit">
+          <select class="form-select" id="fUnit">
             <option value="lb">lb</option>
             <option value="kg">kg</option>
           </select>
@@ -558,25 +555,20 @@ function todayStr() {
 }
 function todayDow() { return new Date().getDay(); }
 
-// ── localStorage + Supabase 스케줄 동기화 ──────
+// ── Supabase 스케줄 동기화 ──────
 const SCHEDULE_TYPE = 'workout_schedule';
 
 async function getSchedule() {
   try {
     const rows = await sbFetch('GET', `?type=eq.${SCHEDULE_TYPE}&order=id.desc&limit=1`);
     if (rows && rows.length > 0) {
-      const remote = rows[0].data;
-      localStorage.setItem('workout_schedule', JSON.stringify(remote));
-      return remote;
+      return rows[0].data;
     }
   } catch(e) {}
-  const raw = localStorage.getItem('workout_schedule');
-  if (raw) return JSON.parse(raw);
   return { sun:[], mon:[], tue:[], wed:[], thu:[], fri:[], sat:[] };
 }
 
 async function saveSchedule(s) {
-  localStorage.setItem('workout_schedule', JSON.stringify(s));
   try {
     await sbFetch('DELETE', `?type=eq.${SCHEDULE_TYPE}`);
     await sbFetch('POST', '', {
@@ -584,7 +576,9 @@ async function saveSchedule(s) {
       type: SCHEDULE_TYPE,
       data: s
     });
-  } catch(e) {}
+  } catch(e) {
+    showToast('저장 오류: ' + e.message);
+  }
 }
 
 // ── 상태 ──────────────────────────────────────
@@ -596,14 +590,15 @@ let graphOpen = false;
 // ── 초기화 ────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   const now = new Date();
-  document.getElementById('headerDate').textContent =
-    `${now.getMonth()+1}월 ${now.getDate()}일 (${DAYS[now.getDay()]})`;
+  const dateLabel = `${now.getMonth()+1}월 ${now.getDate()}일`;
+  document.getElementById('todayDateLabel').textContent = dateLabel;
   document.getElementById('todayDayBadge').textContent = DAYS_FULL[now.getDay()];
 
   // 인바디 날짜 기본값 = 오늘
   document.getElementById('ibDate').value = todayStr();
 
   await buildTodayList();
+  scheduleMidnightReset();
   await buildSettingDayTabs();
   await renderSettingList();
   await loadInbody();
@@ -613,18 +608,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ══════════════════════════════
 // TAB: 오늘 운동
 // ══════════════════════════════
+let midnightTimer = null;
+
+function scheduleMidnightReset() {
+  if (midnightTimer) clearTimeout(midnightTimer);
+  const now = new Date();
+  const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+  const ms = nextMidnight - now;
+  midnightTimer = setTimeout(async () => {
+    await buildTodayList();
+    scheduleMidnightReset();
+  }, ms);
+}
+
 async function buildTodayList() {
   const dow = DAYS_EN[todayDow()];
   const schedule = await getSchedule();
   const exercises = schedule[dow] || [];
 
-  const savedKey = `workout_today_${todayStr()}`;
-  const saved = JSON.parse(localStorage.getItem(savedKey) || '{}');
-
+  // 체크 상태는 메모리에만 — 저장 안 함
   todayExercises = exercises.map((ex, ei) => ({
     ...ex,
     id: `ex_${ei}`,
-    done: saved[`${ei}`]?.done ?? false,
+    done: false,
   }));
 
   renderTodayList();
@@ -632,7 +638,6 @@ async function buildTodayList() {
 
 function renderTodayList() {
   const container = document.getElementById('todayExerciseList');
-  const btn = document.getElementById('completeAllBtn');
 
   if (todayExercises.length === 0) {
     container.innerHTML = `
@@ -640,7 +645,6 @@ function renderTodayList() {
         <div class="emoji">🏋️</div>
         <p>오늘(${DAYS_FULL[todayDow()]})에 설정된<br>운동이 없어요.<br><br>설정 탭에서 추가해보세요!</p>
       </div>`;
-    btn.style.display = 'none';
     updateProgress();
     return;
   }
@@ -660,7 +664,6 @@ function renderTodayList() {
     </div>
   `).join('');
 
-  btn.style.display = 'block';
   updateProgress();
 }
 
@@ -673,7 +676,6 @@ function toggleExDone(ei) {
   btn.textContent = isDone ? '✓' : '○';
   btn.classList.toggle('done', isDone);
   updateProgress();
-  saveTodayLocal();
 }
 
 function updateProgress() {
@@ -683,46 +685,6 @@ function updateProgress() {
   document.getElementById('progressBar').style.width = pct + '%';
   document.getElementById('progressText').textContent = `${pct}% (${done}/${total})`;
   document.getElementById('todaySubtitle').textContent = `${done} / ${total} 완료`;
-}
-
-function saveTodayLocal() {
-  const key = `workout_today_${todayStr()}`;
-  const snap = {};
-  todayExercises.forEach((ex, ei) => { snap[`${ei}`] = { done: ex.done }; });
-  localStorage.setItem(key, JSON.stringify(snap));
-}
-
-async function completeAll() {
-  const today = todayStr();
-  const doneExercises = todayExercises.filter(ex => ex.done);
-  if (doneExercises.length === 0) { showToast('완료된 운동이 없어요!'); return; }
-
-  try {
-    await sbFetch('DELETE', `?log_date=eq.${today}&type=eq.workout_log`);
-    await sbFetch('POST', '', {
-      log_date: today, type: 'workout_log',
-      data: {
-        exercises: doneExercises.map(ex => ({
-          name: ex.name, emoji: ex.emoji,
-          sets: ex.sets, weight: ex.defaultWeight, unit: ex.defaultUnit
-        })),
-        savedAt: new Date().toISOString()
-      }
-    });
-    await pruneOldLogs();
-    showToast(`💪 ${doneExercises.length}개 운동 저장 완료!`);
-  } catch(e) {
-    showToast('저장 오류: ' + e.message);
-  }
-}
-
-async function pruneOldLogs() {
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - KEEP_DAYS);
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
-  try {
-    await sbFetch('DELETE', `?type=eq.workout_log&log_date=lt.${cutoffStr}`);
-  } catch(e) {}
 }
 
 // ══════════════════════════════
@@ -739,9 +701,7 @@ async function loadInbody() {
       fat: r.data?.fat,
     }));
   } catch(e) {
-    // 오프라인 fallback: localStorage
-    const raw = localStorage.getItem('inbody_records');
-    inbodyRecords = raw ? JSON.parse(raw) : [];
+    inbodyRecords = [];
   }
 }
 
@@ -764,16 +724,21 @@ async function saveInbody() {
       type: INBODY_TYPE,
       data: { weight, muscle, fat, savedAt: new Date().toISOString() }
     });
+
+    // 저장 후 최신 목록 다시 불러와서 12개 초과 시 가장 오래된 것 삭제
+    await loadInbody();
+    const allRows = await sbFetch('GET', `?type=eq.${INBODY_TYPE}&order=log_date.asc`);
+    if (allRows && allRows.length > 12) {
+      const toDelete = allRows.slice(0, allRows.length - 12);
+      for (const row of toDelete) {
+        await sbFetch('DELETE', `?id=eq.${row.id}`);
+      }
+    }
+
     showToast('✅ 인바디 기록 저장!');
   } catch(e) {
-    // 오프라인: localStorage 저장
-    const raw = localStorage.getItem('inbody_records');
-    let recs = raw ? JSON.parse(raw) : [];
-    recs = recs.filter(r => r.date !== date);
-    recs.unshift({ date, weight, muscle, fat });
-    recs = recs.slice(0, 12);
-    localStorage.setItem('inbody_records', JSON.stringify(recs));
-    showToast('✅ 로컬 저장 완료');
+    showToast('저장 오류: ' + e.message);
+    return;
   }
 
   // 입력 초기화
@@ -797,11 +762,8 @@ async function deleteInbody(idx) {
       await sbFetch('DELETE', `?type=eq.${INBODY_TYPE}&log_date=eq.${rec.date}`);
     }
   } catch(e) {
-    // 로컬에서만 삭제
-    const raw = localStorage.getItem('inbody_records');
-    let recs = raw ? JSON.parse(raw) : [];
-    recs = recs.filter(r => r.date !== rec.date);
-    localStorage.setItem('inbody_records', JSON.stringify(recs));
+    showToast('삭제 오류: ' + e.message);
+    return;
   }
   await loadInbody();
   renderInbodyList();
@@ -1012,7 +974,6 @@ async function addExercise() {
   [nameEl, setsEl, weightEl].forEach(el => el.classList.remove('error'));
   await renderSettingList();
   if (activeSettingDay === DAYS_EN[todayDow()]) {
-    localStorage.removeItem(`workout_today_${todayStr()}`);
     await buildTodayList();
   }
   showToast(`✅ ${name} 추가됨`);
@@ -1024,7 +985,6 @@ async function deleteExercise(idx) {
   await saveSchedule(schedule);
   await renderSettingList();
   if (activeSettingDay === DAYS_EN[todayDow()]) {
-    localStorage.removeItem(`workout_today_${todayStr()}`);
     await buildTodayList();
   }
 }
