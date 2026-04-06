@@ -103,7 +103,7 @@ else:
 history = [h for h in history if h["date"] != today]
 history.append(data)
 # 최신순 정렬, 최대 35개
-history = sorted(history, key=lambda x: x["date"], reverse=True)[:35]
+history = sorted(history, key=lambda x: x["date"], reverse=True)[:3650]
 
 with open("data/economy_history.json", "w", encoding="utf-8") as f:
     json.dump(history, f, ensure_ascii=False, indent=2)
