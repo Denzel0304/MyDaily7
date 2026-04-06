@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>경제 지표 – MyDaily7</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green1: #e8f8ef;
+      --green2: #b8ecd0;
+      --green3: #5dcf8a;
+      --green4: #2db96a;
+      --green5: #1a8f4e;
+      --sky1: #dff1fb;
+      --sky2: #b8e0f7;
+      --sky3: #85c8f0;
+      --accent: #2db96a;
+      --red:   #f04060;
+      --blue:  #3a7bd5;
+      --text-dark: #1a2e3b;
+      --text-mid:  #4a6478;
+      --text-light:#8aafc2;
+      --card-bg: rgba(255,255,255,0.85);
+      --shadow: 0 8px 32px rgba(45,185,106,0.10);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: linear-gradient(160deg, #e8f6fd 0%, #ceeaf8 40%, #d9f0fc 70%, #e4f5fb 100%);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    .bg-blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.32;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-blob-1 { width: 260px; height: 260px; background: #a8e6c4; top: -60px; left: -80px; }
+    .bg-blob-2 { width: 180px; height: 180px; background: #c5ecfb; bottom: 80px; right: -50px; }
+    .bg-blob-3 { width: 140px; height: 140px; background: #b8ecd0; top: 42%; left: -50px; }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      padding: 0 16px 48px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── 헤더 ── */
+    header {
+      padding-top: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .btn-home {
+      position: absolute;
+      left: 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--green4);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, transform 0.15s;
+      box-shadow: 0 3px 12px rgba(45,185,106,0.28);
+    }
+    .btn-home:active { transform: scale(0.95); background: var(--green5); }
+    .btn-home svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    .header-title {
+      font-family: 'Nunito', sans-serif;
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text-dark);
+      letter-spacing: -0.3px;
+    }
+
+    /* 업데이트 시간 */
+    .update-info {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-light);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .update-dot {
+      width: 6px; height: 6px;
+      background: var(--green3);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100%{opacity:1;transform:scale(1);}
+      50%{opacity:0.4;transform:scale(0.7);}
+    }
+
+    /* ── 탭 ── */
+    .tab-bar {
+      display: flex;
+      background: rgba(255,255,255,0.6);
+      border-radius: 50px;
+      padding: 4px;
+      margin-bottom: 22px;
+      box-shadow: 0 2px 12px rgba(45,185,106,0.08);
+      backdrop-filter: blur(8px);
+    }
+    .tab-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      border-radius: 50px;
+      padding: 9px 0;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      color: var(--text-light);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--green4);
+      color: white;
+      box-shadow: 0 3px 12px rgba(45,185,106,0.30);
+    }
+
+    /* ── 카드 ── */
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 20px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5px solid rgba(255,255,255,0.75);
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.4s ease both;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--green3), #a8e6c4);
+      border-radius: 22px 22px 0 0;
+    }
+
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(14px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .card-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-mid);
+    }
+    .card-icon {
+      width: 32px; height: 32px;
+      border-radius: 9px;
+      background: var(--green1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+
+    .card-value {
+      font-family: 'Nunito', sans-serif;
+      font-size: 30px;
+      font-weight: 900;
+      color: var(--text-dark);
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+    .card-value .unit {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-light);
+      margin-left: 3px;
+    }
+
+    .card-pct {
+      font-family: 'Nunito', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 50px;
+    }
+    .pct-up   { color: var(--red);  background: rgba(240,64,96,0.10); }
+    .pct-down { color: var(--blue); background: rgba(58,123,213,0.10); }
+    .pct-zero { color: var(--text-light); background: rgba(138,175,194,0.12); }
+
+    /* 시총 카드 특별 레이아웃 */
+    .cap-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+    .cap-rank {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .cap-rank-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 50px;
+      color: white;
+    }
+    .rank1 { background: var(--green4); }
+    .rank2 { background: var(--text-light); }
+    .cap-name {
+      font-family: 'Nunito', sans-serif;
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--text-dark);
+    }
+    .cap-arrow {
+      font-size: 20px;
+      color: var(--green3);
+      font-weight: 900;
+    }
+    .cap-diff-label {
+      font-size: 12px;
+      color: var(--text-light);
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    /* 주간/월간 차트 */
+    .chart-section {
+      margin-top: 10px;
+    }
+    .chart-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-light);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .bar-track {
+      height: 8px;
+      background: rgba(180,210,200,0.25);
+      border-radius: 50px;
+      overflow: hidden;
+      margin-bottom: 2px;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 50px;
+      transition: width 0.6s cubic-bezier(.34,1.2,.64,1);
+    }
+    .bar-up   { background: linear-gradient(90deg, var(--red), #ff8fa0); }
+    .bar-down { background: linear-gradient(90deg, var(--blue), #7ab3f0); }
+
+    /* 주간 미니 스파크라인 */
+    .sparkline-wrap {
+      margin-top: 10px;
+    }
+    .spark-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .spark-date {
+      font-size: 10px;
+      color: var(--text-light);
+      width: 44px;
+      flex-shrink: 0;
+    }
+    .spark-bar-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .spark-bar {
+      height: 7px;
+      border-radius: 50px;
+      min-width: 3px;
+    }
+    .spark-val {
+      font-family: 'Nunito', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    /* 로딩 / 오류 */
+    .status-box {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-light);
+      font-size: 14px;
+    }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--green2);
+      border-top-color: var(--green4);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .no-data {
+      font-size: 12px;
+      color: var(--text-light);
+      text-align: center;
+      padding: 16px 0 4px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-blob bg-blob-1"></div>
+  <div class="bg-blob bg-blob-2"></div>
+  <div class="bg-blob bg-blob-3"></div>
+
+  <div class="container">
+
+    <header>
+      <a href="index.html" class="btn-home">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 12L6 8l4-4"/>
+        </svg>
+        홈
+      </a>
+      <h1 class="header-title">경제 지표</h1>
+    </header>
+
+    <div class="update-info">
+      <span class="update-dot"></span>
+      <span id="update-time">데이터 불러오는 중...</span>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="today">오늘</button>
+      <button class="tab-btn" data-tab="week">이번 주</button>
+      <button class="tab-btn" data-tab="month">이번 달</button>
+    </div>
+
+    <div class="cards" id="cards-area">
+      <div class="status-box">
+        <div class="spinner"></div>
+        데이터를 불러오는 중...
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+  // ── 설정 ──
+  const REPO_RAW = 'https://raw.githubusercontent.com/Denzel0304/MyDaily7/main/data/';
+  const LS_LATEST  = 'econ_latest';
+  const LS_HISTORY = 'econ_history';
+  const LS_FETCH_DATE = 'econ_fetch_date';
+
+  let latestData  = null;
+  let historyData = [];
+  let currentTab  = 'today';
+
+  // ── 유틸 ──
+  const fmt = (v, d=2) => v != null ? Number(v).toLocaleString('ko-KR', {maximumFractionDigits:d}) : '--';
+  const pctClass = v => v == null ? 'pct-zero' : v > 0 ? 'pct-up' : v < 0 ? 'pct-down' : 'pct-zero';
+  const pctSign  = v => v == null ? '--' : (v > 0 ? '+' : '') + v.toFixed(2) + '%';
+
+  // ── 데이터 로드 ──
+  async function loadData() {
+    // localStorage 캐시 (오늘 날짜 기준)
+    const today = new Date().toISOString().slice(0,10);
+    const cachedDate = localStorage.getItem(LS_FETCH_DATE);
+
+    if (cachedDate === today && localStorage.getItem(LS_LATEST)) {
+      latestData  = JSON.parse(localStorage.getItem(LS_LATEST));
+      historyData = JSON.parse(localStorage.getItem(LS_HISTORY) || '[]');
+      render();
+      return;
+    }
+
+    // 새로 fetch
+    try {
+      const [latestRes, histRes] = await Promise.all([
+        fetch(REPO_RAW + 'economy_latest.json?t=' + Date.now()),
+        fetch(REPO_RAW + 'economy_history.json?t=' + Date.now()),
+      ]);
+      latestData  = await latestRes.json();
+      historyData = await histRes.json();
+
+      localStorage.setItem(LS_LATEST,     JSON.stringify(latestData));
+      localStorage.setItem(LS_HISTORY,    JSON.stringify(historyData));
+      localStorage.setItem(LS_FETCH_DATE, today);
+      render();
+    } catch(e) {
+      // fetch 실패 시 캐시라도 표시
+      if (localStorage.getItem(LS_LATEST)) {
+        latestData  = JSON.parse(localStorage.getItem(LS_LATEST));
+        historyData = JSON.parse(localStorage.getItem(LS_HISTORY) || '[]');
+        render();
+      } else {
+        document.getElementById('cards-area').innerHTML =
+          `<div class="status-box">❌ 데이터를 불러올 수 없습니다.<br><small>인터넷 연결을 확인해 주세요.</small></div>`;
+        document.getElementById('update-time').textContent = '로드 실패';
+      }
+    }
+  }
+
+  // ── 렌더 분기 ──
+  function render() {
+    if (!latestData) return;
+    document.getElementById('update-time').textContent =
+      `기준일: ${latestData.date} · 매일 07:30 갱신`;
+
+    if (currentTab === 'today') renderToday();
+    else if (currentTab === 'week') renderPeriod(7, '이번 주');
+    else renderPeriod(30, '이번 달');
+  }
+
+  // ── 오늘 탭 ──
+  function renderToday() {
+    const d = latestData;
+    const area = document.getElementById('cards-area');
+    area.innerHTML = `
+      ${makeCard('📊','VIX 지수', d.vix?.value, '', d.vix?.pct, 'VIX')}
+      ${makeCard('📈','나스닥', d.nasdaq?.value, 'pt', d.nasdaq?.pct, 'NASDAQ')}
+      ${makeCard('🇰🇷','코스피', d.kospi?.value, 'pt', d.kospi?.pct, 'KOSPI')}
+      ${makeCard('💵','달러 환율', d.usdkrw?.value, '원', d.usdkrw?.pct, 'USD/KRW')}
+      ${makeCapCard(d.top_stock)}
+    `;
+  }
+
+  function makeCard(icon, label, value, unit, pct, tag) {
+    return `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-label">
+          <div class="card-icon">${icon}</div>
+          ${label}
+        </div>
+        <span class="card-pct ${pctClass(pct)}">${pctSign(pct)}</span>
+      </div>
+      <div class="card-value">${fmt(value)}${unit ? `<span class="unit">${unit}</span>` : ''}</div>
+    </div>`;
+  }
+
+  function makeCapCard(t) {
+    if (!t) return '';
+    return `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-label">
+          <div class="card-icon">🏆</div>
+          미국 시총 1위 vs 2위
+        </div>
+        <span class="card-pct pct-up">+${t.cap_diff_pct ?? '--'}%</span>
+      </div>
+      <div class="cap-row">
+        <div class="cap-rank">
+          <span class="cap-rank-badge rank1">1위</span>
+          <span class="cap-name">${t.rank1 ?? '--'}</span>
+        </div>
+        <span class="cap-arrow">›</span>
+        <div class="cap-rank">
+          <span class="cap-rank-badge rank2">2위</span>
+          <span class="cap-name">${t.rank2 ?? '--'}</span>
+        </div>
+      </div>
+      <div class="cap-diff-label">시총 차이: ${t.cap_diff_pct != null ? t.cap_diff_pct + '%' : '--'} 앞섬</div>
+    </div>`;
+  }
+
+  // ── 주간/월간 탭 ──
+  function renderPeriod(days, label) {
+    const area = document.getElementById('cards-area');
+    if (!historyData || historyData.length < 2) {
+      area.innerHTML = `<div class="status-box">📭 누적 데이터가 부족합니다.<br><small>며칠 후 다시 확인해 주세요.</small></div>`;
+      return;
+    }
+
+    const now = new Date();
+    const cutoff = new Date(now);
+    cutoff.setDate(cutoff.getDate() - days);
+
+    const slice = historyData
+      .filter(d => new Date(d.date) >= cutoff)
+      .sort((a,b) => a.date.localeCompare(b.date));
+
+    if (slice.length < 2) {
+      area.innerHTML = `<div class="status-box">📭 ${label} 데이터가 아직 부족합니다.</div>`;
+      return;
+    }
+
+    const first = slice[0];
+    const last  = slice[slice.length - 1];
+
+    const metrics = [
+      { key:'vix',    icon:'📊', label:'VIX 지수',    unit:'',  field:'value' },
+      { key:'nasdaq', icon:'📈', label:'나스닥',       unit:'pt',field:'value' },
+      { key:'kospi',  icon:'🇰🇷', label:'코스피',      unit:'pt',field:'value' },
+      { key:'usdkrw', icon:'💵', label:'달러 환율',    unit:'원',field:'value' },
+    ];
+
+    const cards = metrics.map(m => {
+      const fv = first[m.key]?.[m.field];
+      const lv = last[m.key]?.[m.field];
+      const diff = (fv != null && lv != null) ? lv - fv : null;
+      const diffPct = (fv != null && fv !== 0 && diff != null) ? (diff / fv * 100) : null;
+
+      const sparkRows = slice.map((d, i) => {
+        if (i === 0) return '';
+        const prev = slice[i-1][m.key]?.[m.field];
+        const curr = d[m.key]?.[m.field];
+        const chg = (prev && curr) ? curr - prev : 0;
+        const isUp = chg >= 0;
+        const maxAbs = Math.max(...slice.slice(1).map((dd, ii) => {
+          const p2 = slice[ii][m.key]?.[m.field];
+          const c2 = dd[m.key]?.[m.field];
+          return Math.abs(c2 - p2) || 0;
+        }), 1);
+        const barW = Math.min(100, Math.round(Math.abs(chg) / maxAbs * 100));
+        const shortDate = d.date.slice(5); // MM-DD
+        return `
+          <div class="spark-row">
+            <span class="spark-date">${shortDate}</span>
+            <div class="spark-bar-wrap">
+              <div class="spark-bar ${isUp ? 'bar-up' : 'bar-down'}" style="width:${barW}%; background:${isUp ? 'var(--red)' : 'var(--blue)'}"></div>
+              <span class="spark-val" style="color:${isUp ? 'var(--red)' : 'var(--blue)'}">
+                ${isUp ? '+' : ''}${fmt(chg, m.key === 'usdkrw' ? 2 : 2)}${m.unit}
+              </span>
+            </div>
+          </div>`;
+      }).join('');
+
+      return `
+      <div class="card">
+        <div class="card-header">
+          <div class="card-label">
+            <div class="card-icon">${m.icon}</div>
+            ${m.label}
+          </div>
+          <span class="card-pct ${pctClass(diffPct)}">${pctSign(diffPct)}</span>
+        </div>
+        <div class="card-value">${fmt(lv)}${m.unit ? `<span class="unit">${m.unit}</span>` : ''}</div>
+        <div style="font-size:11px;color:var(--text-light);margin-top:4px;">
+          ${first.date} → ${last.date} 기간 증감
+        </div>
+        <div class="sparkline-wrap">${sparkRows || '<div class="no-data">데이터 없음</div>'}</div>
+      </div>`;
+    }).join('');
+
+    area.innerHTML = cards;
+  }
+
+  // ── 탭 이벤트 ──
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentTab = btn.dataset.tab;
+      render();
+    });
+  });
+
+  // ── 시작 ──
+  loadData();
+  </script>
+</body>
+</html>
