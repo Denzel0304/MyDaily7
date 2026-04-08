@@ -356,6 +356,49 @@
   * { -webkit-tap-highlight-color: transparent; }
   .done-btn:active { transform: scale(.88); }
   .complete-all-btn:active { transform: scale(.98) !important; }
+
+  /* ── 드래그 핸들 ── */
+  .drag-handle {
+    width: 32px; height: 32px; display: flex; align-items: center;
+    justify-content: center; cursor: grab; color: var(--gray-400);
+    font-size: 18px; flex-shrink: 0; touch-action: none;
+    user-select: none; -webkit-user-select: none;
+  }
+  .drag-handle:active { cursor: grabbing; }
+  .ex-setting-item.dragging {
+    opacity: .45; background: var(--pink-light);
+  }
+  .ex-setting-item.drag-over {
+    border-top: 2px solid var(--pink-btn);
+  }
+
+  /* ── 수정 모드 폼 ── */
+  .add-ex-form.edit-mode { border: 2px solid var(--pink-btn); }
+  .add-ex-form .form-title.editing { color: var(--pink-dark); }
+  .add-btn.edit-mode {
+    background: #5b9bd5;
+    box-shadow: 0 4px 16px rgba(91,155,213,.4);
+  }
+  .cancel-edit-btn {
+    width: 100%; height: 44px;
+    border-radius: var(--radius-sm);
+    background: var(--gray-100); color: var(--gray-600);
+    font-size: 14px; font-weight: 800;
+    border: none; cursor: pointer; margin-top: 6px;
+    font-family: 'Nunito', sans-serif;
+    transition: opacity .2s;
+  }
+  .cancel-edit-btn:hover { opacity: .8; }
+
+  /* ── 설정 아이템 수정 버튼 ── */
+  .ex-edit-btn {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: none; background: var(--sky); color: #5b9bd5;
+    cursor: pointer; font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s; flex-shrink: 0;
+  }
+  .ex-edit-btn:hover { background: #d0e8f7; }
 </style>
 </head>
 <body>
@@ -440,8 +483,8 @@
   <div class="tab-content" id="tab-settings">
     <div class="day-tabs" id="dayTabs"></div>
     <div id="settingExList"></div>
-    <div class="add-ex-form">
-      <div class="form-title">➕ 운동 추가</div>
+    <div class="add-ex-form" id="addExForm">
+      <div class="form-title" id="formTitle">➕ 운동 추가</div>
       <div class="form-row">
         <div class="form-group flex-1">
           <div class="form-label">운동 이름</div>
@@ -465,7 +508,8 @@
           </select>
         </div>
       </div>
-      <button class="add-btn" onclick="addExercise()">추가하기</button>
+      <button class="add-btn" id="addBtn" onclick="addExercise()">추가하기</button>
+      <button class="cancel-edit-btn" id="cancelEditBtn" style="display:none" onclick="cancelEdit()">취소</button>
     </div>
   </div>
 
@@ -487,8 +531,9 @@
 
 <script>
 // ── localStorage 키 ───────────────────────────
-const LS_SCHEDULE = 'workout_schedule';
-const LS_INBODY   = 'workout_inbody';   // [{date, weight, muscle, fat}] 최신순
+const LS_SCHEDULE   = 'workout_schedule';
+const LS_INBODY     = 'workout_inbody';   // [{date, weight, muscle, fat}] 최신순
+const LS_TODAY_DONE = 'workout_today_done'; // {date:'YYYY-MM-DD', done:{id:bool}}
 
 // ── localStorage 헬퍼 ────────────────────────
 function loadSchedule() {
@@ -513,6 +558,26 @@ function loadInbodyLS() {
 
 function saveInbodyLS(arr) {
   localStorage.setItem(LS_INBODY, JSON.stringify(arr));
+}
+
+function loadTodayDone() {
+  try {
+    const raw = localStorage.getItem(LS_TODAY_DONE);
+    if (!raw) return {};
+    const obj = JSON.parse(raw);
+    // 날짜 검증: 오늘이 아니면 삭제
+    if (obj.date !== todayStr()) {
+      localStorage.removeItem(LS_TODAY_DONE);
+      return {};
+    }
+    return obj.done || {};
+  } catch { return {}; }
+}
+
+function saveTodayDone() {
+  const done = {};
+  todayExercises.forEach(ex => { done[ex.id] = ex.done; });
+  localStorage.setItem(LS_TODAY_DONE, JSON.stringify({ date: todayStr(), done }));
 }
 
 // ── 날짜 유틸 ──────────────────────────────────
@@ -567,7 +632,11 @@ function buildTodayList() {
   const schedule = loadSchedule();
   const exercises = schedule[dow] || [];
 
-  todayExercises = exercises.map((ex, ei) => ({ ...ex, id: `ex_${ei}`, done: false }));
+  const savedDone = loadTodayDone();
+  todayExercises = exercises.map((ex, ei) => {
+    const id = `ex_${ei}`;
+    return { ...ex, id, done: savedDone[id] === true };
+  });
   renderTodayList();
 }
 
@@ -611,6 +680,7 @@ function toggleExDone(ei) {
   btn.textContent = isDone ? '✓' : '○';
   btn.classList.toggle('done', isDone);
   updateProgress();
+  saveTodayDone();
 }
 
 function updateProgress() {
@@ -816,6 +886,7 @@ function selectSettingDay(day, el) {
   activeSettingDay = day;
   document.querySelectorAll('.day-tab').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
+  cancelEdit();
   renderSettingList();
 }
 
@@ -835,19 +906,26 @@ function renderSettingList() {
   }
 
   container.innerHTML = `
-    <div class="ex-list-setting">
+    <div class="ex-list-setting" id="exDragList">
       ${list.map((ex, i) => `
-        <div class="ex-setting-item">
+        <div class="ex-setting-item" data-idx="${i}" draggable="true">
+          <div class="drag-handle" data-idx="${i}" title="순서 변경">☰</div>
           <div style="font-size:22px">${ex.emoji||'💪'}</div>
           <div class="ex-setting-info">
             <div class="ex-setting-name">${ex.name}</div>
             <div class="ex-setting-detail">${ex.sets}세트 · ${ex.defaultWeight}${ex.defaultUnit}</div>
           </div>
+          <button class="ex-edit-btn" onclick="startEditExercise(${i})" title="수정">✏️</button>
           <button class="ex-del-btn" onclick="deleteExercise(${i})">✕</button>
         </div>
       `).join('')}
     </div>`;
+
+  initDragSort();
 }
+
+// ── 수정 모드 상태 ──────────────────────────────
+let editingIdx = -1; // -1이면 추가 모드, 0이상이면 수정 중인 인덱스
 
 function addExercise() {
   const nameEl   = document.getElementById('fName');
@@ -873,15 +951,181 @@ function addExercise() {
   const unit     = document.getElementById('fUnit').value;
   const schedule = loadSchedule();
   if (!schedule[activeSettingDay]) schedule[activeSettingDay] = [];
-  schedule[activeSettingDay].push({ name, emoji, sets, defaultWeight: weight, defaultUnit: unit });
-  saveScheduleLS(schedule);
 
-  ['fName','fSets','fWeight'].forEach(id => document.getElementById(id).value = '');
-  [nameEl, setsEl, weightEl].forEach(el => el.classList.remove('error'));
+  if (editingIdx >= 0) {
+    // 수정 모드: 기존 항목 덮어쓰기
+    schedule[activeSettingDay][editingIdx] = { name, emoji, sets, defaultWeight: weight, defaultUnit: unit };
+    saveScheduleLS(schedule);
+    cancelEdit();
+    showToast(`✅ ${name} 수정됨`);
+  } else {
+    // 추가 모드
+    schedule[activeSettingDay].push({ name, emoji, sets, defaultWeight: weight, defaultUnit: unit });
+    saveScheduleLS(schedule);
+    ['fName','fSets','fWeight'].forEach(id => document.getElementById(id).value = '');
+    [nameEl, setsEl, weightEl].forEach(el => el.classList.remove('error'));
+    showToast(`✅ ${name} 추가됨`);
+  }
 
   renderSettingList();
   if (activeSettingDay === DAYS_EN[todayDow()]) buildTodayList();
-  showToast(`✅ ${name} 추가됨`);
+}
+
+function startEditExercise(idx) {
+  const schedule = loadSchedule();
+  const ex = (schedule[activeSettingDay] || [])[idx];
+  if (!ex) return;
+
+  editingIdx = idx;
+  document.getElementById('fName').value   = ex.name;
+  document.getElementById('fSets').value   = ex.sets;
+  document.getElementById('fWeight').value = ex.defaultWeight;
+  document.getElementById('fUnit').value   = ex.defaultUnit || 'kg';
+
+  document.getElementById('formTitle').textContent = '✏️ 운동 수정';
+  document.getElementById('addBtn').textContent = '수정 저장';
+  document.getElementById('addBtn').classList.add('edit-mode');
+  document.getElementById('cancelEditBtn').style.display = 'block';
+  document.getElementById('addExForm').classList.add('edit-mode');
+
+  // 폼으로 스크롤
+  document.getElementById('addExForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function cancelEdit() {
+  editingIdx = -1;
+  ['fName','fSets','fWeight'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('formTitle').textContent = '➕ 운동 추가';
+  document.getElementById('addBtn').textContent = '추가하기';
+  document.getElementById('addBtn').classList.remove('edit-mode');
+  document.getElementById('cancelEditBtn').style.display = 'none';
+  document.getElementById('addExForm').classList.remove('edit-mode');
+}
+
+// ── 드래그 정렬 ─────────────────────────────────
+let dragSrcIdx = null;
+
+function initDragSort() {
+  const list = document.getElementById('exDragList');
+  if (!list) return;
+  const items = list.querySelectorAll('.ex-setting-item');
+
+  items.forEach(item => {
+    // Desktop drag events
+    item.addEventListener('dragstart', onDragStart);
+    item.addEventListener('dragover',  onDragOver);
+    item.addEventListener('dragleave', onDragLeave);
+    item.addEventListener('drop',      onDrop);
+    item.addEventListener('dragend',   onDragEnd);
+
+    // Touch drag (mobile)
+    const handle = item.querySelector('.drag-handle');
+    handle.addEventListener('touchstart', onTouchStart, { passive: false });
+  });
+}
+
+function onDragStart(e) {
+  dragSrcIdx = parseInt(this.dataset.idx);
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.ex-setting-item').forEach(el => el.classList.remove('drag-over'));
+  this.classList.add('drag-over');
+}
+function onDragLeave() { this.classList.remove('drag-over'); }
+function onDrop(e) {
+  e.preventDefault();
+  const dropIdx = parseInt(this.dataset.idx);
+  if (dragSrcIdx === null || dragSrcIdx === dropIdx) return;
+  reorderExercise(dragSrcIdx, dropIdx);
+}
+function onDragEnd() {
+  document.querySelectorAll('.ex-setting-item').forEach(el => {
+    el.classList.remove('dragging', 'drag-over');
+  });
+  dragSrcIdx = null;
+}
+
+// ── 터치 드래그 ─────────────────────────────────
+let touchDragIdx = null;
+let touchClone   = null;
+let touchOffsetY = 0;
+
+function onTouchStart(e) {
+  e.preventDefault();
+  const handle = e.currentTarget;
+  const item   = handle.closest('.ex-setting-item');
+  touchDragIdx  = parseInt(item.dataset.idx);
+  touchOffsetY  = e.touches[0].clientY - item.getBoundingClientRect().top;
+
+  // ghost clone
+  touchClone = item.cloneNode(true);
+  touchClone.style.cssText = `
+    position:fixed; left:${item.getBoundingClientRect().left}px;
+    top:${item.getBoundingClientRect().top}px;
+    width:${item.offsetWidth}px; opacity:0.75;
+    background:white; border-radius:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,.18);
+    pointer-events:none; z-index:9999; transition:none;
+  `;
+  document.body.appendChild(touchClone);
+  item.classList.add('dragging');
+
+  document.addEventListener('touchmove', onTouchMove, { passive: false });
+  document.addEventListener('touchend',  onTouchEnd);
+}
+
+function onTouchMove(e) {
+  e.preventDefault();
+  const y = e.touches[0].clientY;
+  if (touchClone) touchClone.style.top = (y - touchOffsetY) + 'px';
+
+  // highlight target
+  document.querySelectorAll('.ex-setting-item').forEach(el => el.classList.remove('drag-over'));
+  const els = Array.from(document.querySelectorAll('.ex-setting-item'));
+  for (const el of els) {
+    const r = el.getBoundingClientRect();
+    if (y >= r.top && y <= r.bottom) { el.classList.add('drag-over'); break; }
+  }
+}
+
+function onTouchEnd(e) {
+  document.removeEventListener('touchmove', onTouchMove);
+  document.removeEventListener('touchend',  onTouchEnd);
+
+  if (touchClone) { touchClone.remove(); touchClone = null; }
+
+  const y = e.changedTouches[0].clientY;
+  const els = Array.from(document.querySelectorAll('.ex-setting-item'));
+  let dropIdx = null;
+  for (const el of els) {
+    const r = el.getBoundingClientRect();
+    if (y >= r.top && y <= r.bottom) { dropIdx = parseInt(el.dataset.idx); break; }
+  }
+
+  document.querySelectorAll('.ex-setting-item').forEach(el => {
+    el.classList.remove('dragging', 'drag-over');
+  });
+
+  if (dropIdx !== null && dropIdx !== touchDragIdx) {
+    reorderExercise(touchDragIdx, dropIdx);
+  }
+  touchDragIdx = null;
+}
+
+function reorderExercise(fromIdx, toIdx) {
+  const schedule = loadSchedule();
+  const list = schedule[activeSettingDay] || [];
+  const [moved] = list.splice(fromIdx, 1);
+  list.splice(toIdx, 0, moved);
+  schedule[activeSettingDay] = list;
+  saveScheduleLS(schedule);
+  renderSettingList();
+  if (activeSettingDay === DAYS_EN[todayDow()]) buildTodayList();
+  showToast('✅ 순서 변경됨');
 }
 
 function deleteExercise(idx) {
