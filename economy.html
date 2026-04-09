@@ -709,7 +709,7 @@
     const maxV = Math.max(...vals);
     const range = maxV - minV || 1;
 
-    const W = 340, H = 130, PAD_X = 8, PAD_Y = 22;
+    const W = 340, H = 130, PAD_X = 30, PAD_Y = 22;
     const plotW = W - PAD_X * 2;
     const plotH = H - PAD_Y * 2;
     const n = validSlice.length;
@@ -802,10 +802,10 @@
             <path d="${linePath}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <!-- 최고점 -->
             <circle cx="${px(maxIdx)}" cy="${py(maxV)}" r="${dotRadius}" fill="${lineColor}" stroke="white" stroke-width="1.5"/>
-            <text x="${px(maxIdx)}" y="${py(maxV)-8}" text-anchor="middle" font-size="8" fill="${lineColor}" font-family="Nunito,sans-serif" font-weight="700">${fmt(maxV, m.decimals)}</text>
+            <text x="${px(maxIdx)}" y="${py(maxV)-8}" text-anchor="${maxIdx === 0 ? 'start' : maxIdx === n-1 ? 'end' : 'middle'}" font-size="8" fill="${lineColor}" font-family="Nunito,sans-serif" font-weight="700">${fmt(maxV, m.decimals)}</text>
             <!-- 최저점 -->
             <circle cx="${px(minIdx)}" cy="${py(minV)}" r="${dotRadius}" fill="var(--blue)" stroke="white" stroke-width="1.5"/>
-            <text x="${px(minIdx)}" y="${py(minV)+16}" text-anchor="middle" font-size="8" fill="var(--blue)" font-family="Nunito,sans-serif" font-weight="700">${fmt(minV, m.decimals)}</text>
+            <text x="${px(minIdx)}" y="${py(minV)+16}" text-anchor="${minIdx === 0 ? 'start' : minIdx === n-1 ? 'end' : 'middle'}" font-size="8" fill="var(--blue)" font-family="Nunito,sans-serif" font-weight="700">${fmt(minV, m.decimals)}</text>
             <!-- 시작/끝 점 -->
             <circle cx="${px(0)}" cy="${py(fv)}" r="3" fill="var(--text-light)" stroke="white" stroke-width="1.5"/>
             <circle cx="${px(n-1)}" cy="${py(lv)}" r="3.5" fill="${lineColor}" stroke="white" stroke-width="1.5"/>
