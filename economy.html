@@ -71,24 +71,24 @@
     }
 
     .btn-home {
-  position: absolute;
-  left: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--green4);
-  text-decoration: none;
-  flex-shrink: 0;
-  background: white;
-  border-radius: 50px;
-  padding: 10px 16px;
-  min-height: 42px;
-  box-shadow: 0 2px 10px rgba(45,185,106,0.12);
-  border: none;
-  cursor: pointer;
-}
+      position: absolute;
+      left: 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--green4);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, transform 0.15s;
+      box-shadow: 0 3px 12px rgba(45,185,106,0.28);
+    }
     .btn-home:active { transform: scale(0.95); background: var(--green5); }
     .btn-home svg { width: 14px; height: 14px; flex-shrink: 0; }
 
@@ -272,65 +272,159 @@
       margin-top: 4px;
     }
 
-    /* 주간/월간 차트 */
-    .chart-section {
-      margin-top: 10px;
+    /* ── 주간/월간 그래프 영역 ── */
+    .period-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
     }
-    .chart-label-row {
+
+    /* 종목 서브탭 */
+    .metric-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .metric-tabs::-webkit-scrollbar { display: none; }
+    .metric-tab {
+      flex-shrink: 0;
+      border: none;
+      border-radius: 50px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      transition: all 0.18s;
+      background: rgba(255,255,255,0.55);
+      color: var(--text-mid);
+      backdrop-filter: blur(6px);
+      border: 1.5px solid rgba(255,255,255,0.7);
+    }
+    .metric-tab.active {
+      background: var(--green4);
+      color: white;
+      box-shadow: 0 3px 12px rgba(45,185,106,0.30);
+      border-color: transparent;
+    }
+
+    /* 요약 수치 행 */
+    .period-summary {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 20px 14px;
+      backdrop-filter: blur(12px);
+      border: 1.5px solid rgba(255,255,255,0.75);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .period-summary::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--green3), #a8e6c4);
+      border-radius: 22px 22px 0 0;
+    }
+    .summary-top {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .summary-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-light);
+      letter-spacing: 0.3px;
+    }
+    .summary-value {
+      font-family: 'Nunito', sans-serif;
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--text-dark);
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+    .summary-value .unit {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-light);
+      margin-left: 3px;
+    }
+    .summary-badges {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .summary-badge {
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 50px;
+    }
+    .badge-period { color: var(--text-mid); background: rgba(138,175,194,0.13); font-size:11px; font-weight:600; }
+
+    /* SVG 선 그래프 카드 */
+    .chart-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px 20px 18px;
+      backdrop-filter: blur(12px);
+      border: 1.5px solid rgba(255,255,255,0.75);
+      position: relative;
+      overflow: hidden;
+    }
+    .chart-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--green3), #a8e6c4);
+      border-radius: 22px 22px 0 0;
+    }
+    .chart-title-row {
       display: flex;
       justify-content: space-between;
-      font-size: 11px;
-      color: var(--text-light);
-      margin-bottom: 4px;
-      font-weight: 600;
-    }
-    .bar-track {
-      height: 8px;
-      background: rgba(180,210,200,0.25);
-      border-radius: 50px;
-      overflow: hidden;
-      margin-bottom: 2px;
-    }
-    .bar-fill {
-      height: 100%;
-      border-radius: 50px;
-      transition: width 0.6s cubic-bezier(.34,1.2,.64,1);
-    }
-    .bar-up   { background: linear-gradient(90deg, var(--red), #ff8fa0); }
-    .bar-down { background: linear-gradient(90deg, var(--blue), #7ab3f0); }
-
-    /* 주간 미니 스파크라인 */
-    .sparkline-wrap {
-      margin-top: 10px;
-    }
-    .spark-row {
-      display: flex;
       align-items: center;
-      gap: 6px;
-      margin-bottom: 6px;
+      margin-bottom: 12px;
     }
-    .spark-date {
-      font-size: 10px;
-      color: var(--text-light);
-      width: 44px;
-      flex-shrink: 0;
-    }
-    .spark-bar-wrap {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .spark-bar {
-      height: 7px;
-      border-radius: 50px;
-      min-width: 3px;
-    }
-    .spark-val {
-      font-family: 'Nunito', sans-serif;
-      font-size: 11px;
+    .chart-title {
+      font-size: 12px;
       font-weight: 700;
-      white-space: nowrap;
+      color: var(--text-light);
+    }
+    .chart-range-label {
+      font-size: 11px;
+      color: var(--text-light);
+    }
+    .chart-svg-wrap {
+      width: 100%;
+      overflow: hidden;
+    }
+    .chart-svg-wrap svg {
+      display: block;
+      width: 100%;
+    }
+    /* x축 날짜 레이블 */
+    .x-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+      padding: 0 2px;
+    }
+    .x-label {
+      font-size: 9px;
+      color: var(--text-light);
+      font-family: 'Nunito', sans-serif;
     }
 
     /* 로딩 / 오류 */
@@ -368,7 +462,12 @@
   <div class="container">
 
     <header>
-      <a href="index.html" class="btn-home">← 홈</a>
+      <a href="index.html" class="btn-home">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 12L6 8l4-4"/>
+        </svg>
+        홈
+      </a>
       <h1 class="header-title">경제 지표</h1>
     </header>
 
@@ -394,7 +493,7 @@
 
   <script>
   // ── 설정 ──
-  const REPO_RAW = 'https://raw.githubusercontent.com/Denzel0304/MyDaily7033/main/data/';
+  const REPO_RAW = 'https://raw.githubusercontent.com/Denzel0304/MyDaily7/main/data/';
   const LS_LATEST  = 'econ_latest';
   const LS_HISTORY = 'econ_history';
   const LS_FETCH_DATE = 'econ_fetch_date';
@@ -456,7 +555,7 @@
 
     if (currentTab === 'today') renderToday();
     else if (currentTab === 'week') renderPeriod(7, '이번 주');
-    else renderPeriod(30, '이번 달');
+    else if (currentTab === 'month') renderPeriod(30, '이번 달');
   }
 
   // ── 오늘 탭 ──
@@ -513,6 +612,14 @@
   }
 
   // ── 주간/월간 탭 ──
+  const METRICS = [
+    { key:'vix',    icon:'📊', label:'VIX',    fullLabel:'VIX 지수',  unit:'',   decimals:2 },
+    { key:'nasdaq', icon:'📈', label:'나스닥', fullLabel:'나스닥',    unit:'pt', decimals:0 },
+    { key:'kospi',  icon:'🇰🇷', label:'코스피', fullLabel:'코스피',   unit:'pt', decimals:0 },
+    { key:'usdkrw', icon:'💵', label:'환율',   fullLabel:'달러 환율', unit:'원', decimals:1 },
+  ];
+  let periodActiveMetric = 'vix';
+
   function renderPeriod(days, label) {
     const area = document.getElementById('cards-area');
     if (!historyData || historyData.length < 2) {
@@ -533,65 +640,169 @@
       return;
     }
 
-    const first = slice[0];
-    const last  = slice[slice.length - 1];
-
-    const metrics = [
-      { key:'vix',    icon:'📊', label:'VIX 지수',    unit:'',  field:'value' },
-      { key:'nasdaq', icon:'📈', label:'나스닥',       unit:'pt',field:'value' },
-      { key:'kospi',  icon:'🇰🇷', label:'코스피',      unit:'pt',field:'value' },
-      { key:'usdkrw', icon:'💵', label:'달러 환율',    unit:'원',field:'value' },
-    ];
-
-    const cards = metrics.map(m => {
-      const fv = first[m.key]?.[m.field];
-      const lv = last[m.key]?.[m.field];
-      const diff = (fv != null && lv != null) ? lv - fv : null;
-      const diffPct = (fv != null && fv !== 0 && diff != null) ? (diff / fv * 100) : null;
-
-      const sparkRows = slice.map((d, i) => {
-        if (i === 0) return '';
-        const prev = slice[i-1][m.key]?.[m.field];
-        const curr = d[m.key]?.[m.field];
-        const chg = (prev && curr) ? curr - prev : 0;
-        const isUp = chg >= 0;
-        const maxAbs = Math.max(...slice.slice(1).map((dd, ii) => {
-          const p2 = slice[ii][m.key]?.[m.field];
-          const c2 = dd[m.key]?.[m.field];
-          return Math.abs(c2 - p2) || 0;
-        }), 1);
-        const barW = Math.min(100, Math.round(Math.abs(chg) / maxAbs * 100));
-        const shortDate = d.date.slice(5); // MM-DD
-        return `
-          <div class="spark-row">
-            <span class="spark-date">${shortDate}</span>
-            <div class="spark-bar-wrap">
-              <div class="spark-bar ${isUp ? 'bar-up' : 'bar-down'}" style="width:${barW}%; background:${isUp ? 'var(--red)' : 'var(--blue)'}"></div>
-              <span class="spark-val" style="color:${isUp ? 'var(--red)' : 'var(--blue)'}">
-                ${isUp ? '+' : ''}${fmt(chg, m.key === 'usdkrw' ? 2 : 2)}${m.unit}
-              </span>
-            </div>
-          </div>`;
-      }).join('');
-
-      return `
-      <div class="card">
-        <div class="card-header">
-          <div class="card-label">
-            <div class="card-icon">${m.icon}</div>
-            ${m.label}
-          </div>
-          <span class="card-pct ${pctClass(diffPct)}">${pctSign(diffPct)}</span>
+    area.innerHTML = `
+      <div class="period-wrap">
+        <div class="metric-tabs" id="metric-tabs">
+          ${METRICS.map(m => `
+            <button class="metric-tab${m.key === periodActiveMetric ? ' active' : ''}"
+                    data-metric="${m.key}">
+              ${m.icon} ${m.label}
+            </button>`).join('')}
         </div>
-        <div class="card-value">${fmt(lv)}${m.unit ? `<span class="unit">${m.unit}</span>` : ''}</div>
-        <div style="font-size:11px;color:var(--text-light);margin-top:4px;">
-          ${first.date} → ${last.date} 기간 증감
-        </div>
-        <div class="sparkline-wrap">${sparkRows || '<div class="no-data">데이터 없음</div>'}</div>
+        <div id="period-content"></div>
       </div>`;
+
+    // 서브탭 이벤트
+    document.querySelectorAll('.metric-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.metric-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        periodActiveMetric = btn.dataset.metric;
+        renderMetricView(slice);
+      });
+    });
+
+    renderMetricView(slice);
+  }
+
+  function renderMetricView(slice) {
+    const m = METRICS.find(x => x.key === periodActiveMetric);
+    const content = document.getElementById('period-content');
+    if (!content) return;
+
+    // null 아닌 첫 유효값 찾기 (-- 버그 수정)
+    const validSlice = slice.filter(d => d[m.key]?.value != null);
+    if (validSlice.length < 2) {
+      content.innerHTML = `<div class="status-box">📭 ${m.fullLabel} 데이터가 부족합니다.</div>`;
+      return;
+    }
+
+    const firstValid = validSlice[0];
+    const lastValid  = validSlice[validSlice.length - 1];
+    const fv = firstValid[m.key].value;
+    const lv = lastValid[m.key].value;
+    const diff    = lv - fv;
+    const diffPct = fv !== 0 ? (diff / fv * 100) : null;
+
+    // 선 그래프 SVG 생성
+    const vals = validSlice.map(d => d[m.key].value);
+    const minV = Math.min(...vals);
+    const maxV = Math.max(...vals);
+    const range = maxV - minV || 1;
+
+    const W = 340, H = 110, PAD_X = 8, PAD_Y = 10;
+    const plotW = W - PAD_X * 2;
+    const plotH = H - PAD_Y * 2;
+    const n = validSlice.length;
+
+    const px = i => PAD_X + (i / (n - 1)) * plotW;
+    const py = v => PAD_Y + plotH - ((v - minV) / range) * plotH;
+
+    // 그라데이션 fill path
+    const points = vals.map((v, i) => `${px(i)},${py(v)}`).join(' ');
+    const linePath = vals.map((v, i) => `${i===0?'M':'L'}${px(i)},${py(v)}`).join(' ');
+    const fillPath = `${linePath} L${px(n-1)},${PAD_Y+plotH} L${PAD_X},${PAD_Y+plotH} Z`;
+
+    const isPositive = diff >= 0;
+    const lineColor  = isPositive ? 'var(--red)' : 'var(--blue)';
+    const fillId     = 'grad_' + m.key;
+
+    // x축 레이블: 균등 5개
+    const labelIdxs = [0, Math.floor(n/4), Math.floor(n/2), Math.floor(3*n/4), n-1]
+      .filter((v,i,a) => a.indexOf(v) === i && v < n);
+    const xLabels = labelIdxs.map(i =>
+      `<span class="x-label">${validSlice[i].date.slice(5)}</span>`
+    ).join('');
+
+    // 최고/최저 점 표시
+    const maxIdx = vals.indexOf(maxV);
+    const minIdx = vals.indexOf(minV);
+    const dotRadius = 4;
+
+    // 일별 변화 바 (최근 7개)
+    const barSlice = validSlice.slice(-Math.min(8, validSlice.length));
+    const changes = barSlice.slice(1).map((d, i) => {
+      const prev = barSlice[i][m.key].value;
+      const curr = d[m.key].value;
+      return { date: d.date.slice(5), chg: curr - prev, up: curr >= prev };
+    });
+    const maxAbs = Math.max(...changes.map(c => Math.abs(c.chg)), 0.001);
+    const barRows = changes.map(c => {
+      const w = Math.round(Math.abs(c.chg) / maxAbs * 100);
+      const col = c.up ? 'var(--red)' : 'var(--blue)';
+      const sign = c.up ? '+' : '';
+      return `
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <span style="font-size:9px;color:var(--text-light);font-family:'Nunito',sans-serif;width:38px;flex-shrink:0;">${c.date}</span>
+          <div style="flex:1;height:6px;background:rgba(180,210,200,0.25);border-radius:50px;overflow:hidden;">
+            <div style="height:100%;width:${w}%;background:${col};border-radius:50px;"></div>
+          </div>
+          <span style="font-family:'Nunito',sans-serif;font-size:10px;font-weight:700;color:${col};white-space:nowrap;width:54px;text-align:right;">
+            ${sign}${fmt(c.chg, m.decimals)}${m.unit}
+          </span>
+        </div>`;
     }).join('');
 
-    area.innerHTML = cards;
+    content.innerHTML = `
+      <!-- 요약 카드 -->
+      <div class="period-summary">
+        <div class="summary-label">${m.icon} ${m.fullLabel} · 현재값</div>
+        <div class="summary-top">
+          <div class="summary-value">${fmt(lv, m.decimals)}${m.unit ? `<span class="unit">${m.unit}</span>` : ''}</div>
+          <span class="card-pct ${pctClass(diffPct)}">${pctSign(diffPct)}</span>
+        </div>
+        <div class="summary-badges">
+          <span class="summary-badge badge-period">${firstValid.date} → ${lastValid.date}</span>
+          <span class="summary-badge ${pctClass(diff)}" style="font-size:12px;">
+            ${diff >= 0 ? '+' : ''}${fmt(diff, m.decimals)}${m.unit}
+          </span>
+        </div>
+      </div>
+
+      <!-- 선 그래프 카드 -->
+      <div class="chart-card" style="margin-bottom:12px;">
+        <div class="chart-title-row">
+          <span class="chart-title">📉 전체 추이</span>
+          <span class="chart-range-label">${n}개 데이터</span>
+        </div>
+        <div class="chart-svg-wrap">
+          <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
+            <defs>
+              <linearGradient id="${fillId}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="${lineColor}" stop-opacity="0.18"/>
+                <stop offset="100%" stop-color="${lineColor}" stop-opacity="0.01"/>
+              </linearGradient>
+            </defs>
+            <!-- 가이드 라인 -->
+            <line x1="${PAD_X}" y1="${PAD_Y}" x2="${W-PAD_X}" y2="${PAD_Y}" stroke="rgba(180,210,200,0.3)" stroke-width="1" stroke-dasharray="3,4"/>
+            <line x1="${PAD_X}" y1="${PAD_Y+plotH/2}" x2="${W-PAD_X}" y2="${PAD_Y+plotH/2}" stroke="rgba(180,210,200,0.3)" stroke-width="1" stroke-dasharray="3,4"/>
+            <line x1="${PAD_X}" y1="${PAD_Y+plotH}" x2="${W-PAD_X}" y2="${PAD_Y+plotH}" stroke="rgba(180,210,200,0.3)" stroke-width="1" stroke-dasharray="3,4"/>
+            <!-- fill -->
+            <path d="${fillPath}" fill="url(#${fillId})"/>
+            <!-- line -->
+            <path d="${linePath}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- 최고점 -->
+            <circle cx="${px(maxIdx)}" cy="${py(maxV)}" r="${dotRadius}" fill="${lineColor}" stroke="white" stroke-width="1.5"/>
+            <text x="${px(maxIdx)}" y="${py(maxV)-8}" text-anchor="middle" font-size="8" fill="${lineColor}" font-family="Nunito,sans-serif" font-weight="700">${fmt(maxV, m.decimals)}</text>
+            <!-- 최저점 -->
+            <circle cx="${px(minIdx)}" cy="${py(minV)}" r="${dotRadius}" fill="var(--blue)" stroke="white" stroke-width="1.5"/>
+            <text x="${px(minIdx)}" y="${py(minV)+16}" text-anchor="middle" font-size="8" fill="var(--blue)" font-family="Nunito,sans-serif" font-weight="700">${fmt(minV, m.decimals)}</text>
+            <!-- 시작/끝 점 -->
+            <circle cx="${px(0)}" cy="${py(fv)}" r="3" fill="var(--text-light)" stroke="white" stroke-width="1.5"/>
+            <circle cx="${px(n-1)}" cy="${py(lv)}" r="3.5" fill="${lineColor}" stroke="white" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="x-labels">${xLabels}</div>
+      </div>
+
+      <!-- 일별 변화 바 카드 -->
+      <div class="chart-card">
+        <div class="chart-title-row">
+          <span class="chart-title">📊 최근 일별 변화</span>
+          <span class="chart-range-label">최근 ${changes.length}일</span>
+        </div>
+        ${barRows || '<div class="no-data">데이터 없음</div>'}
+      </div>`;
   }
 
   // ── 탭 이벤트 ──
