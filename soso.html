@@ -80,6 +80,8 @@ html, body { height: 100%; overflow: hidden; background: var(--sky); font-family
 .week-day-label.is-today { color: var(--accent); border-bottom-color: var(--accent); }
 .today-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; flex-shrink: 0; }
 .week-day-empty { font-size: 12px; color: var(--text-light); padding: 3px 2px; }
+.week-day-label.is-sat { color: #2255AA; border-bottom-color: #2255AA; }
+.week-day-label.is-sun { color: #AA2222; border-bottom-color: #AA2222; }
 
 /* MODAL */
 .modal-overlay { position: fixed; inset: 0; background: rgba(44,74,90,0.45); z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
@@ -109,7 +111,7 @@ html, body { height: 100%; overflow: hidden; background: var(--sky); font-family
 </head>
 <body>
 <div id="app">
-  <div class="app-header"><span class="app-title">소소한 앱</span></div>
+  <div class="app-header"><span style="display:flex;align-items:center;gap:7px;"><span style="font-size:22px;line-height:1">📅</span><span class="app-title">소소한 앱</span></span></div>
   <div class="tab-content">
 
     <div class="panel active" id="panel-schedule">
@@ -295,7 +297,8 @@ function renderSch(){
     const items=S.sch.filter(x=>x.date===key);
     const block=document.createElement('div');block.className='week-day-block';
     const lbl=document.createElement('div');
-    lbl.className='week-day-label'+(key===todayStr?' is-today':'');
+    const isSat=dow===6,isSun=dow===0;
+    lbl.className='week-day-label'+(key===todayStr?' is-today':'')+(isSat?' is-sat':'')+(isSun?' is-sun':'');
     if(key===todayStr){const dot=document.createElement('span');dot.className='today-dot';lbl.appendChild(dot);}
     const dayNames=['일','월','화','수','목','금','토'];
     lbl.appendChild(document.createTextNode(`${d.getMonth()+1}월 ${d.getDate()}일 (${dayNames[dow]})`));
