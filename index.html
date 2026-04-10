@@ -37,7 +37,6 @@
       overflow-x: hidden;
     }
 
-    /* 배경 장식 원 */
     .bg-blob {
       position: fixed;
       border-radius: 50%;
@@ -61,9 +60,8 @@
       min-height: 100dvh;
     }
 
-    /* 헤더 */
     header {
-      padding: 52px 4px 24px;
+      padding: 36px 4px 14px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -79,9 +77,7 @@
       letter-spacing: -0.5px;
       text-align: center;
     }
-    .app-title span {
-      color: var(--accent);
-    }
+    .app-title span { color: var(--accent); }
 
     .app-subtitle {
       font-size: 13px;
@@ -90,7 +86,6 @@
       margin-top: 4px;
     }
 
-    /* 날짜 pill */
     .date-pill {
       background: white;
       border-radius: 50px;
@@ -116,19 +111,18 @@
       50% { opacity: 0.5; transform: scale(0.8); }
     }
 
-    /* 메뉴 그리드 */
     .menu-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 14px;
-      margin-top: 28px;
+      margin-top: 18px;
     }
 
     .menu-card {
       background: var(--card-bg);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: 18px 16px 16px;
+      padding: 14px 16px 12px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -141,14 +135,13 @@
       border: 1.5px solid rgba(255,255,255,0.7);
       position: relative;
       overflow: hidden;
-      min-height: 130px;
+      min-height: 105px;
     }
     .menu-card:active {
       transform: scale(0.95);
       box-shadow: 0 4px 16px rgba(79,174,224,0.10);
     }
 
-    /* 카드별 상단 포인트 색 */
     .menu-card::before {
       content: '';
       position: absolute;
@@ -156,42 +149,48 @@
       height: 4px;
       border-radius: 24px 24px 0 0;
     }
-    .card-economy::before  { background: linear-gradient(90deg, #5dcf8a, #a8e6c4); } /* 그린 */
-.card-protein::before  { background: linear-gradient(90deg, #4faee0, #85c8f0); } /* 블루 */
+    .card-economy::before  { background: linear-gradient(90deg, #5dcf8a, #a8e6c4); }
+    .card-protein::before  { background: linear-gradient(90deg, #4faee0, #85c8f0); }
     .card-workout::before  { background: linear-gradient(90deg, #f87c9b, #fbc4d0); }
     .card-habit::before    { background: linear-gradient(90deg, #c4b5fd, #ddd6fe); }
-
-    /* 카드 내부: 아이콘 상단 중앙, 라벨 하단 */
-    .menu-card {
-      justify-content: space-between;
-    }
+    .card-soso::before     { background: linear-gradient(90deg, #85c8f0, #b8e0f7); }
 
     .card-icon-wrap {
-      width: 54px; height: 54px;
-      border-radius: 15px;
+      width: 48px; height: 48px;
+      border-radius: 13px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 28px;
-      margin: 8px auto 0;
+      font-size: 26px;
+      margin: 4px auto 0;
     }
-    .card-economy  .card-icon-wrap { background: #d4f5e3; } /* 연한 그린 */
-    .card-protein  .card-icon-wrap { background: #ddf1fb; } /* 연한 블루 */
+    .card-economy  .card-icon-wrap { background: #d4f5e3; }
+    .card-protein  .card-icon-wrap { background: #ddf1fb; }
     .card-workout  .card-icon-wrap { background: #fde4ec; }
     .card-habit    .card-icon-wrap { background: #ede9fe; }
+    .card-soso     .card-icon-wrap { background: #ddf1fb; }
 
     .card-label {
       font-family: 'Nunito', sans-serif;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 800;
       color: var(--text-dark);
       line-height: 1.2;
       text-align: center;
       white-space: nowrap;
+      margin-top: 4px;
     }
 
-    /* 하단 인용 */
+    /* 빈 셀 (그리드 3행 우측 채우기용) */
+    .card-empty {
+      background: transparent;
+      box-shadow: none;
+      border: none;
+      pointer-events: none;
+    }
+    .card-empty::before { display: none; }
+
     .footer-quote {
       margin-top: auto;
-      padding-top: 36px;
+      padding-top: 28px;
       text-align: center;
       font-size: 12px;
       color: var(--text-light);
@@ -205,17 +204,17 @@
       margin-bottom: 2px;
     }
 
-    /* 로드 애니메이션 */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(18px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    header       { animation: fadeUp 0.45s ease both; }
+    header                  { animation: fadeUp 0.45s ease both; }
     .menu-card:nth-child(1) { animation: fadeUp 0.45s 0.10s ease both; }
     .menu-card:nth-child(2) { animation: fadeUp 0.45s 0.18s ease both; }
     .menu-card:nth-child(3) { animation: fadeUp 0.45s 0.26s ease both; }
     .menu-card:nth-child(4) { animation: fadeUp 0.45s 0.34s ease both; }
-    .footer-quote { animation: fadeUp 0.45s 0.42s ease both; }
+    .menu-card:nth-child(5) { animation: fadeUp 0.45s 0.40s ease both; }
+    .footer-quote           { animation: fadeUp 0.45s 0.46s ease both; }
   </style>
 </head>
 <body>
@@ -237,29 +236,32 @@
 
     <div class="menu-grid">
 
-      <!-- 경제지표 -->
       <a href="economy.html" class="menu-card card-economy">
         <div class="card-icon-wrap">📈</div>
         <div class="card-label">경제 지표</div>
       </a>
 
-      <!-- 영양 트래커 -->
       <a href="nutrition.html" class="menu-card card-protein">
         <div class="card-icon-wrap">🥩</div>
         <div class="card-label">영양 트래커</div>
       </a>
 
-      <!-- 헬스 기록 -->
       <a href="workout.html" class="menu-card card-workout">
         <div class="card-icon-wrap">🏋️</div>
         <div class="card-label">운동 기록</div>
       </a>
 
-      <!-- 습관 트래커 -->
       <a href="habits.html" class="menu-card card-habit">
         <div class="card-icon-wrap">✅</div>
         <div class="card-label">습관 트래커</div>
       </a>
+
+      <a href="soso.html" class="menu-card card-soso">
+        <div class="card-icon-wrap">📅</div>
+        <div class="card-label">소소한 앱</div>
+      </a>
+
+      <div class="menu-card card-empty"></div>
 
     </div>
 
