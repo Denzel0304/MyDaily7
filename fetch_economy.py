@@ -1,10 +1,16 @@
 import yfinance as yf
 import json
+import math
 import os
 from datetime import datetime, timezone, timedelta
 
 KST = timezone(timedelta(hours=9))
 today = datetime.now(KST).strftime("%Y-%m-%d")
+
+def safe_pct(value):
+    if value is None or (isinstance(value, float) and math.isnan(value)):
+        return None
+    return value
 
 def get_pct(ticker, period="2d"):
     try:
@@ -73,10 +79,10 @@ cap_diff_pct = round((top1_cap - top2_cap) / top2_cap * 100, 1) if top2_cap else
 
 data = {
     "date": today,
-    "vix": {"value": vix, "pct": vix_pct},
-    "nasdaq": {"value": nasdaq_price, "pct": nasdaq_pct},
-    "kospi": {"value": kospi_price, "pct": kospi_pct},
-    "usdkrw": {"value": usdkrw, "pct": usdkrw_pct},
+    "vix":    {"value": vix,          "pct": safe_pct(vix_pct)},
+    "nasdaq": {"value": nasdaq_price, "pct": safe_pct(nasdaq_pct)},
+    "kospi":  {"value": kospi_price,  "pct": safe_pct(kospi_pct)},
+    "usdkrw": {"value": usdkrw,       "pct": safe_pct(usdkrw_pct)},
     "top_stock": {
         "rank1": top1_name,
         "rank2": top2_name,
@@ -91,7 +97,7 @@ os.makedirs("data", exist_ok=True)
 with open("data/economy_latest.json", "w", encoding="utf-8") as f:
     json.dump(data, f, ensure_ascii=False, indent=2)
 
-# history.json에 누적 (최대 35일)
+# history.json에 누적
 history_path = "data/economy_history.json"
 if os.path.exists(history_path):
     with open(history_path, "r", encoding="utf-8") as f:
@@ -102,7 +108,7 @@ else:
 # 오늘 날짜 중복 제거 후 추가
 history = [h for h in history if h["date"] != today]
 history.append(data)
-# 최신순 정렬, 최대 35개
+# 최신순 정렬, 최대 3650개
 history = sorted(history, key=lambda x: x["date"], reverse=True)[:3650]
 
 with open("data/economy_history.json", "w", encoding="utf-8") as f:
