@@ -24,7 +24,8 @@
       --radius: 24px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html { overflow: hidden; height: 100%; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: none; }
 
     body {
       font-family: 'Noto Sans KR', sans-serif;
@@ -34,7 +35,11 @@
       flex-direction: column;
       align-items: center;
       padding: 0;
-      overflow-x: hidden;
+      overflow: hidden;
+      height: 100dvh;
+      height: 100vh;
+      overscroll-behavior: none;
+      touch-action: none;
     }
 
     .bg-blob {
@@ -153,7 +158,7 @@
     .card-protein::before  { background: linear-gradient(90deg, #4faee0, #85c8f0); }
     .card-workout::before  { background: linear-gradient(90deg, #f87c9b, #fbc4d0); }
     .card-habit::before    { background: linear-gradient(90deg, #c4b5fd, #ddd6fe); }
-    .card-soso::before     { background: linear-gradient(90deg, #85c8f0, #b8e0f7); }
+    .card-soso::before     { background: linear-gradient(90deg, #f9a870, #fcc9a0); }
 
     .card-icon-wrap {
       width: 48px; height: 48px;
@@ -166,7 +171,7 @@
     .card-protein  .card-icon-wrap { background: #ddf1fb; }
     .card-workout  .card-icon-wrap { background: #fde4ec; }
     .card-habit    .card-icon-wrap { background: #ede9fe; }
-    .card-soso     .card-icon-wrap { background: #ddf1fb; }
+    .card-soso     .card-icon-wrap { background: #fdecd8; }
 
     .card-label {
       font-family: 'Nunito', sans-serif;
