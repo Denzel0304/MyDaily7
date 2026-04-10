@@ -478,6 +478,7 @@
         </optgroup>
         <optgroup label="────────────" style="color:#ccc; font-size:8px;"></optgroup>
         <option value="banana">🍌 바나나</option>
+        <option value="yeonyanggaeng">🍫 연양갱</option>
         <option value="sweetpotato">🍠 고구마</option>
         <option value="jam">🍯 잼</option>
         <option value="ramen">🍜 라면</option>
@@ -672,6 +673,7 @@
     bread:       null,   // 1장당 16g 고정
     extra_c:     null,   // 입력값 그대로
     banana:      null,   // 1개당 16g
+    yeonyanggaeng: null,   // 1개당 33g (50g 기준)
     sweetpotato: 27.7,
     jam:         null,   // 1큰술당 13g
     ramen:       null,   // 1개당 83g
@@ -684,6 +686,7 @@
     bread:    16,    // 1장당 16g
     extra_c:  1,     // 입력값 그대로 (1당 1g)
     banana:   16,
+    yeonyanggaeng: 33,
     jam:      13,    // 1큰술당 13g
     ramen:    83,
     jjajang:  80,
@@ -693,18 +696,21 @@
   const CARB_FOOD_UNIT = {
     shake_c:'g', misugaru_c:'g', grainrice:'g', bread:'장', extra_c:'g',
     banana:'개', sweetpotato:'g', jam:'큰술',
+    yeonyanggaeng:'개',
     ramen:'개', jjajang:'개', somyeon:'개', tteok:'g',
   };
   const CARB_FOOD_NAMES = {
     shake_c:'단백질 보충제', misugaru_c:'미숫가루', grainrice:'잡곡밥',
     bread:'식빵', extra_c:'기타',
     banana:'바나나', sweetpotato:'고구마', jam:'잼',
+    yeonyanggaeng:'연양갱',
     ramen:'라면', jjajang:'짜장면', somyeon:'소면', tteok:'떡'
   };
   const CARB_FOOD_ICONS = {
     shake_c:'💪', misugaru_c:'🌾', grainrice:'🍚',
     bread:'🍞', extra_c:'➕',
     banana:'🍌', sweetpotato:'🍠', jam:'🍯',
+    yeonyanggaeng:'🍫',
     ramen:'🍜', jjajang:'🍜', somyeon:'🍜', tteok:'🍡'
   };
 
