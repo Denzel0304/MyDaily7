@@ -510,7 +510,8 @@
   // ── 데이터 로드 ──
   async function loadData() {
     // localStorage 캐시 (오늘 날짜 기준)
-    const today = new Date().toISOString().slice(0,10);
+    const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
+  .toISOString().slice(0, 10);
     const cachedDate = localStorage.getItem(LS_FETCH_DATE);
 
     if (cachedDate === today && localStorage.getItem(LS_LATEST)) {
