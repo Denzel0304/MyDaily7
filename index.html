@@ -163,6 +163,8 @@
     .card-workout::before  { background: linear-gradient(90deg, #f87c9b, #fbc4d0); }
     .card-habit::before    { background: linear-gradient(90deg, #c4b5fd, #ddd6fe); }
     .card-soso::before     { background: linear-gradient(90deg, #f9a870, #fcc9a0); }
+    /* 하루 감정: #c9956a 기반 파스텔 그라데이션 */
+    .card-emotion::before  { background: linear-gradient(90deg, #d4a882, #e8c4a0); }
 
     .card-icon-wrap {
       width: 48px; height: 48px;
@@ -176,6 +178,8 @@
     .card-workout  .card-icon-wrap { background: #fde4ec; }
     .card-habit    .card-icon-wrap { background: #ede9fe; }
     .card-soso     .card-icon-wrap { background: #fdecd8; }
+    /* 하루 감정 아이콘 배경: #c9956a 의 매우 연한 버전 */
+    .card-emotion  .card-icon-wrap { background: #f5e6d8; }
 
     .card-label {
       font-family: 'Nunito', sans-serif;
@@ -188,7 +192,6 @@
       margin-top: 4px;
     }
 
-    /* 빈 셀 (그리드 3행 우측 채우기용) */
     .card-empty {
       background: transparent;
       box-shadow: none;
@@ -225,7 +228,8 @@
     .menu-card:nth-child(3) { animation: fadeUp 0.45s 0.26s ease both; }
     .menu-card:nth-child(4) { animation: fadeUp 0.45s 0.34s ease both; }
     .menu-card:nth-child(5) { animation: fadeUp 0.45s 0.40s ease both; }
-    .footer-quote           { animation: fadeUp 0.45s 0.46s ease both; }
+    .menu-card:nth-child(6) { animation: fadeUp 0.45s 0.46s ease both; }
+    .footer-quote           { animation: fadeUp 0.45s 0.52s ease both; }
   </style>
 </head>
 <body>
@@ -272,7 +276,10 @@
         <div class="card-label">소소한 앱</div>
       </a>
 
-      <div class="menu-card card-empty"></div>
+      <a href="emotion.html" class="menu-card card-emotion">
+        <div class="card-icon-wrap">🌳</div>
+        <div class="card-label">하루 감정</div>
+      </a>
 
     </div>
 
@@ -289,13 +296,11 @@
     const str = `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
     document.getElementById('today-date').textContent = str;
 
-    // 폰트 로드 완료 후 화면 표시 (레이아웃 안정화)
     function showBody() {
       document.body.style.opacity = '1';
     }
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(showBody);
-      // 폰트 로드가 너무 오래 걸리면 500ms 후 강제 표시
       setTimeout(showBody, 500);
     } else {
       showBody();
