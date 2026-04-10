@@ -1,9 +1,6 @@
 name: Fetch Economy Data
 on:
-  schedule:
-    # KST 06:50 = UTC 21:50 (전날)
-    - cron: '50 21 * * *'
-  workflow_dispatch: # 수동 실행도 가능
+  workflow_dispatch:
 jobs:
   fetch:
     runs-on: ubuntu-latest
