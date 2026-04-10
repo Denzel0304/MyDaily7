@@ -57,8 +57,9 @@ html, body { height: 100%; overflow: hidden; background: var(--sky); font-family
 .panel-hd { display: flex; align-items: center; justify-content: space-between; padding: 12px 0 10px; }
 .panel-title { font-size: 16px; font-weight: 700; color: var(--text); }
 .add-btn { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-mid); color: white; border: none; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.io-btn { width: 28px; height: 28px; border-radius: 50%; background: var(--white); color: var(--accent); border: 1.5px solid var(--accent-mid); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.panel-hd-right { display: flex; align-items: center; gap: 6px; }
+.io-btn { height: 34px; padding: 0 12px; border-radius: 17px; background: var(--white); color: var(--accent-btn); border: 1.5px solid var(--accent-mid); font-size: 15px; cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0; white-space: nowrap; }
+.io-btn-label { font-size: 11px; font-weight: 600; color: var(--accent-btn); }
+.panel-hd-right { display: flex; align-items: center; gap: 10px; }
 
 /* ITEM LIST */
 .item-list { display: flex; flex-direction: column; gap: 8px; }
@@ -138,8 +139,8 @@ html, body { height: 100%; overflow: hidden; background: var(--sky); font-family
       <div class="panel-hd">
         <span class="panel-title">디데이</span>
         <div class="panel-hd-right">
-          <button class="io-btn" id="import-dd" title="불러오기">📥</button>
-          <button class="io-btn" id="export-dd" title="내보내기">📤</button>
+          <button class="io-btn" id="import-dd">📥<span class="io-btn-label">불러오기</span></button>
+          <button class="io-btn" id="export-dd">📤<span class="io-btn-label">내보내기</span></button>
           <button class="add-btn" id="add-dd">+</button>
         </div>
       </div>
@@ -151,8 +152,8 @@ html, body { height: 100%; overflow: hidden; background: var(--sky); font-family
       <div class="panel-hd">
         <span class="panel-title">기념일</span>
         <div class="panel-hd-right">
-          <button class="io-btn" id="import-an" title="불러오기">📥</button>
-          <button class="io-btn" id="export-an" title="내보내기">📤</button>
+          <button class="io-btn" id="import-an">📥<span class="io-btn-label">불러오기</span></button>
+          <button class="io-btn" id="export-an">📤<span class="io-btn-label">내보내기</span></button>
           <button class="add-btn" id="add-an">+</button>
         </div>
       </div>
@@ -556,20 +557,50 @@ function exportData(type) {
 
 function importData(type, file) {
   if (!file) return;
+  const fname = file.name.toLowerCase();
+  // 파일명으로 타입 검증
+  if (type === 'dd') {
+    if (fname.includes('anniversary')) {
+      alert('형식이 다릅니다. 디데이 파일을 선택해주세요.\n(파일명에 dday가 포함된 파일)');
+      return;
+    }
+    if (!fname.includes('dday') && !fname.includes('diday')) {
+      // 파일명 검증이 모호한 경우 내용으로 2차 확인 - 일단 진행하되 경고
+    }
+  } else {
+    if (fname.includes('dday') || fname.includes('diday')) {
+      alert('형식이 다릅니다. 기념일 파일을 선택해주세요.\n(파일명에 anniversary가 포함된 파일)');
+      return;
+    }
+    if (!fname.includes('anniversary')) {
+      // 파일명 검증이 모호한 경우 내용으로 2차 확인 - 일단 진행
+    }
+  }
   const reader = new FileReader();
   reader.onload = e => {
     try {
       const data = JSON.parse(e.target.result);
       if (!Array.isArray(data)) { alert('올바른 파일이 아니에요.'); return; }
+      // 내용 기반 2차 검증
       if (type === 'dd') {
-        if (confirm(`디데이 ${data.length}개를 불러올까요? 기존 데이터는 덮어씌워져요.`)) {
+        const hasAnnivFields = data.length > 0 && data[0].month !== undefined;
+        if (hasAnnivFields) {
+          alert('형식이 다릅니다. 디데이 파일을 선택해주세요.');
+          return;
+        }
+        if (confirm(`디데이 ${data.length}개를 불러올까요?\n기존 데이터는 덮어씌워져요.`)) {
           S.dd = data;
           save();
           renderAll();
           alert('불러오기 완료!');
         }
       } else {
-        if (confirm(`기념일 ${data.length}개를 불러올까요? 기존 데이터는 덮어씌워져요.`)) {
+        const hasDdayFields = data.length > 0 && data[0].date !== undefined && data[0].month === undefined;
+        if (hasDdayFields) {
+          alert('형식이 다릅니다. 기념일 파일을 선택해주세요.');
+          return;
+        }
+        if (confirm(`기념일 ${data.length}개를 불러올까요?\n기존 데이터는 덮어씌워져요.`)) {
           S.an = data;
           save();
           renderAll();
