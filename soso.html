@@ -75,6 +75,11 @@ html, body { height: 100%; overflow: hidden; background: var(--sky); font-family
 .dday-past { background: #FFF0E6; color: #8A4000; }
 .dday-today { background: #E6FFE6; color: #1A6B1A; }
 .lunar-tag { font-size: 9px; background: #EEE8FF; color: #5533AA; border-radius: 4px; padding: 1px 4px; margin-left: 3px; font-weight: 600; vertical-align: middle; }
+.week-day-block { margin-bottom: 14px; }
+.week-day-label { font-size: 12px; font-weight: 700; color: var(--text-muted); padding: 4px 2px 5px; border-bottom: 1.5px solid var(--border-mid); margin-bottom: 7px; display: flex; align-items: center; gap: 5px; }
+.week-day-label.is-today { color: var(--accent); border-bottom-color: var(--accent); }
+.today-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; flex-shrink: 0; }
+.week-day-empty { font-size: 12px; color: var(--text-light); padding: 3px 2px; }
 
 /* MODAL */
 .modal-overlay { position: fixed; inset: 0; background: rgba(44,74,90,0.45); z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
@@ -115,10 +120,10 @@ html, body { height: 100%; overflow: hidden; background: var(--sky); font-family
       </div>
       <div class="day-tabs" id="day-tabs"></div>
       <div class="sec-hd">
-        <span class="sec-title" id="day-sec-title">일정</span>
+        <span class="sec-title" id="day-sec-title">일정 입력: 날짜 선택 후 +</span>
         <button class="add-btn" id="add-sch">+</button>
       </div>
-      <div class="item-list" id="sch-list"></div>
+      <div id="sch-week-view"></div>
     </div>
 
     <div class="panel" id="panel-dday">
@@ -275,17 +280,38 @@ function renderWeek(){
     tabs.appendChild(el);
   });
   const sd=new Date(S.selDay+'T00:00:00');
-  $('day-sec-title').textContent=`${sd.getMonth()+1}월 ${sd.getDate()}일 (${DAY[sd.getDay()]}) 일정`;
+  $('day-sec-title').textContent=`선택된 날짜: ${sd.getMonth()+1}/${sd.getDate()} (${DAY[sd.getDay()]}) 에 추가`;
 }
 
 // ── RENDER LISTS ──────────────────────────────────────────────────────
 function renderSch(){
-  const list=$('sch-list');
-  const items=S.sch.filter(x=>x.date===S.selDay);
-  list.innerHTML='';
-  if(!items.length){list.innerHTML='<div class="empty-msg">일정이 없어요</div>';return;}
-  items.forEach((it,i)=>list.appendChild(makeCard(it,i,'sch')));
-  setupDrag(list,S.sch,'sch');
+  const container=$('sch-week-view');
+  container.innerHTML='';
+  const dates=weekDates(S.weekOffset);
+  const todayStr=fmt(today0());
+  let hasAny=false;
+  dates.forEach(d=>{
+    const key=fmt(d),dow=d.getDay();
+    const items=S.sch.filter(x=>x.date===key);
+    const block=document.createElement('div');block.className='week-day-block';
+    const lbl=document.createElement('div');
+    lbl.className='week-day-label'+(key===todayStr?' is-today':'');
+    if(key===todayStr){const dot=document.createElement('span');dot.className='today-dot';lbl.appendChild(dot);}
+    const dayNames=['일','월','화','수','목','금','토'];
+    lbl.appendChild(document.createTextNode(`${d.getMonth()+1}월 ${d.getDate()}일 (${dayNames[dow]})`));
+    block.appendChild(lbl);
+    if(!items.length){
+      const em=document.createElement('div');em.className='week-day-empty';em.textContent='일정 없음';
+      block.appendChild(em);
+    }else{
+      hasAny=true;
+      const ilist=document.createElement('div');ilist.className='item-list';ilist.style.marginBottom='4px';
+      items.forEach((it,i)=>ilist.appendChild(makeCard(it,i,'sch')));
+      setupDrag(ilist,S.sch,'sch');
+      block.appendChild(ilist);
+    }
+    container.appendChild(block);
+  });
 }
 function renderDd(){
   const list=$('dd-list');list.innerHTML='';
@@ -418,8 +444,8 @@ function openModal(type,item,idx){
   $('g-anniv').style.display=type==='an'?'':'none';
   $('g-imp').style.display=type==='sch'?'':'none';
   if(type==='dd'){
-    if(isE&&item.date){const[y,m,d]=item.date.split('-');$('f-y').value=y;$('f-mo').value=+m;$('f-d').value=+d;}
-    else{const t=new Date();$('f-y').value=t.getFullYear();$('f-mo').value=t.getMonth()+1;$('f-d').value=t.getDate();}
+    if(isE&&item.date){const[y,m,d]=item.date.split('-');$('f-y').value=+y;$('f-mo').value=+m;$('f-d').value=+d;}
+    else{$('f-y').value='';$('f-mo').value='';$('f-d').value='';}
   }
   if(type==='an'){
     selCal=isE?(item.lunar?'lunar':'solar'):'solar';
