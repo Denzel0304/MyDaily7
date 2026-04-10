@@ -170,23 +170,16 @@ window.addEmotion=function(){
   const label=input.value.trim();
   if(!label)return;
   const td=todayStr(),hour=new Date().getHours();
-  const ex=records.find(r=>r.date===td&&r.label===label&&r.type===type);
-  if(ex){
-    // 이미 있는 열매: 카운트만 증가 (클릭과 동일)
-    ex.count=(ex.count||1)+1;
-    ex.times=ex.times||[];ex.times.push(hour);
-  } else {
-    const todayList=getTodayEmotions();
-    if(todayList.length>=13){alert('오늘 열매는 최대 13개까지 달 수 있어요 🌳');return;}
-    // 빈 슬롯 번호 찾기
-    const usedSlots=new Set(todayList.map(r=>r.slot));
-    let freeSlot=-1;
-    for(let i=0;i<13;i++){if(!usedSlots.has(i)){freeSlot=i;break;}}
-    if(freeSlot<0)return;
-    const colorIdx=freeSlot%7;
-    // count:1 — 첫 등록은 1, 클릭해야 2가 됨
-    records.push({date:td,label,type,count:1,times:[hour],ts:Date.now(),slot:freeSlot,colorIdx});
-  }
+  const todayList=getTodayEmotions();
+  if(todayList.length>=13){alert('오늘 열매는 최대 13개까지 달 수 있어요 🌳');return;}
+  // 이미 같은 이름+타입이 있어도 무조건 새 열매로 추가
+  const usedSlots=new Set(todayList.map(r=>r.slot));
+  let freeSlot=-1;
+  for(let i=0;i<13;i++){if(!usedSlots.has(i)){freeSlot=i;break;}}
+  if(freeSlot<0)return;
+  const colorIdx=freeSlot%7;
+  // count:0 — 열매 생성 자체는 카운트 아님. 탭할 때 1이 됨
+  records.push({date:td,label,type,count:0,times:[],ts:Date.now(),slot:freeSlot,colorIdx});
   saveData();input.value='';drawTree();
   const h=document.getElementById('drag-hint');
   h.classList.add('show');setTimeout(()=>h.classList.remove('show'),3500);
@@ -353,9 +346,10 @@ function drawTree(){
     // +/- 뱃지
     o+=`<circle cx="${p.x-R+12}" cy="${p.y-R+12}" r="12" fill="${fr.type==='+'?'#c8e6c9':'#ffcdd2'}" pointer-events="none"/>`;
     o+=`<text x="${p.x-R+12}" y="${p.y-R+17}" text-anchor="middle" font-size="14" fill="${tcol}" font-weight="700" pointer-events="none">${tc}</text>`;
-    // 카운트 뱃지: 2 이상, 진한 녹색
-    if(cnt>=2){
-      o+=`<circle cx="${p.x+R-11}" cy="${p.y-R+11}" r="13" fill="#2e7d32" pointer-events="none"/>`;
+    // 카운트 뱃지: 1 이상일 때 표시, 긍정=녹색 부정=빨간색
+    if(cnt>=1){
+      const badgeCol=fr.type==='+'?'#2e7d32':'#c62828';
+      o+=`<circle cx="${p.x+R-11}" cy="${p.y-R+11}" r="13" fill="${badgeCol}" pointer-events="none"/>`;
       o+=`<text x="${p.x+R-11}" y="${p.y-R+16}" text-anchor="middle" font-size="12" fill="white" font-weight="700" pointer-events="none">${cnt>99?'99+':cnt}</text>`;
     }
   });
