@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="소소한 앱">
+<title>소소한 앱</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --sky: #D6ECFA;
+    --sky-dark: #B8DDEF;
+    --sky-deeper: #8FC5E0;
+    --white: #FFFFFF;
+    --text: #2C4A5A;
+    --text-muted: #5A7A8A;
+    --text-light: #8AAABB;
+    --border: rgba(44,74,90,0.15);
+    --border-mid: rgba(44,74,90,0.25);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 2px 8px rgba(44,74,90,0.12);
+    --shadow-sm: 0 1px 4px rgba(44,74,90,0.08);
+    --imp-low: #B8DDEF;
+    --imp-low-text: #1D5C7A;
+    --imp-mid: #FFD580;
+    --imp-mid-text: #7A5200;
+    --imp-high: #FFB3B3;
+    --imp-high-text: #7A1A1A;
+    --tab-h: 64px;
+    --header-h: 56px;
+  }
+  html, body { height: 100%; overflow: hidden; background: var(--sky); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--text); }
+  #app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; max-width: 480px; margin: 0 auto; background: var(--sky); }
+  /* HEADER */
+  .app-header { height: var(--header-h); display: flex; align-items: center; justify-content: center; background: var(--sky); flex-shrink: 0; }
+  .app-title { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+  /* CONTENT */
+  .tab-content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0 0 8px; -webkit-overflow-scrolling: touch; }
+  /* TABS */
+  .tab-bar { height: var(--tab-h); display: flex; background: var(--white); border-top: 1px solid var(--border); flex-shrink: 0; }
+  .tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: none; background: transparent; color: var(--text-light); font-size: 11px; font-weight: 500; cursor: pointer; padding: 6px 0; transition: color 0.2s; }
+  .tab-btn.active { color: #1D5C7A; }
+  .tab-btn .tab-icon { font-size: 20px; }
+  .tab-btn.active .tab-icon { filter: drop-shadow(0 1px 2px rgba(29,92,122,0.3)); }
+  /* PANEL */
+  .panel { display: none; padding: 0 12px; }
+  .panel.active { display: block; }
+  /* WEEK NAV */
+  .week-nav { display: flex; align-items: center; justify-content: space-between; padding: 12px 4px 8px; }
+  .week-label { font-size: 15px; font-weight: 600; color: var(--text); text-align: center; flex: 1; }
+  .nav-btn { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--border-mid); background: var(--white); color: var(--text); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  /* DAY TABS */
+  .day-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 0 4px 10px; scrollbar-width: none; }
+  .day-tabs::-webkit-scrollbar { display: none; }
+  .day-tab { flex-shrink: 0; padding: 6px 10px; border-radius: 20px; border: 1.5px solid var(--border-mid); background: var(--white); color: var(--text-muted); font-size: 12px; font-weight: 500; cursor: pointer; text-align: center; min-width: 48px; transition: all 0.15s; }
+  .day-tab.active { background: #1D5C7A; border-color: #1D5C7A; color: white; }
+  .day-tab .day-name { font-size: 11px; }
+  .day-tab .day-num { font-size: 14px; font-weight: 600; }
+  /* SECTION HEADER */
+  .section-header { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 8px; }
+  .section-title { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+  .add-btn { width: 30px; height: 30px; border-radius: 50%; background: #1D5C7A; color: white; border: none; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; flex-shrink: 0; }
+  /* ITEM LIST */
+  .item-list { display: flex; flex-direction: column; gap: 8px; min-height: 40px; }
+  .item-card { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); padding: 10px 12px; display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-sm); transition: opacity 0.15s; user-select: none; }
+  .item-card.dragging { opacity: 0.5; box-shadow: var(--shadow); }
+  .item-card.drag-over { border-color: #1D5C7A; }
+  .drag-handle { color: var(--text-light); font-size: 16px; cursor: grab; flex-shrink: 0; display: flex; flex-direction: column; gap: 3px; padding: 2px 0; }
+  .drag-handle span { display: block; width: 18px; height: 2px; background: var(--text-light); border-radius: 2px; }
+  .item-body { flex: 1; min-width: 0; }
+  .item-name { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .item-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .edit-btn { width: 28px; height: 28px; border-radius: var(--radius-sm); border: 1px solid var(--border-mid); background: transparent; color: var(--text-muted); font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .del-btn { width: 28px; height: 28px; border-radius: var(--radius-sm); border: 1px solid #FFB3B3; background: transparent; color: #A83232; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  /* BADGE */
+  .imp-badge { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 20px; flex-shrink: 0; }
+  .imp-low { background: var(--imp-low); color: var(--imp-low-text); }
+  .imp-mid { background: var(--imp-mid); color: var(--imp-mid-text); }
+  .imp-high { background: var(--imp-high); color: var(--imp-high-text); }
+  /* D-DAY / 기념일 BADGE */
+  .dday-badge { font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 20px; background: #E8F4FD; color: #1D5C7A; flex-shrink: 0; min-width: 64px; text-align: center; }
+  .dday-past { background: #FFF0E6; color: #8A4000; }
+  .dday-today { background: #E6FFE6; color: #1A6B1A; }
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(44,74,90,0.45); z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
+  .modal-overlay.hidden { display: none; }
+  .modal-box { background: var(--white); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; padding: 20px 20px 32px; max-height: 80vh; overflow-y: auto; }
+  .modal-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; display: block; }
+  .form-input { width: 100%; padding: 10px 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--border-mid); background: var(--sky); font-size: 14px; color: var(--text); outline: none; font-family: inherit; }
+  .form-input:focus { border-color: #1D5C7A; }
+  .imp-select { display: flex; gap: 8px; }
+  .imp-opt { flex: 1; padding: 8px 0; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--sky); font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .imp-opt.sel-low { background: var(--imp-low); border-color: var(--imp-low); color: var(--imp-low-text); }
+  .imp-opt.sel-mid { background: var(--imp-mid); border-color: var(--imp-mid); color: var(--imp-mid-text); }
+  .imp-opt.sel-high { background: var(--imp-high); border-color: var(--imp-high); color: var(--imp-high-text); }
+  .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .btn-cancel { flex: 1; padding: 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--border-mid); background: transparent; color: var(--text-muted); font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-save { flex: 2; padding: 12px; border-radius: var(--radius-sm); border: none; background: #1D5C7A; color: white; font-size: 14px; font-weight: 600; cursor: pointer; }
+  /* EMPTY */
+  .empty-msg { text-align: center; padding: 32px 0; color: var(--text-light); font-size: 13px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="app-header">
+    <span class="app-title">소소한 앱</span>
+  </div>
+
+  <div class="tab-content">
+    <!-- 다음 주 일정 -->
+    <div class="panel active" id="panel-schedule">
+      <div class="week-nav">
+        <button class="nav-btn" id="prev-week">‹</button>
+        <span class="week-label" id="week-label"></span>
+        <button class="nav-btn" id="next-week">›</button>
+      </div>
+      <div class="day-tabs" id="day-tabs"></div>
+      <div style="padding: 0 4px;">
+        <div class="section-header">
+          <span class="section-title" id="day-section-title">일정</span>
+          <button class="add-btn" id="add-schedule-btn">+</button>
+        </div>
+        <div class="item-list" id="schedule-list"></div>
+      </div>
+    </div>
+
+    <!-- 디데이 -->
+    <div class="panel" id="panel-dday">
+      <div style="padding: 12px 4px 8px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 16px; font-weight: 700; color: var(--text);">디데이</span>
+        <button class="add-btn" id="add-dday-btn">+</button>
+      </div>
+      <div class="item-list" id="dday-list"></div>
+    </div>
+
+    <!-- 기념일 -->
+    <div class="panel" id="panel-anniversary">
+      <div style="padding: 12px 4px 8px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 16px; font-weight: 700; color: var(--text);">기념일</span>
+        <button class="add-btn" id="add-anniv-btn">+</button>
+      </div>
+      <div class="item-list" id="anniv-list"></div>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="schedule">
+      <span class="tab-icon">📅</span>
+      <span>다음 주 일정</span>
+    </button>
+    <button class="tab-btn" data-tab="dday">
+      <span class="tab-icon">⏳</span>
+      <span>디데이</span>
+    </button>
+    <button class="tab-btn" data-tab="anniversary">
+      <span class="tab-icon">🎉</span>
+      <span>기념일</span>
+    </button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay hidden" id="modal">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">일정 추가</div>
+    <div class="form-group">
+      <label class="form-label">제목</label>
+      <input class="form-input" id="f-name" type="text" placeholder="제목을 입력하세요" />
+    </div>
+    <div class="form-group" id="f-date-group">
+      <label class="form-label">날짜</label>
+      <input class="form-input" id="f-date" type="date" />
+    </div>
+    <div class="form-group" id="f-imp-group">
+      <label class="form-label">중요도</label>
+      <div class="imp-select" id="imp-select">
+        <div class="imp-opt" data-val="low">낮음</div>
+        <div class="imp-opt sel-mid" data-val="mid">보통</div>
+        <div class="imp-opt" data-val="high">높음</div>
+      </div>
+    </div>
+    <div class="form-group" id="f-memo-group">
+      <label class="form-label">메모 <span style="color:var(--text-light)">(선택)</span></label>
+      <input class="form-input" id="f-memo" type="text" placeholder="간단한 메모" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="modal-cancel">취소</button>
+      <button class="btn-save" id="modal-save">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const DAY_KO = ['일','월','화','수','목','금','토'];
+
+// ── STATE ─────────────────────────────────────────────────────────────
+let state = {
+  weekOffset: 1,
+  selectedDay: null,
+  schedules: [],
+  ddays: [],
+  anniversaries: [],
+};
+
+function load() {
+  try { state.schedules = JSON.parse(localStorage.getItem('ss_sch') || '[]'); } catch(e){ state.schedules = []; }
+  try { state.ddays = JSON.parse(localStorage.getItem('ss_dd') || '[]'); } catch(e){ state.ddays = []; }
+  try { state.anniversaries = JSON.parse(localStorage.getItem('ss_an') || '[]'); } catch(e){ state.anniversaries = []; }
+}
+function save() {
+  localStorage.setItem('ss_sch', JSON.stringify(state.schedules));
+  localStorage.setItem('ss_dd', JSON.stringify(state.ddays));
+  localStorage.setItem('ss_an', JSON.stringify(state.anniversaries));
+}
+
+// ── DATE UTILS ────────────────────────────────────────────────────────
+function getWeekDates(offsetWeeks) {
+  const now = new Date();
+  const day = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - day + 1 + offsetWeeks * 7);
+  monday.setHours(0,0,0,0);
+  return Array.from({length:7}, (_,i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d;
+  });
+}
+function fmt(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function dayDiff(dateStr) {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const target = new Date(dateStr); target.setHours(0,0,0,0);
+  return Math.round((target - now) / 86400000);
+}
+
+// ── WEEK NAV ──────────────────────────────────────────────────────────
+function renderWeek() {
+  const dates = getWeekDates(state.weekOffset);
+  const s = dates[0], e = dates[6];
+  $('week-label').textContent =
+    `${s.getMonth()+1}/${s.getDate()} (${DAY_KO[s.getDay()]}) ~ ${e.getMonth()+1}/${e.getDate()} (${DAY_KO[e.getDay()]})`;
+
+  if (!state.selectedDay || !dates.find(d => fmt(d) === state.selectedDay)) {
+    state.selectedDay = fmt(dates[0]);
+  }
+  const tabs = $('day-tabs');
+  tabs.innerHTML = '';
+  dates.forEach(d => {
+    const key = fmt(d);
+    const btn = document.createElement('div');
+    btn.className = 'day-tab' + (key === state.selectedDay ? ' active' : '');
+    btn.innerHTML = `<div class="day-name">${DAY_KO[d.getDay()]}</div><div class="day-num">${d.getDate()}</div>`;
+    btn.onclick = () => { state.selectedDay = key; renderWeek(); renderScheduleList(); };
+    tabs.appendChild(btn);
+  });
+  const selDate = new Date(state.selectedDay + 'T00:00:00');
+  $('day-section-title').textContent =
+    `${selDate.getMonth()+1}월 ${selDate.getDate()}일 (${DAY_KO[selDate.getDay()]}) 일정`;
+}
+
+// ── SCHEDULE ──────────────────────────────────────────────────────────
+function renderScheduleList() {
+  const list = $('schedule-list');
+  const items = state.schedules.filter(s => s.date === state.selectedDay);
+  list.innerHTML = '';
+  if (!items.length) { list.innerHTML = '<div class="empty-msg">일정이 없어요</div>'; return; }
+  items.forEach((item, idx) => {
+    const el = makeItemCard(item, idx, 'schedule');
+    list.appendChild(el);
+  });
+  setupDrag(list, state.schedules, 'schedule');
+}
+
+// ── DDAY ─────────────────────────────────────────────────────────────
+function renderDdayList() {
+  const list = $('dday-list');
+  list.innerHTML = '';
+  if (!state.ddays.length) { list.innerHTML = '<div class="empty-msg">디데이를 추가해보세요</div>'; return; }
+  state.ddays.forEach((item, idx) => {
+    const el = makeItemCard(item, idx, 'dday');
+    list.appendChild(el);
+  });
+  setupDrag(list, state.ddays, 'dday');
+}
+
+// ── ANNIVERSARY ──────────────────────────────────────────────────────
+function renderAnnivList() {
+  const list = $('anniv-list');
+  list.innerHTML = '';
+  if (!state.anniversaries.length) { list.innerHTML = '<div class="empty-msg">기념일을 추가해보세요</div>'; return; }
+  state.anniversaries.forEach((item, idx) => {
+    const el = makeItemCard(item, idx, 'anniversary');
+    list.appendChild(el);
+  });
+  setupDrag(list, state.anniversaries, 'anniversary');
+}
+
+// ── ITEM CARD ─────────────────────────────────────────────────────────
+function makeDdayText(dateStr, type) {
+  const diff = dayDiff(dateStr);
+  if (type === 'dday') {
+    if (diff === 0) return { text: 'D-DAY', cls: 'dday-today' };
+    if (diff < 0) return { text: `+${Math.abs(diff)}일`, cls: 'dday-past' };
+    return { text: `D-${diff}`, cls: '' };
+  } else {
+    if (diff === 0) return { text: 'D-DAY', cls: 'dday-today' };
+    if (diff < 0) {
+      const abs = Math.abs(diff);
+      const years = Math.floor(abs / 365);
+      return { text: `+${abs}일${years >= 1 ? ` (${years}주년)` : ''}`, cls: 'dday-past' };
+    }
+    return { text: `-${diff}일`, cls: '' };
+  }
+}
+
+function makeItemCard(item, idx, type) {
+  const card = document.createElement('div');
+  card.className = 'item-card';
+  card.dataset.idx = idx;
+  card.draggable = true;
+
+  const handle = document.createElement('div');
+  handle.className = 'drag-handle';
+  handle.innerHTML = '<span></span><span></span><span></span>';
+
+  const body = document.createElement('div');
+  body.className = 'item-body';
+  const nameEl = document.createElement('div');
+  nameEl.className = 'item-name';
+  nameEl.textContent = item.name;
+  body.appendChild(nameEl);
+  if (item.memo) {
+    const meta = document.createElement('div');
+    meta.className = 'item-meta';
+    meta.textContent = item.memo;
+    body.appendChild(meta);
+  }
+
+  const actions = document.createElement('div');
+  actions.className = 'item-actions';
+
+  if (type === 'schedule') {
+    const badge = document.createElement('span');
+    badge.className = `imp-badge imp-${item.importance || 'mid'}`;
+    badge.textContent = item.importance === 'low' ? '낮음' : item.importance === 'high' ? '높음' : '보통';
+    actions.appendChild(badge);
+  } else {
+    const ddInfo = makeDdayText(item.date, type);
+    const ddBadge = document.createElement('span');
+    ddBadge.className = `dday-badge ${ddInfo.cls}`;
+    ddBadge.textContent = ddInfo.text;
+    actions.appendChild(ddBadge);
+  }
+
+  const editBtn = document.createElement('button');
+  editBtn.className = 'edit-btn';
+  editBtn.innerHTML = '✏️';
+  editBtn.style.fontSize = '14px';
+  editBtn.onclick = () => openModal(type, item, idx);
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'del-btn';
+  delBtn.innerHTML = '✕';
+  delBtn.onclick = () => deleteItem(type, idx);
+
+  actions.appendChild(editBtn);
+  actions.appendChild(delBtn);
+
+  card.appendChild(handle);
+  card.appendChild(body);
+  card.appendChild(actions);
+  return card;
+}
+
+// ── DRAG & DROP ───────────────────────────────────────────────────────
+function setupDrag(container, arr, type) {
+  let dragIdx = null;
+  container.querySelectorAll('.item-card').forEach(card => {
+    card.addEventListener('dragstart', e => {
+      dragIdx = +card.dataset.idx;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+    card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('drag-over'); });
+    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      card.classList.remove('drag-over');
+      const dropIdx = +card.dataset.idx;
+      if (dragIdx === null || dragIdx === dropIdx) return;
+      if (type === 'schedule') {
+        const filtered = arr.filter(s => s.date === state.selectedDay);
+        const others = arr.filter(s => s.date !== state.selectedDay);
+        const [moved] = filtered.splice(dragIdx, 1);
+        filtered.splice(dropIdx, 0, moved);
+        state.schedules = [...others, ...filtered];
+      } else {
+        const [moved] = arr.splice(dragIdx, 1);
+        arr.splice(dropIdx, 0, moved);
+      }
+      dragIdx = null;
+      save(); renderAll();
+    });
+    // Touch drag
+    let touch = null, touchClone = null, startY = 0;
+    card.addEventListener('touchstart', e => {
+      if (!e.target.closest('.drag-handle')) return;
+      touch = card;
+      startY = e.touches[0].clientY;
+      dragIdx = +card.dataset.idx;
+      touchClone = card.cloneNode(true);
+      touchClone.style.cssText = `position:fixed;left:${card.getBoundingClientRect().left}px;top:${card.getBoundingClientRect().top}px;width:${card.offsetWidth}px;opacity:.7;z-index:999;pointer-events:none;`;
+      document.body.appendChild(touchClone);
+      card.style.opacity = '0.3';
+    }, {passive: true});
+    card.addEventListener('touchmove', e => {
+      if (!touch) return;
+      const dy = e.touches[0].clientY - startY;
+      if (touchClone) touchClone.style.top = (card.getBoundingClientRect().top + dy) + 'px';
+    }, {passive: true});
+    card.addEventListener('touchend', e => {
+      if (!touch || !touchClone) return;
+      touchClone.remove(); touchClone = null;
+      card.style.opacity = '';
+      const el = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+      const dropCard = el?.closest('.item-card');
+      if (dropCard && dropCard !== card) {
+        const dropIdx = +dropCard.dataset.idx;
+        if (type === 'schedule') {
+          const filtered = arr.filter(s => s.date === state.selectedDay);
+          const others = arr.filter(s => s.date !== state.selectedDay);
+          const [moved] = filtered.splice(dragIdx, 1);
+          filtered.splice(dropIdx, 0, moved);
+          state.schedules = [...others, ...filtered];
+        } else {
+          const [moved] = arr.splice(dragIdx, 1);
+          arr.splice(dropIdx, 0, moved);
+        }
+        save(); renderAll();
+      }
+      touch = null; dragIdx = null;
+    });
+  });
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────
+let modalCtx = { type: null, item: null, idx: null };
+let selImp = 'mid';
+
+function openModal(type, item, idx) {
+  modalCtx = { type, item, idx };
+  const isEdit = item !== null;
+  $('modal-title').textContent = isEdit ? '수정' : (type === 'schedule' ? '일정 추가' : type === 'dday' ? '디데이 추가' : '기념일 추가');
+  $('f-name').value = isEdit ? item.name : '';
+  $('f-memo').value = isEdit ? (item.memo || '') : '';
+  $('f-date').value = isEdit ? item.date : (type === 'schedule' ? state.selectedDay : fmt(new Date()));
+
+  $('f-imp-group').style.display = type === 'schedule' ? '' : 'none';
+  $('f-date-group').style.display = type === 'schedule' ? 'none' : '';
+
+  selImp = isEdit && item.importance ? item.importance : 'mid';
+  updateImpSelect();
+  $('modal').classList.remove('hidden');
+  setTimeout(() => $('f-name').focus(), 100);
+}
+
+function updateImpSelect() {
+  document.querySelectorAll('#imp-select .imp-opt').forEach(opt => {
+    opt.className = 'imp-opt';
+    if (opt.dataset.val === selImp) opt.classList.add(`sel-${selImp}`);
+  });
+}
+
+document.querySelectorAll('#imp-select .imp-opt').forEach(opt => {
+  opt.onclick = () => { selImp = opt.dataset.val; updateImpSelect(); };
+});
+
+$('modal-cancel').onclick = () => $('modal').classList.add('hidden');
+$('modal').onclick = e => { if (e.target === $('modal')) $('modal').classList.add('hidden'); };
+
+$('modal-save').onclick = () => {
+  const name = $('f-name').value.trim();
+  if (!name) { $('f-name').focus(); return; }
+  const { type, item, idx } = modalCtx;
+  const obj = { id: item?.id || Date.now(), name, memo: $('f-memo').value.trim(), date: $('f-date').value };
+
+  if (type === 'schedule') {
+    obj.date = state.selectedDay;
+    obj.importance = selImp;
+    if (idx !== null) state.schedules[idx] = obj;
+    else state.schedules.push(obj);
+  } else if (type === 'dday') {
+    if (idx !== null) state.ddays[idx] = obj;
+    else state.ddays.push(obj);
+  } else {
+    if (idx !== null) state.anniversaries[idx] = obj;
+    else state.anniversaries.push(obj);
+  }
+  save(); renderAll();
+  $('modal').classList.add('hidden');
+};
+
+function deleteItem(type, idx) {
+  if (!confirm('삭제할까요?')) return;
+  if (type === 'schedule') {
+    const filtered = state.schedules.filter(s => s.date === state.selectedDay);
+    const others = state.schedules.filter(s => s.date !== state.selectedDay);
+    filtered.splice(idx, 1);
+    state.schedules = [...others, ...filtered];
+  } else if (type === 'dday') {
+    state.ddays.splice(idx, 1);
+  } else {
+    state.anniversaries.splice(idx, 1);
+  }
+  save(); renderAll();
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    $(`panel-${btn.dataset.tab}`).classList.add('active');
+  };
+});
+
+// ── WEEK BUTTONS ──────────────────────────────────────────────────────
+$('prev-week').onclick = () => { state.weekOffset--; state.selectedDay = null; renderWeek(); renderScheduleList(); };
+$('next-week').onclick = () => { state.weekOffset++; state.selectedDay = null; renderWeek(); renderScheduleList(); };
+
+// ── ADD BUTTONS ───────────────────────────────────────────────────────
+$('add-schedule-btn').onclick = () => openModal('schedule', null, null);
+$('add-dday-btn').onclick = () => openModal('dday', null, null);
+$('add-anniv-btn').onclick = () => openModal('anniversary', null, null);
+
+// ── RENDER ALL ────────────────────────────────────────────────────────
+function renderAll() {
+  renderWeek();
+  renderScheduleList();
+  renderDdayList();
+  renderAnnivList();
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────
+load();
+renderAll();
+</script>
+</body>
+</html>
