@@ -509,44 +509,20 @@
 
   // ── 데이터 로드 ──
   async function loadData() {
-    // localStorage 캐시 (오늘 날짜 기준)
-    const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
-  .toISOString().slice(0, 10);
-    const cachedDate = localStorage.getItem(LS_FETCH_DATE);
-
-    if (cachedDate === today && localStorage.getItem(LS_LATEST)) {
-      latestData  = JSON.parse(localStorage.getItem(LS_LATEST));
-      historyData = JSON.parse(localStorage.getItem(LS_HISTORY) || '[]');
-      render();
-      return;
-    }
-
-    // 새로 fetch
-    try {
-      const [latestRes, histRes] = await Promise.all([
-        fetch(REPO_RAW + 'economy_latest.json?t=' + Date.now()),
-        fetch(REPO_RAW + 'economy_history.json?t=' + Date.now()),
-      ]);
-      latestData  = await latestRes.json();
-      historyData = await histRes.json();
-
-      localStorage.setItem(LS_LATEST,     JSON.stringify(latestData));
-      localStorage.setItem(LS_HISTORY,    JSON.stringify(historyData));
-      localStorage.setItem(LS_FETCH_DATE, today);
-      render();
-    } catch(e) {
-      // fetch 실패 시 캐시라도 표시
-      if (localStorage.getItem(LS_LATEST)) {
-        latestData  = JSON.parse(localStorage.getItem(LS_LATEST));
-        historyData = JSON.parse(localStorage.getItem(LS_HISTORY) || '[]');
-        render();
-      } else {
-        document.getElementById('cards-area').innerHTML =
-          `<div class="status-box">❌ 데이터를 불러올 수 없습니다.<br><small>인터넷 연결을 확인해 주세요.</small></div>`;
-        document.getElementById('update-time').textContent = '로드 실패';
-      }
-    }
+  try {
+    const [latestRes, histRes] = await Promise.all([
+      fetch(REPO_RAW + 'economy_latest.json?t=' + Date.now()),
+      fetch(REPO_RAW + 'economy_history.json?t=' + Date.now()),
+    ]);
+    latestData  = await latestRes.json();
+    historyData = await histRes.json();
+    render();
+  } catch(e) {
+    document.getElementById('cards-area').innerHTML =
+      `<div class="status-box">❌ 데이터를 불러올 수 없습니다.<br><small>인터넷 연결을 확인해 주세요.</small></div>`;
+    document.getElementById('update-time').textContent = '로드 실패';
   }
+}
 
   // ── 렌더 분기 ──
   function render() {
