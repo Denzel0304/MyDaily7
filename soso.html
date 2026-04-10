@@ -57,6 +57,8 @@ html, body { height: 100%; overflow: hidden; background: var(--sky); font-family
 .panel-hd { display: flex; align-items: center; justify-content: space-between; padding: 12px 0 10px; }
 .panel-title { font-size: 16px; font-weight: 700; color: var(--text); }
 .add-btn { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-mid); color: white; border: none; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.io-btn { width: 28px; height: 28px; border-radius: 50%; background: var(--white); color: var(--accent); border: 1.5px solid var(--accent-mid); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.panel-hd-right { display: flex; align-items: center; gap: 6px; }
 
 /* ITEM LIST */
 .item-list { display: flex; flex-direction: column; gap: 8px; }
@@ -135,18 +137,28 @@ html, body { height: 100%; overflow: hidden; background: var(--sky); font-family
     <div class="panel" id="panel-dday">
       <div class="panel-hd">
         <span class="panel-title">디데이</span>
-        <button class="add-btn" id="add-dd">+</button>
+        <div class="panel-hd-right">
+          <button class="io-btn" id="import-dd" title="불러오기">📥</button>
+          <button class="io-btn" id="export-dd" title="내보내기">📤</button>
+          <button class="add-btn" id="add-dd">+</button>
+        </div>
       </div>
       <div class="item-list" id="dd-list"></div>
     </div>
+    <input type="file" id="file-import-dd" accept=".json" style="display:none">
 
     <div class="panel" id="panel-anniversary">
       <div class="panel-hd">
         <span class="panel-title">기념일</span>
-        <button class="add-btn" id="add-an">+</button>
+        <div class="panel-hd-right">
+          <button class="io-btn" id="import-an" title="불러오기">📥</button>
+          <button class="io-btn" id="export-an" title="내보내기">📤</button>
+          <button class="add-btn" id="add-an">+</button>
+        </div>
       </div>
       <div class="item-list" id="an-list"></div>
     </div>
+    <input type="file" id="file-import-an" accept=".json" style="display:none">
 
   </div>
   <div class="tab-bar">
@@ -524,6 +536,59 @@ $('next-week').onclick=()=>{S.weekOffset++;S.selDay=null;renderAll();};
 $('add-sch').onclick=()=>openModal('sch',null,null);
 $('add-dd').onclick=()=>openModal('dd',null,null);
 $('add-an').onclick=()=>openModal('an',null,null);
+
+
+// ── 내보내기 / 불러오기 ───────────────────────────────────────────────
+function exportData(type) {
+  const data = type === 'dd' ? S.dd : S.an;
+  const label = type === 'dd' ? 'dday' : 'anniversary';
+  const date = new Date();
+  const ds = `${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}`;
+  const filename = `soso_${label}_${ds}.json`;
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importData(type, file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) { alert('올바른 파일이 아니에요.'); return; }
+      if (type === 'dd') {
+        if (confirm(`디데이 ${data.length}개를 불러올까요? 기존 데이터는 덮어씌워져요.`)) {
+          S.dd = data;
+          save();
+          renderAll();
+          alert('불러오기 완료!');
+        }
+      } else {
+        if (confirm(`기념일 ${data.length}개를 불러올까요? 기존 데이터는 덮어씌워져요.`)) {
+          S.an = data;
+          save();
+          renderAll();
+          alert('불러오기 완료!');
+        }
+      }
+    } catch(err) {
+      alert('파일을 읽을 수 없어요. JSON 파일인지 확인해주세요.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+$('export-dd').onclick = () => exportData('dd');
+$('export-an').onclick = () => exportData('an');
+$('import-dd').onclick = () => $('file-import-dd').click();
+$('import-an').onclick = () => $('file-import-an').click();
+$('file-import-dd').onchange = e => { importData('dd', e.target.files[0]); e.target.value=''; };
+$('file-import-an').onchange = e => { importData('an', e.target.files[0]); e.target.value=''; };
 
 function renderAll(){renderWeek();renderSch();renderDd();renderAn();}
 load();renderAll();
