@@ -40,6 +40,8 @@
       height: 100vh;
       overscroll-behavior: none;
       touch-action: none;
+      opacity: 0;
+      transition: opacity 0.25s ease;
     }
 
     .bg-blob {
@@ -62,7 +64,9 @@
       padding: 0 18px 40px;
       display: flex;
       flex-direction: column;
-      min-height: 100dvh;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
     }
 
     header {
@@ -195,11 +199,13 @@
 
     .footer-quote {
       margin-top: auto;
-      padding-top: 28px;
+      padding-top: 16px;
+      padding-bottom: 8px;
       text-align: center;
       font-size: 12px;
       color: var(--text-light);
       line-height: 1.7;
+      flex-shrink: 0;
     }
     .footer-quote strong {
       display: block;
@@ -282,6 +288,18 @@
     const days = ['일','월','화','수','목','금','토'];
     const str = `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
     document.getElementById('today-date').textContent = str;
+
+    // 폰트 로드 완료 후 화면 표시 (레이아웃 안정화)
+    function showBody() {
+      document.body.style.opacity = '1';
+    }
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(showBody);
+      // 폰트 로드가 너무 오래 걸리면 500ms 후 강제 표시
+      setTimeout(showBody, 500);
+    } else {
+      showBody();
+    }
   </script>
 
 </body>
