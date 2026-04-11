@@ -138,14 +138,8 @@ function loadData(){
     const s=localStorage.getItem(SK);
     if(s)records=JSON.parse(s);
   }catch(e){records=[];}
-  // 자정 이후 새 날이면 모든 열매 카운트 0으로 리셋
-  const lastDate=localStorage.getItem(SK_DATE)||'';
-  const today=todayStr();
-  if(lastDate && lastDate!==today){
-    records.forEach(r=>{if(r.date===lastDate){r.count=0;r.times=[];}});
-    try{localStorage.setItem(SK,JSON.stringify(records));}catch(e){}
-  }
-  localStorage.setItem(SK_DATE,today);
+  // 날짜 저장 (자정 리셋 불필요: 오늘 탭은 todayStr()로 필터링하므로 새 날이면 자동으로 빈 상태)
+  localStorage.setItem(SK_DATE,todayStr());
 }
 function saveData(){pruneOldData();try{localStorage.setItem(SK,JSON.stringify(records));localStorage.setItem(SK_DATE,todayStr());}catch(e){}}
 function pruneOldData(){const c=new Date();c.setFullYear(c.getFullYear()-1);const cs=dStr(c);records=records.filter(r=>r.date>=cs);}
