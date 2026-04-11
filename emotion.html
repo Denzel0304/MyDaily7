@@ -1,982 +1,633 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0a0820">
-<title>N멍</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<title>하루 감정</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400&family=Noto+Sans+KR:wght@300;400&display=swap');
-  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-  html, body {
-    width:100%; height:100%; overflow:hidden; background:#000;
-    -webkit-tap-highlight-color:transparent;
-    -webkit-touch-callout:none;
-    user-select:none; -webkit-user-select:none;
-  }
-  #app {
-    position:fixed; top:0; left:0; width:100%; height:100%;
-    touch-action:none; overflow:hidden;
-  }
-  canvas#c {
-    position:absolute; top:0; left:0; width:100%; height:100%; display:block;
-  }
-  #top-bar {
-    position:absolute; top:0; left:0; right:0;
-    padding:max(env(safe-area-inset-top,16px),16px) 20px 0;
-    display:flex; align-items:center; gap:10px;
-    z-index:30; pointer-events:none;
-  }
-  #app-icon {
-    width:38px; height:38px; border-radius:11px;
-    background:rgba(255,255,255,0.14);
-    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
-    border:0.5px solid rgba(255,255,255,0.22);
-    display:flex; align-items:center; justify-content:center; flex-shrink:0;
-  }
-  #app-name {
-    font-family:'Noto Serif KR',serif; font-size:22px; font-weight:300;
-    color:rgba(255,255,255,0.92); letter-spacing:2px;
-    text-shadow:0 2px 12px rgba(0,0,0,0.3);
-  }
-  #scene-label {
-    position:absolute;
-    bottom:calc(env(safe-area-inset-bottom,0px) + 58px);
-    left:50%; transform:translateX(-50%);
-    font-family:'Noto Sans KR',sans-serif; font-size:12px; font-weight:300;
-    color:rgba(255,255,255,0.65); letter-spacing:2.5px;
-    text-shadow:0 1px 8px rgba(0,0,0,0.4);
-    white-space:nowrap; z-index:30; pointer-events:none;
-    transition:opacity 0.6s ease;
-  }
-  #dots {
-    position:absolute;
-    bottom:calc(env(safe-area-inset-bottom,0px) + 34px);
-    left:50%; transform:translateX(-50%);
-    display:flex; gap:7px; align-items:center;
-    z-index:30; pointer-events:none;
-  }
-  .dot {
-    width:5px; height:5px; border-radius:50%;
-    background:rgba(255,255,255,0.3);
-    transition:all 0.45s cubic-bezier(0.34,1.56,0.64,1);
-  }
-  .dot.active { width:20px; border-radius:3px; background:rgba(255,255,255,0.82); }
-  .arrow-btn {
-    position:absolute; top:50%; transform:translateY(-50%);
-    width:44px; height:44px; border-radius:50%;
-    background:rgba(255,255,255,0.12);
-    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
-    border:0.5px solid rgba(255,255,255,0.18);
-    display:flex; align-items:center; justify-content:center;
-    cursor:pointer; z-index:30;
-    transition:background 0.2s, transform 0.15s;
-    -webkit-tap-highlight-color:transparent; touch-action:manipulation;
-  }
-  .arrow-btn:active { background:rgba(255,255,255,0.25); transform:translateY(-50%) scale(0.93); }
-  #btn-left  { left:14px; }
-  #btn-right { right:14px; }
-  #fade {
-    position:absolute; top:0; left:0; right:0; bottom:0;
-    background:#000; opacity:0; pointer-events:none; z-index:20;
-    transition:opacity 0.32s ease;
-  }
+@import url('https://fonts.googleapis.com/css2?family=Gamja+Flower&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;touch-action:none;}
+body{font-family:'Gamja Flower',cursive;background:#fdf6ee;overscroll-behavior:none;}
+:root{
+  --cream:#fdf6ee;--warm1:#f5e6d3;--warm2:#e8c9a8;
+  --brown1:#c9956a;--brown2:#8b6347;--brown3:#5a3e2b;
+  --text1:#3d2b1f;--text2:#7a5c47;--text3:#b89880;
+  --font-round:'Gamja Flower',cursive;--font-body:'Gamja Flower',cursive;
+}
+#app{width:100%;max-width:430px;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;background:var(--cream);overflow:hidden;position:relative;}
+.header{padding:13px 20px 9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--cream);border-bottom:1px solid var(--warm2);position:relative;}
+.header h1{font-size:22px;font-weight:400;color:var(--brown2);letter-spacing:3px;font-family:var(--font-round);display:flex;align-items:center;gap:8px;}
+.header-icon{font-size:22px;line-height:1;}
+.header-date{position:absolute;right:16px;font-size:15px;font-weight:700;color:var(--brown2);line-height:1.3;text-align:right;}
+.tabs{display:flex;flex-shrink:0;background:var(--warm1);border-bottom:2px solid var(--warm2);}
+.tab{flex:1;padding:11px 0;text-align:center;font-size:16px;font-weight:400;color:var(--text3);cursor:pointer;transition:all 0.2s;position:relative;font-family:var(--font-round);letter-spacing:1px;}
+.tab.active{color:var(--brown2);background:var(--cream);}
+.tab.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--brown1);}
+.content{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+.tab-panel{display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0;}
+.tab-panel.active{display:flex;}
+.input-area{padding:11px 12px;background:var(--warm1);border-bottom:1px solid var(--warm2);flex-shrink:0;}
+.input-row{display:flex;gap:7px;align-items:center;}
+.type-select{border:1.5px solid var(--warm2);border-radius:20px;padding:10px 10px 8px 10px;font-size:15px;font-family:var(--font-round);background:#fff;color:var(--brown3);outline:none;cursor:pointer;min-width:82px;flex-shrink:0;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23b89880'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px;line-height:1.5;}
+.emotion-input{flex:1;min-width:0;border:1.5px solid var(--warm2);border-radius:20px;padding:9px 14px;font-size:16px;font-family:var(--font-round);background:#fff;color:var(--text1);outline:none;transition:border-color 0.2s;}
+.emotion-input:focus{border-color:var(--brown1);}
+.add-btn{width:42px;height:42px;border-radius:50%;background:var(--brown1);border:none;color:#fff;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s,transform 0.1s;line-height:1;}
+.add-btn:active{background:var(--brown2);transform:scale(0.93);}
+.tree-area{flex:1;overflow:hidden;position:relative;user-select:none;}
+#tree-svg{width:100%;height:100%;display:block;touch-action:none;}
+#delete-zone{position:absolute;bottom:0;left:0;right:0;height:72px;display:flex;align-items:center;justify-content:center;background:transparent;border-top:2px dashed transparent;transition:all 0.25s;pointer-events:none;font-size:14px;color:#c62828;font-family:var(--font-round);letter-spacing:1px;opacity:0;}
+#delete-zone.active{background:rgba(255,210,210,0.6);border-top-color:#e88;opacity:1;}
+#delete-zone.over{background:rgba(255,150,150,0.78);border-top-color:#c62828;}
+#drag-ghost{position:fixed;pointer-events:none;z-index:9999;display:none;transform:translate(-50%,-60%);}
+.drag-hint{position:absolute;top:7px;left:0;right:0;text-align:center;font-size:11px;color:var(--text3);font-family:var(--font-round);opacity:0;transition:opacity 0.4s;pointer-events:none;}
+.drag-hint.show{opacity:1;}
+.scroll-panel{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px 14px 24px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
+.period-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:10px 14px;background:var(--warm1);border-radius:12px;border:1px solid var(--warm2);}
+.nav-btn{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--warm2);background:#fff;color:var(--brown2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;}
+.nav-btn:active{background:var(--warm2);}
+.nav-btn:disabled{opacity:0.3;cursor:default;}
+.period-label{font-size:15px;color:var(--brown2);text-align:center;font-family:var(--font-round);}
+.period-sub{font-size:11px;color:var(--text3);text-align:center;margin-top:2px;}
+.summary-card{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:12px;border:1px solid var(--warm2);}
+.summary-title{font-size:14px;color:var(--text3);margin-bottom:8px;}
+.badge-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.badge{padding:5px 12px;border-radius:20px;font-size:14px;font-weight:700;}
+.badge-pos{background:#e8f5e9;color:#2e7d32;}
+.badge-neg{background:#fce4ec;color:#c62828;}
+.summary-comment{font-size:15px;color:var(--brown2);line-height:1.6;font-family:var(--font-round);}
+.chart-card{background:#fff;border-radius:14px;padding:14px 12px 10px;margin-bottom:12px;border:1px solid var(--warm2);}
+.chart-card-title{font-size:15px;font-weight:700;color:var(--brown2);margin-bottom:12px;}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.bar-label{width:70px;font-size:14px;color:var(--text2);text-align:right;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bar-track{flex:1;background:var(--warm1);border-radius:8px;height:24px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:8px;display:flex;align-items:center;justify-content:flex-end;padding-right:7px;min-width:20px;}
+.bar-num{font-size:13px;font-weight:700;color:var(--brown3);}
+.time-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.time-cell{background:var(--warm1);border-radius:8px;padding:9px 4px;text-align:center;border:1px solid transparent;}
+.time-cell.has-data{border-color:var(--warm2);}
+.time-cell-label{font-size:13px;color:var(--text3);display:block;margin-bottom:3px;font-family:var(--font-round);}
+.time-cell-count{font-size:19px;font-weight:700;}
+.no-data{text-align:center;color:var(--text3);font-size:16px;padding:60px 0;font-family:var(--font-round);}
 </style>
 </head>
 <body>
 <div id="app">
-  <canvas id="c"></canvas>
-  <div id="fade"></div>
-  <div id="top-bar">
-    <div id="app-icon">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2C7.5 2 4 6.5 4 11C4 16 8 20 12 22C16 20 20 16 20 11C20 6.5 16.5 2 12 2Z"
-              fill="rgba(255,255,255,0.75)" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/>
-        <path d="M12 8V16M9 12.5C10.5 14 13.5 14 15 12.5"
-              stroke="rgba(255,255,255,0.45)" stroke-width="1" stroke-linecap="round"/>
-      </svg>
-    </div>
-    <span id="app-name">N멍</span>
+  <div class="header">
+    <h1><span class="header-icon">🌳</span>하루 감정</h1>
+    <span class="header-date" id="header-date"></span>
   </div>
-  <div id="scene-label"></div>
-  <div id="dots"></div>
-  <button class="arrow-btn" id="btn-left" aria-label="이전 장면">
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <path d="M11 4L6 9L11 14" stroke="rgba(255,255,255,0.88)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </button>
-  <button class="arrow-btn" id="btn-right" aria-label="다음 장면">
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <path d="M7 4L12 9L7 14" stroke="rgba(255,255,255,0.88)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </button>
+  <div class="tabs">
+    <div class="tab active" data-tab="today" onclick="switchTab('today')">오늘</div>
+    <div class="tab" data-tab="week" onclick="switchTab('week')">이번 주</div>
+    <div class="tab" data-tab="month" onclick="switchTab('month')">이번 달</div>
+  </div>
+  <div class="content">
+    <div class="tab-panel active" id="panel-today">
+      <div class="input-area">
+        <div class="input-row">
+          <select class="type-select" id="emotion-type">
+            <option value="+">😊 긍정</option>
+            <option value="-">😔 부정</option>
+          </select>
+          <input class="emotion-input" id="emotion-input" placeholder="지금 감정은?" maxlength="8"/>
+          <button class="add-btn" onclick="addEmotion()">+</button>
+        </div>
+      </div>
+      <div class="tree-area" id="tree-area">
+        <div class="drag-hint" id="drag-hint">길게 눌러 아래로 드래그하면 삭제돼요</div>
+        <svg id="tree-svg" viewBox="0 0 390 540" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div id="delete-zone">🗑 여기로 드래그하면 삭제돼요</div>
+      </div>
+    </div>
+    <div class="tab-panel" id="panel-week">
+      <div class="scroll-panel">
+        <div class="period-nav">
+          <button class="nav-btn" id="week-prev" onclick="changeWeek(-1)">‹</button>
+          <div><div class="period-label" id="week-label"></div><div class="period-sub" id="week-sub"></div></div>
+          <button class="nav-btn" id="week-next" onclick="changeWeek(1)">›</button>
+        </div>
+        <div id="week-content"></div>
+      </div>
+    </div>
+    <div class="tab-panel" id="panel-month">
+      <div class="scroll-panel">
+        <div class="period-nav">
+          <button class="nav-btn" id="month-prev" onclick="changeMonth(-1)">‹</button>
+          <div><div class="period-label" id="month-label"></div><div class="period-sub" id="month-sub"></div></div>
+          <button class="nav-btn" id="month-next" onclick="changeMonth(1)">›</button>
+        </div>
+        <div id="month-content"></div>
+      </div>
+    </div>
+  </div>
 </div>
+<svg id="drag-ghost" width="80" height="80" xmlns="http://www.w3.org/2000/svg"></svg>
 
 <script>
 (function(){
 'use strict';
 
-const canvas = document.getElementById('c');
-const ctx    = canvas.getContext('2d');
-const fade   = document.getElementById('fade');
-const labelEl= document.getElementById('scene-label');
-const dotsEl = document.getElementById('dots');
-let W, H, dpr = Math.min(window.devicePixelRatio||1,2);
-
-function resize() {
-  W = window.innerWidth; H = window.innerHeight;
-  canvas.width  = Math.round(W*dpr);
-  canvas.height = Math.round(H*dpr);
-  canvas.style.width = W+'px'; canvas.style.height = H+'px';
-  ctx.scale(dpr,dpr);
-  initScene();
+/* ── 스토리지 ── */
+const SK='haruemotion_v4';
+let records=[];
+function loadData(){
+  try{
+    let s=localStorage.getItem('haruemotion_v4');
+    if(!s)s=localStorage.getItem('haruemotion_v3');
+    if(s){
+      records=JSON.parse(s);
+      // 구버전 데이터 정리
+      // 1) slot 없는 레코드: 날짜별로 슬롯 번호 재부여
+      const dateGroups={};
+      records.forEach(r=>{
+        if(!dateGroups[r.date])dateGroups[r.date]=[];
+        dateGroups[r.date].push(r);
+      });
+      Object.values(dateGroups).forEach(group=>{
+        let nextSlot=0;
+        const usedSlots=new Set(group.filter(r=>typeof r.slot==='number').map(r=>r.slot));
+        group.forEach(r=>{
+          if(typeof r.slot!=='number'){
+            while(usedSlots.has(nextSlot))nextSlot++;
+            r.slot=nextSlot;
+            r.colorIdx=nextSlot%7;
+            usedSlots.add(nextSlot);
+            nextSlot++;
+          }
+          if(typeof r.colorIdx!=='number')r.colorIdx=r.slot%7;
+          if(!r.times)r.times=[];
+          if(typeof r.count!=='number')r.count=0;
+        });
+      });
+    }
+  }catch(e){records=[];}
 }
-window.addEventListener('resize', resize);
+function saveData(){
+  const cut=new Date();cut.setFullYear(cut.getFullYear()-1);
+  const cs=dStr(cut);
+  records=records.filter(r=>r.date>=cs);
+  try{localStorage.setItem('haruemotion_v4',JSON.stringify(records));}catch(e){}
+}
+loadData();
 
-const scenes = [
-  { name:'봄 나무',      id:'spring_tree'    },
-  { name:'별똥별',       id:'shooting_stars' },
-  { name:'눈 내리는 밤', id:'snowfall'       },
-  { name:'빗속의 호수',  id:'lake_rain'      },
-  { name:'가을 낙엽',    id:'autumn'         },
-  { name:'연못의 잉어',  id:'koi_pond'       },
+/* ── 날짜 유틸 ── */
+function dStr(d){return d.toISOString().slice(0,10);}
+function todayStr(){return dStr(new Date());}
+function parseDate(s){return new Date(s+'T00:00:00');}
+function weekRange(off){
+  const now=new Date(),day=now.getDay();
+  const mon=new Date(now);
+  mon.setDate(now.getDate()-(day===0?6:day-1)+off*7);
+  mon.setHours(0,0,0,0);
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  return{start:mon,end:sun};
+}
+function monthRange(y,m){return{start:new Date(y,m,1),end:new Date(y,m+1,0)};}
+
+/* ── 상태 ── */
+let weekOffset=0,monthYear=new Date().getFullYear(),monthMonth=new Date().getMonth();
+
+/* ── 헤더 날짜 ── */
+(function(){
+  const now=new Date(),days=['일','월','화','수','목','금','토'];
+  document.getElementById('header-date').innerHTML=
+    `${now.getMonth()+1}월 ${now.getDate()}일<br><span style="font-size:13px;color:var(--text3)">${days[now.getDay()]}요일</span>`;
+})();
+
+/* ── 탭 ── */
+window.switchTab=function(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  if(tab==='week'){weekOffset=0;renderWeek();}
+  if(tab==='month'){monthYear=new Date().getFullYear();monthMonth=new Date().getMonth();renderMonth();}
+};
+
+/* ── 오늘 감정 목록 ── */
+function getTodayFruits(){return records.filter(r=>r.date===todayStr());}
+
+/* ── 감정 추가
+   - count:0 으로 시작 (열매 생성 자체는 카운트 아님)
+   - 탭하면 +1
+   - 같은 이름이 있어도 새 슬롯에 새 열매
+── */
+window.addEmotion=function(){
+  const input=document.getElementById('emotion-input');
+  const type=document.getElementById('emotion-type').value;
+  const label=input.value.trim();
+  if(!label)return;
+  const list=getTodayFruits();
+  if(list.length>=13){alert('오늘 열매는 최대 13개예요 🌳');return;}
+  const used=new Set(list.map(r=>r.slot));
+  let slot=-1;
+  for(let i=0;i<13;i++){if(!used.has(i)){slot=i;break;}}
+  if(slot<0)return;
+  records.push({
+    date:todayStr(),label,type,
+    count:0,          // ← 0부터 시작, 탭해야 1
+    times:[],
+    slot,
+    colorIdx:slot%7,
+    ts:Date.now()
+  });
+  saveData();
+  input.value='';
+  drawTree();
+  // 드래그 힌트 잠깐 표시
+  const h=document.getElementById('drag-hint');
+  h.classList.add('show');
+  setTimeout(()=>h.classList.remove('show'),3000);
+};
+
+/* ── 열매 탭: count+1 ── */
+function tapFruit(label,type){
+  const rec=records.find(r=>r.date===todayStr()&&r.label===label&&r.type===type);
+  if(!rec)return;
+  rec.count++;
+  rec.times.push(new Date().getHours());
+  saveData();drawTree();
+}
+
+/* ── 열매 삭제 ── */
+function deleteFruit(label,type){
+  const idx=records.findIndex(r=>r.date===todayStr()&&r.label===label&&r.type===type);
+  if(idx>=0){records.splice(idx,1);saveData();drawTree();}
+}
+
+/* ════════════════════════
+   드래그-투-삭제
+   핵심: SVG 좌표계 기반으로 열매 찾기
+════════════════════════ */
+const SVG_W=390, SVG_H=540;
+const R=34; // 열매 반지름
+
+const FIXED_SLOTS=[
+  {x:195,y:112},{x:118,y:168},{x:272,y:163},
+  {x:195,y:205},{x:76,y:248},{x:314,y:242},
+  {x:152,y:262},{x:238,y:258},{x:195,y:308},
+  {x:94,y:326},{x:296,y:321},{x:152,y:362},{x:238,y:358}
 ];
 
-// 7. 첫 화면 랜덤
-let currentIdx = Math.floor(Math.random()*scenes.length);
-let particles=[], extras=[], animId, t=0;
-
-function buildDots() {
-  dotsEl.innerHTML='';
-  scenes.forEach((_,i)=>{
-    const d=document.createElement('div');
-    d.className='dot'+(i===currentIdx?' active':'');
-    dotsEl.appendChild(d);
-  });
+function clientToSvg(cx,cy){
+  const rect=document.getElementById('tree-svg').getBoundingClientRect();
+  return{
+    x:(cx-rect.left)/rect.width*SVG_W,
+    y:(cy-rect.top)/rect.height*SVG_H
+  };
 }
-function updateUI(){ labelEl.textContent=scenes[currentIdx].name; buildDots(); }
 
-function changeScene(dir) {
-  fade.style.opacity='1';
-  setTimeout(()=>{
-    currentIdx=(currentIdx+dir+scenes.length)%scenes.length;
-    updateUI(); initScene(); fade.style.opacity='0';
-  },320);
+function fruitAtClient(cx,cy){
+  const sp=clientToSvg(cx,cy);
+  return getTodayFruits().find(fr=>{
+    const p=FIXED_SLOTS[fr.slot];
+    if(!p)return false;
+    const dx=sp.x-p.x,dy=sp.y-p.y;
+    return dx*dx+dy*dy<=(R+12)*(R+12);
+  })||null;
 }
-document.getElementById('btn-left').addEventListener('click',()=>changeScene(-1));
-document.getElementById('btn-right').addEventListener('click',()=>changeScene(1));
 
-let touchX0=null, touchY0=null;
-document.getElementById('app').addEventListener('touchstart',e=>{
-  touchX0=e.touches[0].clientX; touchY0=e.touches[0].clientY;
+function isOverDeleteZone(clientY){
+  const dz=document.getElementById('delete-zone');
+  return clientY>=dz.getBoundingClientRect().top;
+}
+
+function showDeleteZone(v){
+  document.getElementById('delete-zone').classList.toggle('active',v);
+}
+function setDeleteZoneOver(v){
+  document.getElementById('delete-zone').classList.toggle('over',v);
+}
+
+function updateGhost(cx,cy,label,type){
+  const g=document.getElementById('drag-ghost');
+  g.style.left=cx+'px';g.style.top=cy+'px';
+  g.innerHTML=`<circle cx="40" cy="40" r="34" fill="${type==='+'?'#b5d99c':'#f5b8b8'}" opacity="0.93"/>
+    <text x="40" y="45" text-anchor="middle" font-size="14" font-weight="700" fill="#3d2b1f" font-family="'Gamja Flower',cursive">${label}</text>`;
+}
+
+// 드래그 상태
+let drag=null;     // {label, type}
+let lpTimer=null;
+let tapTarget=null; // touchstart에서 찾은 열매 (탭용)
+
+const treeArea=document.getElementById('tree-area');
+
+treeArea.addEventListener('touchstart',function(e){
+  const t=e.touches[0];
+  const found=fruitAtClient(t.clientX,t.clientY);
+  tapTarget=found;
+  if(!found)return;
+
+  // 롱프레스 타이머
+  lpTimer=setTimeout(function(){
+    lpTimer=null;
+    tapTarget=null; // 롱프레스면 탭 무효화
+    drag={label:found.label,type:found.type};
+    showDeleteZone(true);
+    updateGhost(t.clientX,t.clientY,found.label,found.type);
+    document.getElementById('drag-ghost').style.display='block';
+    if(navigator.vibrate)navigator.vibrate(35);
+  },500);
 },{passive:true});
-document.getElementById('app').addEventListener('touchend',e=>{
-  if(touchX0===null) return;
-  const dx=e.changedTouches[0].clientX-touchX0;
-  const dy=e.changedTouches[0].clientY-touchY0;
-  if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>48) changeScene(dx<0?1:-1);
-  touchX0=touchY0=null;
+
+// touchmove: document에 붙여야 손가락이 treeArea 밖으로 나가도 끊기지 않음
+document.addEventListener('touchmove',function(e){
+  if(lpTimer){
+    // 조금이라도 움직이면 롱프레스 취소
+    clearTimeout(lpTimer);lpTimer=null;tapTarget=null;
+    return;
+  }
+  if(!drag)return;
+  e.preventDefault();
+  const t=e.touches[0];
+  updateGhost(t.clientX,t.clientY,drag.label,drag.type);
+  setDeleteZoneOver(isOverDeleteZone(t.clientY));
+},{passive:false});
+
+document.addEventListener('touchend',function(e){
+  if(lpTimer){
+    // 짧게 뗀 것 = 탭
+    clearTimeout(lpTimer);lpTimer=null;
+    if(tapTarget){tapFruit(tapTarget.label,tapTarget.type);}
+    tapTarget=null;
+    return;
+  }
+  if(!drag)return;
+  const t=e.changedTouches[0];
+  document.getElementById('drag-ghost').style.display='none';
+  if(isOverDeleteZone(t.clientY)){
+    deleteFruit(drag.label,drag.type);
+  }
+  drag=null;
+  showDeleteZone(false);
+  setDeleteZoneOver(false);
+  tapTarget=null;
 },{passive:true});
-document.getElementById('app').addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
 
-function initScene() {
-  particles=[]; extras=[]; t=0;
-  cancelAnimationFrame(animId);
-  const id=scenes[currentIdx].id;
-  if      (id==='spring_tree')    initSpringTree();
-  else if (id==='shooting_stars') initShootingStars();
-  else if (id==='snowfall')       initSnowfall();
-  else if (id==='lake_rain')      initLakeRain();
-  else if (id==='autumn')         initAutumn();
-  else if (id==='koi_pond')       initKoiPond();
-  loop();
-}
+document.addEventListener('touchcancel',function(){
+  if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
+  tapTarget=null;
+  if(drag){
+    document.getElementById('drag-ghost').style.display='none';
+    showDeleteZone(false);setDeleteZoneOver(false);
+    drag=null;
+  }
+},{passive:true});
 
-/* ════════════════════════════════════════════
-   1. 봄 나무  — 잎 적게, 느리게, 하나 둘
-   ════════════════════════════════════════════ */
-function initSpringTree() {
-  // 시작할 때 잎 6장만, 이미 화면에 흩어진 상태
-  for(let i=0;i<6;i++) particles.push(makeLeaf(true));
-}
+// 마우스 클릭 (데스크탑)
+treeArea.addEventListener('click',function(e){
+  if(drag)return;
+  const found=fruitAtClient(e.clientX,e.clientY);
+  if(found)tapFruit(found.label,found.type);
+});
 
-function makeLeaf(scatter) {
-  return {
-    type:'leaf',
-    x: W*0.15+Math.random()*W*0.7,
-    y: scatter ? Math.random()*H : -15,
-    vx: (Math.random()-0.5)*0.22,
-    vy: 0.10+Math.random()*0.18,       // 매우 느리게
-    rot: Math.random()*Math.PI*2,
-    rotV: (Math.random()-0.5)*0.014,
-    size: 6+Math.random()*8,
-    alpha: 0.65+Math.random()*0.35,
-    swg: Math.random()*Math.PI*2,
-    swgS: 0.006+Math.random()*0.010,
-    hue: 92+Math.random()*38,
-  };
-}
+/* ════════════════════════
+   나무 그리기
+════════════════════════ */
+const PP=['#b5d99c','#aec6e8','#f5e4a0','#d4b8e8','#a8d8c8','#f5c2a8','#c8e0b8'];
+const NP=['#f5b8b8','#d4a8c8','#e8c4a8','#c8a8d8','#f5d0a8','#b8c8e8','#e8b8c8'];
 
-function drawSpringBG() {
-  const sky=ctx.createLinearGradient(0,0,0,H);
-  sky.addColorStop(0,'#bde8a8'); sky.addColorStop(0.5,'#d8f0c8'); sky.addColorStop(1,'#e8f5d8');
-  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+function drawTree(){
+  const svg=document.getElementById('tree-svg');
+  const fruits=getTodayFruits();
+  let o='';
 
-  ctx.fillStyle='rgba(172,215,142,0.38)';
-  ctx.beginPath(); ctx.ellipse(W*0.12,H*0.73,W*0.36,H*0.13,0,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='rgba(155,205,125,0.28)';
-  ctx.beginPath(); ctx.ellipse(W*0.88,H*0.76,W*0.32,H*0.11,0,0,Math.PI*2); ctx.fill();
+  // 그림자
+  o+=`<ellipse cx="195" cy="494" rx="82" ry="13" fill="#d4c4a8" opacity="0.3"/>`;
+  // 줄기
+  o+=`<path d="M174,496 C175,430 179,368 181,328" stroke="#c8a97a" stroke-width="26" fill="none" stroke-linecap="round"/>`;
+  o+=`<path d="M216,496 C215,430 211,368 209,328" stroke="#b8956a" stroke-width="19" fill="none" stroke-linecap="round"/>`;
+  // 가지
+  o+=`<path d="M181,328 C158,286 122,242 84,198" stroke="#c8a97a" stroke-width="12" fill="none" stroke-linecap="round"/>`;
+  o+=`<path d="M196,302 C220,260 258,226 296,194" stroke="#c8a97a" stroke-width="11" fill="none" stroke-linecap="round"/>`;
+  o+=`<path d="M183,344 C150,328 115,306 82,268" stroke="#b8956a" stroke-width="10" fill="none" stroke-linecap="round"/>`;
+  o+=`<path d="M207,340 C242,324 278,304 308,268" stroke="#b8956a" stroke-width="10" fill="none" stroke-linecap="round"/>`;
+  o+=`<path d="M190,275 C192,234 191,192 192,152" stroke="#c8a97a" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+  o+=`<path d="M192,165 C172,148 145,135 118,125" stroke="#c8a97a" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+  o+=`<path d="M192,165 C214,148 240,135 264,125" stroke="#c8a97a" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+  // 잎사귀
+  [
+    {cx:195,cy:255,rx:155,ry:138,op:0.17,c:'#5fa85f'},
+    {cx:148,cy:232,rx:135,ry:120,op:0.19,c:'#6ab86a'},
+    {cx:244,cy:228,rx:132,ry:118,op:0.19,c:'#6ab86a'},
+    {cx:195,cy:218,rx:145,ry:128,op:0.23,c:'#78c878'},
+    {cx:162,cy:200,rx:118,ry:106,op:0.27,c:'#88d288'},
+    {cx:230,cy:196,rx:115,ry:103,op:0.27,c:'#88d288'},
+    {cx:195,cy:178,rx:128,ry:114,op:0.30,c:'#96dc96'},
+    {cx:172,cy:164,rx:100,ry:90, op:0.28,c:'#a4e0a4'},
+    {cx:220,cy:161,rx:97, ry:87, op:0.28,c:'#a4e0a4'},
+    {cx:195,cy:142,rx:102,ry:92, op:0.32,c:'#b0e6b0'},
+    {cx:176,cy:128,rx:78, ry:70, op:0.28,c:'#bceabc'},
+    {cx:215,cy:125,rx:75, ry:67, op:0.28,c:'#bceabc'},
+    {cx:195,cy:110,rx:65, ry:58, op:0.30,c:'#c6eec6'},
+  ].forEach(f=>o+=`<ellipse cx="${f.cx}" cy="${f.cy}" rx="${f.rx}" ry="${f.ry}" fill="${f.c}" opacity="${f.op}"/>`);
 
-  const gr=ctx.createLinearGradient(0,H*0.78,0,H);
-  gr.addColorStop(0,'rgba(130,185,95,0.7)'); gr.addColorStop(1,'rgba(100,155,65,0.9)');
-  ctx.fillStyle=gr; ctx.fillRect(0,H*0.8,W,H*0.2);
-
-  const tx=W*0.5, ty=H*0.82;
-  ctx.lineCap='round'; ctx.lineJoin='round';
-  ctx.strokeStyle='#7a5c3a'; ctx.lineWidth=13;
-  ctx.beginPath(); ctx.moveTo(tx,ty);
-  ctx.bezierCurveTo(tx-8,ty-H*0.12,tx+6,ty-H*0.24,tx,ty-H*0.33); ctx.stroke();
-
-  ctx.lineWidth=5;
-  ctx.beginPath(); ctx.moveTo(tx,ty-H*0.19); ctx.quadraticCurveTo(tx+48,ty-H*0.24,tx+62,ty-H*0.22); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(tx,ty-H*0.24); ctx.quadraticCurveTo(tx-42,ty-H*0.30,tx-58,ty-H*0.28); ctx.stroke();
-  ctx.lineWidth=3;
-  ctx.beginPath(); ctx.moveTo(tx+40,ty-H*0.23); ctx.quadraticCurveTo(tx+55,ty-H*0.30,tx+52,ty-H*0.35); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(tx-36,ty-H*0.28); ctx.quadraticCurveTo(tx-48,ty-H*0.34,tx-44,ty-H*0.39); ctx.stroke();
-
-  const blobs=[[tx,ty-H*0.50,88,0.58],[tx-64,ty-H*0.40,72,0.54],[tx+58,ty-H*0.41,68,0.52],[tx-28,ty-H*0.57,62,0.50],[tx+30,ty-H*0.55,65,0.50],[tx,ty-H*0.62,52,0.46]];
-  blobs.forEach(([bx,by,r,a])=>{
-    ctx.globalAlpha=a;
-    ctx.fillStyle='hsl(108,55%,52%)';
-    ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='hsl(100,50%,62%)';
-    ctx.beginPath(); ctx.arc(bx-r*0.18,by-r*0.22,r*0.58,0,Math.PI*2); ctx.fill();
+  // 열매: 패스1 - 줄기 + 본체 + 텍스트 (겹침 없도록 먼저)
+  fruits.forEach(fr=>{
+    const si=typeof fr.slot==='number'?fr.slot:0;
+    if(si>=FIXED_SLOTS.length)return;
+    const p=FIXED_SLOTS[si];
+    const ci=typeof fr.colorIdx==='number'?fr.colorIdx:si%7;
+    const col=fr.type==='+'?PP[ci]:NP[ci];
+    const le=fr.label.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,'&apos;');
+    // 줄기
+    o+=`<line x1="${p.x}" y1="${p.y-R}" x2="${p.x+5}" y2="${p.y-R-14}" stroke="#b8956a" stroke-width="2.5" stroke-linecap="round"/>`;
+    // 본체
+    o+=`<circle cx="${p.x}" cy="${p.y}" r="${R}" fill="${col}" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>`;
+    // 텍스트
+    const ll=fr.label.length,fs=ll<=1?22:ll===2?19:16;
+    o+=`<text x="${p.x}" y="${p.y+fs*0.38}" text-anchor="middle" font-size="${fs}" font-weight="700" fill="#3d2b1f" font-family="'Gamja Flower',cursive" pointer-events="none">${fr.label}</text>`;
   });
-  ctx.globalAlpha=1;
 
-  for(let i=0;i<10;i++){
-    const ang=(i/10)*Math.PI*2;
-    const r2=46+Math.sin(t*0.35+i)*5;
-    ctx.globalAlpha=0.32+Math.sin(t*0.4+i)*0.07;
-    ctx.fillStyle='hsl(340,70%,88%)';
-    ctx.beginPath(); ctx.arc(tx+Math.cos(ang)*r2*0.9,ty-H*0.50+Math.sin(ang)*r2*0.55,3.5+Math.sin(i)*1.2,0,Math.PI*2); ctx.fill();
-  }
-  ctx.globalAlpha=1;
-}
-
-function drawLeaf(p) {
-  ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.globalAlpha=p.alpha;
-  ctx.fillStyle=`hsl(${p.hue},58%,46%)`;
-  ctx.beginPath();
-  ctx.moveTo(0,-p.size);
-  ctx.bezierCurveTo(p.size*0.9,-p.size*0.4,p.size*0.7,p.size*0.5,0,p.size*0.9);
-  ctx.bezierCurveTo(-p.size*0.7,p.size*0.5,-p.size*0.9,-p.size*0.4,0,-p.size);
-  ctx.fill();
-  ctx.strokeStyle=`hsla(${p.hue+15},50%,34%,0.35)`; ctx.lineWidth=0.6;
-  ctx.beginPath(); ctx.moveTo(0,-p.size*0.8); ctx.lineTo(0,p.size*0.75); ctx.stroke();
-  ctx.restore();
-}
-
-function updateLeaf(p) {
-  p.swg+=p.swgS;
-  p.x+=p.vx+Math.sin(p.swg)*0.45;
-  p.y+=p.vy; p.rot+=p.rotV;
-  if(p.y>H+20) Object.assign(p,makeLeaf(false));
-}
-
-/* ════════════════════════════════════════════
-   2. 별똥별 — 느리게, 랜덤 방향, 긴 궤적
-   ════════════════════════════════════════════ */
-function initShootingStars() {
-  for(let i=0;i<130;i++) particles.push({
-    type:'star', x:Math.random()*W, y:Math.random()*H*0.88,
-    r:0.3+Math.random()*1.3, a:0.25+Math.random()*0.75,
-    twk:Math.random()*Math.PI*2, twkS:0.005+Math.random()*0.015,
-  });
-  // 처음 하나
-  spawnShooter();
-}
-
-function spawnShooter() {
-  // 랜덤 방향: 전방위 (단 아래쪽 방향 많도록)
-  // 진행각도 랜덤, 속도 느리게
-  const speed = 0.6 + Math.random()*1.0;
-  // 시작 위치: 상단 또는 좌/우 가장자리
-  let sx, sy, angle;
-  const edge = Math.floor(Math.random()*3);
-  if(edge===0){       // 상단
-    sx = Math.random()*W; sy = -10;
-    angle = (25+Math.random()*130)*Math.PI/180;
-  } else if(edge===1){ // 좌측
-    sx = -10; sy = Math.random()*H*0.6;
-    angle = (-30+Math.random()*80)*Math.PI/180;
-  } else {             // 우측
-    sx = W+10; sy = Math.random()*H*0.6;
-    angle = (Math.PI) + (-30+Math.random()*80)*Math.PI/180;
-  }
-
-  extras.push({
-    type:'shooter',
-    x:sx, y:sy,
-    vx:Math.cos(angle)*speed,
-    vy:Math.sin(angle)*speed,
-    trail:[],
-    life:0,
-    maxLife:200+Math.random()*150,
-  });
-}
-
-function drawNightBG() {
-  const sky=ctx.createLinearGradient(0,0,0,H);
-  sky.addColorStop(0,'#080620'); sky.addColorStop(0.45,'#100e38'); sky.addColorStop(1,'#181658');
-  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
-
-  ctx.save(); ctx.globalAlpha=0.06;
-  const mw=ctx.createRadialGradient(W*0.5,H*0.32,0,W*0.5,H*0.32,W*0.7);
-  mw.addColorStop(0,'#c8b8ee'); mw.addColorStop(1,'transparent');
-  ctx.fillStyle=mw;
-  ctx.beginPath(); ctx.ellipse(W*0.5,H*0.32,W*0.72,H*0.22,-0.28,0,Math.PI*2); ctx.fill();
-  ctx.restore();
-
-  ctx.save(); ctx.globalAlpha=0.9;
-  const mg=ctx.createRadialGradient(W*0.82,H*0.10,0,W*0.82,H*0.10,55);
-  mg.addColorStop(0,'rgba(255,248,215,0.32)'); mg.addColorStop(1,'transparent');
-  ctx.fillStyle=mg; ctx.beginPath(); ctx.arc(W*0.82,H*0.10,55,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#fff9d8'; ctx.beginPath(); ctx.arc(W*0.82,H*0.10,26,0,Math.PI*2); ctx.fill();
-  ctx.restore();
-
-  ctx.fillStyle='rgba(5,4,20,0.96)';
-  ctx.beginPath(); ctx.moveTo(0,H);
-  ctx.bezierCurveTo(W*0.1,H*0.84,W*0.22,H*0.80,W*0.32,H*0.86);
-  ctx.bezierCurveTo(W*0.42,H*0.92,W*0.52,H*0.78,W*0.64,H*0.84);
-  ctx.bezierCurveTo(W*0.76,H*0.90,W*0.88,H*0.82,W,H*0.87);
-  ctx.lineTo(W,H); ctx.closePath(); ctx.fill();
-}
-
-/* ════════════════════════════════════════════
-   3. 눈 내리는 밤 — 큰 나무 다양한 크기, 눈쌓임, 느린 눈송이
-   ════════════════════════════════════════════ */
-function initSnowfall() {
-  for(let i=0;i<60;i++) particles.push(makeSnow(true));
-}
-function makeSnow(scatter) {
-  return {
-    type:'snow',
-    x:Math.random()*W,
-    y:scatter?Math.random()*H:-8,
-    r:1.4+Math.random()*3.8,
-    vx:(Math.random()-0.5)*0.28,
-    vy:0.18+Math.random()*0.38,   // 느리게
-    a:0.45+Math.random()*0.55,
-    swg:Math.random()*Math.PI*2,
-    swgS:0.003+Math.random()*0.008,
-    rot:Math.random()*Math.PI*2,
-  };
-}
-
-function drawSnowflake(x,y,r,alpha,rot) {
-  ctx.save(); ctx.globalAlpha=alpha;
-  ctx.strokeStyle='rgba(215,232,255,0.88)';
-  ctx.lineWidth=0.65; ctx.lineCap='round';
-  ctx.translate(x,y); ctx.rotate(rot);
-  for(let i=0;i<6;i++){
-    ctx.save(); ctx.rotate(i*Math.PI/3);
-    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-r); ctx.stroke();
-    if(r>2.5){
-      const b=r*0.5;
-      ctx.beginPath(); ctx.moveTo(0,-b); ctx.lineTo(r*0.26,-b-r*0.18); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0,-b); ctx.lineTo(-r*0.26,-b-r*0.18); ctx.stroke();
-    }
-    ctx.restore();
-  }
-  ctx.restore();
-}
-
-function drawPineSnow(px,py,sc) {
-  ctx.strokeStyle='#5a3a22'; ctx.lineWidth=5*sc; ctx.lineCap='round';
-  ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px,py-H*0.06*sc); ctx.stroke();
-  const tiers=[
-    [py,28*sc,1.50*sc],
-    [py-H*0.085*sc,23*sc,1.35*sc],
-    [py-H*0.165*sc,18*sc,1.22*sc],
-    [py-H*0.238*sc,13*sc,1.10*sc],
-    [py-H*0.302*sc, 9*sc,0.98*sc],
-  ];
-  tiers.forEach(([ty,r,h])=>{
-    ctx.fillStyle='rgba(28,58,42,0.88)';
-    ctx.beginPath(); ctx.moveTo(px,ty-r*h); ctx.lineTo(px-r,ty); ctx.lineTo(px+r,ty); ctx.closePath(); ctx.fill();
-    // 눈 쌓임
-    ctx.fillStyle='rgba(218,232,248,0.84)';
-    ctx.beginPath();
-    ctx.moveTo(px-r*0.12,ty-r*h+1.5);
-    ctx.quadraticCurveTo(px,ty-r*h-r*0.14,px+r*0.12,ty-r*h+1.5);
-    ctx.quadraticCurveTo(px+r*0.65,ty-r*h+r*0.3,px+r*0.78,ty-r*0.08);
-    ctx.quadraticCurveTo(px,ty+r*0.09,px-r*0.78,ty-r*0.08);
-    ctx.quadraticCurveTo(px-r*0.65,ty-r*h+r*0.3,px-r*0.12,ty-r*h+1.5);
-    ctx.fill();
-  });
-}
-
-function drawSnowBG() {
-  const sky=ctx.createLinearGradient(0,0,0,H);
-  sky.addColorStop(0,'#141e2e'); sky.addColorStop(0.55,'#1e2c48'); sky.addColorStop(1,'#2a3a5e');
-  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
-
-  ctx.fillStyle='rgba(180,200,220,0.18)';
-  ctx.beginPath(); ctx.ellipse(W*0.25,H*0.72,W*0.38,H*0.10,0,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='rgba(160,185,210,0.14)';
-  ctx.beginPath(); ctx.ellipse(W*0.78,H*0.75,W*0.34,H*0.09,0,0,Math.PI*2); ctx.fill();
-
-  const gd=ctx.createLinearGradient(0,H*0.82,0,H);
-  gd.addColorStop(0,'#d8e4ee'); gd.addColorStop(1,'#e8f0f8');
-  ctx.fillStyle=gd;
-  ctx.beginPath(); ctx.moveTo(0,H*0.84);
-  ctx.bezierCurveTo(W*0.2,H*0.81,W*0.4,H*0.83,W*0.6,H*0.82);
-  ctx.bezierCurveTo(W*0.8,H*0.81,W*0.9,H*0.84,W,H*0.83);
-  ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fill();
-
-  // 크기 다른 나무 5그루
-  drawPineSnow(W*0.14, H*0.84, 1.05);
-  drawPineSnow(W*0.34, H*0.86, 0.68);
-  drawPineSnow(W*0.52, H*0.83, 1.45);  // 중앙 제일 크게
-  drawPineSnow(W*0.72, H*0.85, 0.80);
-  drawPineSnow(W*0.88, H*0.84, 1.12);
-}
-
-/* ════════════════════════════════════════════
-   4. 빗속의 호수 — 빗방울 천천히, 파장 다양
-   ════════════════════════════════════════════ */
-function initLakeRain() {
-  for(let i=0;i<28;i++) particles.push(makeRaindrop(true));
-}
-
-function makeRaindrop(scatter) {
-  return {
-    type:'raindrop',
-    x: W*0.04+Math.random()*W*0.92,
-    y: scatter ? -Math.random()*H*0.5 : -20,
-    vy: 1.5+Math.random()*1.5,
-    len: 9+Math.random()*14,
-    a: 0.32+Math.random()*0.42,
-    w: 0.7+Math.random()*0.8,
-  };
-}
-
-function spawnRipple(x,y) {
-  extras.push({
-    type:'ripple',
-    x,y,r:0,
-    maxR: 10+Math.random()*55,
-    ryRatio: 0.28+Math.random()*0.30,
-    life:0, maxLife:80+Math.random()*100,
-    a:0.62,
-  });
-}
-
-function drawLakeBG() {
-  const lakeY=H*0.44;
-
-  // 흐린 하늘
-  const sky=ctx.createLinearGradient(0,0,0,lakeY);
-  sky.addColorStop(0,'#3a4858'); sky.addColorStop(1,'#4e6070');
-  ctx.fillStyle=sky; ctx.fillRect(0,0,W,lakeY);
-
-  // 안개낀 먼 산 실루엣
-  ctx.fillStyle='rgba(55,75,95,0.55)';
-  ctx.beginPath(); ctx.moveTo(0,lakeY);
-  ctx.quadraticCurveTo(W*0.15,H*0.25,W*0.28,lakeY);
-  ctx.quadraticCurveTo(W*0.42,H*0.20,W*0.58,lakeY);
-  ctx.quadraticCurveTo(W*0.74,H*0.22,W*0.88,lakeY);
-  ctx.quadraticCurveTo(W*0.95,H*0.28,W,lakeY);
-  ctx.lineTo(W,0); ctx.lineTo(0,0); ctx.closePath(); ctx.fill();
-
-  // 호수
-  const lg=ctx.createLinearGradient(0,lakeY,0,H);
-  lg.addColorStop(0,'rgba(72,102,132,0.95)');
-  lg.addColorStop(0.4,'rgba(58,88,118,0.97)');
-  lg.addColorStop(1,'rgba(40,65,98,1)');
-  ctx.fillStyle=lg;
-  ctx.beginPath();
-  // 출렁이는 수면선
-  for(let x2=0;x2<=W;x2+=18){
-    const wy=lakeY+Math.sin(t*0.7+x2*0.038)*2.2;
-    x2===0?ctx.moveTo(x2,wy):ctx.lineTo(x2,wy);
-  }
-  ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fill();
-
-  // 수면 반사 광택
-  ctx.save(); ctx.globalAlpha=0.055;
-  ctx.strokeStyle='rgba(195,218,238,1)'; ctx.lineWidth=1.1;
-  for(let i=0;i<5;i++){
-    ctx.beginPath();
-    for(let x2=0;x2<=W;x2+=15){
-      const wy=lakeY+H*0.05+i*H*0.08+Math.sin(t*0.85+x2*0.05+i)*3;
-      x2===0?ctx.moveTo(x2,wy):ctx.lineTo(x2,wy);
-    }
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  // 강변 나무 실루엣
-  ctx.fillStyle='rgba(28,40,52,0.80)';
-  // 왼쪽 무리
-  ctx.beginPath(); ctx.moveTo(0,lakeY); ctx.lineTo(W*0.10,lakeY);
-  ctx.quadraticCurveTo(W*0.14,H*0.26,W*0.06,H*0.08);
-  ctx.quadraticCurveTo(W*0.01,H*0.24,0,lakeY); ctx.fill();
-  // 오른쪽 무리
-  ctx.beginPath(); ctx.moveTo(W,lakeY); ctx.lineTo(W*0.90,lakeY);
-  ctx.quadraticCurveTo(W*0.85,H*0.26,W*0.93,H*0.07);
-  ctx.quadraticCurveTo(W*0.99,H*0.23,W,lakeY); ctx.fill();
-}
-
-/* ════════════════════════════════════════════
-   5. 가을 낙엽 — 나무 중앙 배치, 적게 천천히
-   ════════════════════════════════════════════ */
-function initAutumn() {
-  for(let i=0;i<10;i++) particles.push(makeAutumnLeaf(true));
-}
-const autumnHues=[8,18,26,33,42];
-function makeAutumnLeaf(scatter) {
-  const h=autumnHues[Math.floor(Math.random()*autumnHues.length)];
-  return {
-    type:'autumn',
-    x:Math.random()*W,
-    y:scatter?Math.random()*H:-18,
-    vx:(Math.random()-0.5)*0.48,
-    vy:0.14+Math.random()*0.30,       // 느리게
-    rot:Math.random()*Math.PI*2,
-    rotV:(Math.random()-0.5)*0.020,
-    size:6+Math.random()*9,
-    a:0.78+Math.random()*0.22,
-    swg:Math.random()*Math.PI*2,
-    swgS:0.007+Math.random()*0.012,
-    hue:h, shape:Math.floor(Math.random()*3),
-  };
-}
-
-function drawAutumnBG() {
-  const sky=ctx.createLinearGradient(0,0,0,H);
-  sky.addColorStop(0,'#dda848'); sky.addColorStop(0.45,'#c88838'); sky.addColorStop(1,'#b87030');
-  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
-
-  ctx.fillStyle='rgba(195,132,48,0.32)';
-  ctx.beginPath(); ctx.ellipse(W*0.28,H*0.64,W*0.42,H*0.13,0,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='rgba(175,112,38,0.26)';
-  ctx.beginPath(); ctx.ellipse(W*0.78,H*0.67,W*0.36,H*0.11,0,0,Math.PI*2); ctx.fill();
-
-  const gr=ctx.createLinearGradient(0,H*0.76,0,H);
-  gr.addColorStop(0,'rgba(148,80,22,0.85)'); gr.addColorStop(1,'rgba(95,48,10,0.95)');
-  ctx.fillStyle=gr; ctx.fillRect(0,H*0.78,W,H*0.22);
-
-  for(let i=0;i<22;i++){
-    const lx=(i/22)*W*1.04-W*0.02;
-    const ly=H*0.83+Math.sin(i*1.4)*H*0.07;
-    ctx.save(); ctx.translate(lx,ly); ctx.rotate(i*0.72); ctx.globalAlpha=0.52;
-    ctx.fillStyle=`hsl(${autumnHues[i%autumnHues.length]},68%,42%)`;
-    ctx.beginPath(); ctx.ellipse(0,0,7,4,0,0,Math.PI*2); ctx.fill();
-    ctx.restore();
-  }
-
-  // 나무 — 중앙 쪽으로 (W*0.28, W*0.72)
-  [[W*0.28,H*0.78,0],[W*0.72,H*0.80,1]].forEach(([tx,ty,idx])=>{
-    ctx.strokeStyle='rgba(70,32,10,0.72)';
-    ctx.lineWidth=11; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(tx,ty-H*0.38); ctx.stroke();
-    ctx.lineWidth=4.5;
-    const brs=idx===0
-      ?[[-46,H*0.24],[+40,H*0.27],[-20,H*0.32],[+15,H*0.36]]
-      :[[+42,H*0.25],[-38,H*0.28],[+18,H*0.33],[-13,H*0.37]];
-    brs.forEach(([bx,bd])=>{
-      ctx.beginPath();
-      ctx.moveTo(tx,ty-bd+Math.abs(bx)*0.28);
-      ctx.quadraticCurveTo((tx+tx+bx)*0.5,ty-bd+8,tx+bx,ty-bd);
-      ctx.stroke();
-    });
-    ctx.globalAlpha=0.72;
-    for(let i=0;i<10;i++){
-      ctx.fillStyle=`hsl(${18+i*4},68%,48%)`;
-      ctx.beginPath(); ctx.arc(tx-28+i*7,ty-H*0.34+Math.sin(i*1.3)*13,7+Math.sin(i)*2,0,Math.PI*2); ctx.fill();
-    }
-    ctx.globalAlpha=1;
-  });
-}
-
-function drawAutumnLeaf(p) {
-  ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.globalAlpha=p.a;
-  ctx.fillStyle=`hsl(${p.hue},72%,46%)`;
-  ctx.beginPath();
-  if(p.shape===0){
-    ctx.ellipse(0,0,p.size*0.65,p.size*0.95,0,0,Math.PI*2);
-  } else if(p.shape===1){
-    ctx.moveTo(0,-p.size);
-    ctx.bezierCurveTo(p.size*0.85,-p.size*0.3,p.size*0.65,p.size*0.55,0,p.size*0.88);
-    ctx.bezierCurveTo(-p.size*0.65,p.size*0.55,-p.size*0.85,-p.size*0.3,0,-p.size);
-  } else {
-    ctx.moveTo(0,-p.size); ctx.lineTo(p.size*0.38,-p.size*0.5);
-    ctx.lineTo(p.size*0.88,-p.size*0.28); ctx.lineTo(p.size*0.48,p.size*0.10);
-    ctx.lineTo(p.size*0.38,p.size*0.78); ctx.lineTo(0,p.size*0.48);
-    ctx.lineTo(-p.size*0.38,p.size*0.78); ctx.lineTo(-p.size*0.48,p.size*0.10);
-    ctx.lineTo(-p.size*0.88,-p.size*0.28); ctx.lineTo(-p.size*0.38,-p.size*0.5);
-    ctx.closePath();
-  }
-  ctx.fill(); ctx.restore();
-}
-
-function updateAutumnLeaf(p) {
-  p.swg+=p.swgS;
-  p.x+=p.vx+Math.sin(p.swg)*0.6;
-  p.y+=p.vy; p.rot+=p.rotV;
-  if(p.y>H+20) Object.assign(p,makeAutumnLeaf(false));
-}
-
-/* ════════════════════════════════════════════
-   6. 연못 — 위에서 내려다보기, 물고기 실루엣
-   ════════════════════════════════════════════ */
-const fishPalette=[
-  {body:'rgba(215,88,48,0.20)',fin:'rgba(238,140,68,0.12)'},
-  {body:'rgba(238,195,68,0.18)',fin:'rgba(255,215,88,0.11)'},
-  {body:'rgba(195,195,185,0.17)',fin:'rgba(215,215,205,0.10)'},
-  {body:'rgba(68,95,55,0.20)',fin:'rgba(88,120,65,0.12)'},
-  {body:'rgba(108,82,55,0.19)',fin:'rgba(138,108,72,0.11)'},
-  {body:'rgba(58,88,155,0.18)',fin:'rgba(88,118,185,0.10)'},
-];
-
-function initKoiPond() {
-  const cx=W*0.5, cy=H*0.5;
-  for(let i=0;i<6;i++){
-    const ang=Math.random()*Math.PI*2;
-    const dist=Math.min(W,H)*(0.08+Math.random()*0.24);
-    const fc=fishPalette[i%fishPalette.length];
-    particles.push({
-      type:'fish',
-      x:cx+Math.cos(ang)*dist,
-      y:cy+Math.sin(ang)*dist,
-      angle:ang,
-      speed:0.28+Math.random()*0.38,
-      turnRate:(Math.random()-0.5)*0.012,
-      len:38+Math.random()*28,
-      wid:14+Math.random()*10,
-      bodyColor:fc.body,
-      finColor:fc.fin,
-      tail:Math.random()*Math.PI*2,
-      tailS:0.035+Math.random()*0.025,
-      wakeTimer:0,
-    });
-  }
-  for(let i=0;i<4;i++) extras.push(makeSurfaceLeaf());
-}
-
-function makeSurfaceLeaf() {
-  const cx=W*0.5, cy=H*0.5, pr=Math.min(W,H)*0.40;
-  const ang=Math.random()*Math.PI*2;
-  const dist=Math.random()*pr*0.85;
-  return {
-    type:'leaf',
-    x:cx+Math.cos(ang)*dist,
-    y:cy+Math.sin(ang)*dist,
-    rot:Math.random()*Math.PI*2,
-    drift:Math.random()*Math.PI*2,
-    driftS:0.002+Math.random()*0.004,
-    size:6+Math.random()*9,
-    hue:78+Math.random()*55,
-    a:0.52+Math.random()*0.38,
-  };
-}
-
-function drawKoiScene() {
-  const cx=W*0.5, cy=H*0.5;
-  const pr=Math.min(W,H)*0.46;
-
-  // 잔디 배경
-  ctx.fillStyle='#3a5a30';
-  ctx.fillRect(0,0,W,H);
-
-  // 돌 테두리
-  ctx.strokeStyle='rgba(88,78,62,0.85)'; ctx.lineWidth=20;
-  ctx.beginPath(); ctx.arc(cx,cy,pr+9,0,Math.PI*2); ctx.stroke();
-  ctx.strokeStyle='rgba(118,108,88,0.45)'; ctx.lineWidth=7;
-  ctx.beginPath(); ctx.arc(cx,cy,pr+16,0,Math.PI*2); ctx.stroke();
-
-  // 연못 클리핑
-  ctx.save();
-  ctx.beginPath(); ctx.arc(cx,cy,pr,0,Math.PI*2); ctx.clip();
-
-  const wg=ctx.createRadialGradient(cx,cy,0,cx,cy,pr);
-  wg.addColorStop(0,'#2a5a62'); wg.addColorStop(0.6,'#1e4a55'); wg.addColorStop(1,'#163848');
-  ctx.fillStyle=wg; ctx.fillRect(cx-pr,cy-pr,pr*2,pr*2);
-
-  // 수면 잔물결 (동심원)
-  ctx.globalAlpha=0.06;
-  ctx.strokeStyle='rgba(175,215,205,1)'; ctx.lineWidth=1;
-  for(let i=0;i<7;i++){
-    const rr=pr*(0.15+i*0.12)+Math.sin(t*0.4+i)*3.5;
-    ctx.beginPath(); ctx.arc(cx,cy,rr,0,Math.PI*2); ctx.stroke();
-  }
-  ctx.globalAlpha=1;
-
-  ctx.restore();
-
-  // 연꽃잎 (수면 위, 클립 안)
-  ctx.save();
-  ctx.beginPath(); ctx.arc(cx,cy,pr,0,Math.PI*2); ctx.clip();
-  const lilyData=[[0.28,0.62,13],[0.55,0.78,17],[0.82,0.55,11],[0.18,0.40,15],[0.68,0.30,10]];
-  lilyData.forEach(([angF,distF,lr],i)=>{
-    const ang2=angF*Math.PI*2+t*0.04;
-    const dist2=pr*distF*0.85;
-    const lx=cx+Math.cos(ang2)*dist2;
-    const ly=cy+Math.sin(ang2)*dist2;
-    ctx.globalAlpha=0.75;
-    ctx.fillStyle='rgba(38,108,48,0.88)';
-    ctx.beginPath(); ctx.arc(lx,ly,lr,0.3,Math.PI*1.82); ctx.lineTo(lx,ly); ctx.closePath(); ctx.fill();
-    if(i%2===0){
-      ctx.fillStyle='rgba(255,182,192,0.88)';
-      ctx.beginPath(); ctx.arc(lx,ly-lr*0.22,4.5,0,Math.PI*2); ctx.fill();
+  // 열매: 패스2 - 뱃지/숫자를 모든 열매 위에 그림 (z-order 보장)
+  fruits.forEach(fr=>{
+    const si=typeof fr.slot==='number'?fr.slot:0;
+    if(si>=FIXED_SLOTS.length)return;
+    const p=FIXED_SLOTS[si];
+    const tcol=fr.type==='+'?'#2e7d32':'#c62828';
+    const cnt=fr.count||0;
+    // +/- 뱃지
+    o+=`<circle cx="${p.x-R+12}" cy="${p.y-R+12}" r="12" fill="${fr.type==='+'?'#c8e6c9':'#ffcdd2'}" pointer-events="none"/>`;
+    o+=`<text x="${p.x-R+12}" y="${p.y-R+17}" text-anchor="middle" font-size="14" fill="${tcol}" font-weight="700" pointer-events="none">${fr.type==='+'?'+':'−'}</text>`;
+    // 카운트 뱃지 (1 이상일 때만)
+    if(cnt>=1){
+      const bc=fr.type==='+'?'#2e7d32':'#c62828';
+      o+=`<circle cx="${p.x+R-11}" cy="${p.y-R+11}" r="13" fill="${bc}" pointer-events="none"/>`;
+      o+=`<text x="${p.x+R-11}" y="${p.y-R+16}" text-anchor="middle" font-size="12" fill="white" font-weight="700" pointer-events="none">${cnt>99?'99+':cnt}</text>`;
     }
   });
-  ctx.globalAlpha=1;
-  ctx.restore();
+
+  svg.innerHTML=o;
 }
 
-function drawFishSilhouette(p) {
-  const cx=W*0.5, cy=H*0.5, pr=Math.min(W,H)*0.46;
-  ctx.save();
-  ctx.beginPath(); ctx.arc(cx,cy,pr,0,Math.PI*2); ctx.clip();
-  ctx.translate(p.x,p.y);
-  ctx.rotate(p.angle+Math.PI*0.5);
-  const L=p.len, BW=p.wid;
-  const tw=Math.sin(p.tail)*BW*0.38;
+/* ════════════════════════
+   통계 탭
+════════════════════════ */
+window.changeWeek=function(d){weekOffset=Math.max(-51,Math.min(0,weekOffset+d));renderWeek();};
+window.changeMonth=function(d){
+  monthMonth+=d;
+  if(monthMonth>11){monthMonth=0;monthYear++;}
+  if(monthMonth<0){monthMonth=11;monthYear--;}
+  const now=new Date(),mY=now.getFullYear()-1,mM=now.getMonth();
+  if(monthYear<mY||(monthYear===mY&&monthMonth<mM)){monthMonth=mM;monthYear=mY;}
+  if(monthYear>now.getFullYear()||(monthYear===now.getFullYear()&&monthMonth>now.getMonth())){monthMonth=now.getMonth();monthYear=now.getFullYear();}
+  renderMonth();
+};
 
-  // 몸통 — 물결쳐 보이는 반투명 얼룩
-  ctx.fillStyle=p.bodyColor;
-  ctx.beginPath();
-  ctx.moveTo(0,-L*0.5);
-  ctx.bezierCurveTo(BW*0.52,-L*0.22, BW*0.56,L*0.12, tw,L*0.5);
-  ctx.bezierCurveTo(-BW*0.56,L*0.12, -BW*0.52,-L*0.22, 0,-L*0.5);
-  ctx.fill();
-
-  // 꼬리 흐릿하게
-  ctx.fillStyle=p.finColor;
-  ctx.beginPath();
-  ctx.moveTo(tw,L*0.46);
-  ctx.quadraticCurveTo(BW*0.68+tw,L*0.72, BW*0.38+tw,L*0.84);
-  ctx.quadraticCurveTo(tw,L*0.64, -BW*0.38+tw,L*0.84);
-  ctx.quadraticCurveTo(-BW*0.68+tw,L*0.72, tw,L*0.46);
-  ctx.fill();
-  ctx.restore();
+function getRange(s,e){
+  const ss=dStr(s),ee=dStr(e);
+  return records.filter(r=>r.date>=ss&&r.date<=ee);
+}
+function buildEM(recs){
+  // label+type 조합별로 합산 (같은 label이라도 긍정/부정은 별도 항목)
+  const m={};
+  recs.forEach(r=>{
+    const k=r.label+'|||'+r.type;
+    if(!m[k])m[k]={label:r.label,type:r.type,count:0};
+    m[k].count+=r.count||0;
+  });
+  return Object.values(m).filter(e=>e.count>0).sort((a,b)=>b.count-a.count);
+}
+function buildDD(recs,days){
+  return days.map(day=>{
+    const it=recs.filter(r=>r.date===day);
+    const p=it.filter(r=>r.type==='+').reduce((a,r)=>a+(r.count||0),0);
+    const n=it.filter(r=>r.type==='-').reduce((a,r)=>a+(r.count||0),0);
+    return{day,p,n};
+  });
+}
+function buildHD(recs){
+  return[
+    {label:'새벽',h:[0,1,2,3,4,5]},
+    {label:'오전',h:[6,7,8,9,10,11]},
+    {label:'낮',h:[12,13,14,15,16,17]},
+    {label:'저녁',h:[18,19,20,21,22,23]}
+  ].map(s=>{
+    let p=0,n=0;
+    recs.forEach(r=>(r.times||[]).forEach(h=>{if(s.h.includes(h)){r.type==='+'?p++:n++;}}));
+    return{label:s.label,p,n,total:p+n};
+  });
 }
 
-function updateFish(p) {
-  p.tail+=p.tailS;
-  p.angle+=p.turnRate;
-  p.turnRate+=(Math.random()-0.5)*0.002;
-  p.turnRate=Math.max(-0.025,Math.min(0.025,p.turnRate));
-  p.x+=Math.cos(p.angle-Math.PI*0.5)*p.speed;
-  p.y+=Math.sin(p.angle-Math.PI*0.5)*p.speed;
+function renderStats(recs,days){
+  if(!recs.length)return'<div class="no-data">이 기간엔 기록된 감정이 없어요 🌱</div>';
+  let pos=0,neg=0;
+  recs.forEach(r=>{r.type==='+'?pos+=r.count||0:neg+=r.count||0;});
+  const tot=pos+neg,pr=tot>0?Math.round(pos/tot*100):0;
+  const cmt=pos>neg*1.5?'긍정적인 감정이 풍부했던 기간이에요 🌸':neg>pos*1.5?'힘든 감정이 많았어요. 수고 많으셨어요 💙':'긍정과 부정이 균형을 이뤘어요 🌿';
+  let html=`<div class="summary-card">
+    <div class="summary-title">감정 요약</div>
+    <div class="badge-row">
+      <span class="badge badge-pos">긍정 ${pos}회 (${pr}%)</span>
+      <span class="badge badge-neg">부정 ${neg}회 (${100-pr}%)</span>
+    </div>
+    <div class="summary-comment">${cmt}</div>
+  </div>`;
 
-  const cx=W*0.5, cy=H*0.5, pr=Math.min(W,H)*0.38;
-  const dx=p.x-cx, dy=p.y-cy;
-  if(dx*dx+dy*dy>pr*pr){
-    const da=Math.atan2(cy-p.y,cx-p.x)-(p.angle-Math.PI*0.5);
-    p.angle+=Math.sin(da)*0.06;
-  }
+  const el=buildEM(recs),mc=Math.max(...el.map(e=>e.count),1);
+  html+=`<div class="chart-card"><div class="chart-card-title">감정별 기록 횟수</div>`;
+  el.forEach(e=>{
+    const pct=Math.max(14,Math.round(e.count/mc*100));
+    html+=`<div class="bar-row">
+      <div class="bar-label">${e.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${e.type==='+'?'#b5d99c':'#f5b8b8'};">
+        <span class="bar-num">${e.count}</span></div></div>
+    </div>`;
+  });
+  html+=`</div>`;
 
-  p.wakeTimer++;
-  if(p.wakeTimer>28){
-    p.wakeTimer=0;
-    extras.push({type:'wake',x:p.x,y:p.y,r:0,maxR:6+Math.random()*20,life:0,maxLife:70+Math.random()*40,a:0.32});
-  }
-}
-
-function drawSurfaceLeaf(p) {
-  const cx=W*0.5, cy=H*0.5, pr=Math.min(W,H)*0.46;
-  ctx.save();
-  ctx.beginPath(); ctx.arc(cx,cy,pr,0,Math.PI*2); ctx.clip();
-  p.drift+=p.driftS;
-  p.x+=Math.sin(p.drift)*0.22;
-  p.y+=Math.cos(p.drift*0.7)*0.18;
-  // 연못 안에 가두기
-  const dx=p.x-cx, dy=p.y-cy;
-  if(dx*dx+dy*dy>(pr*0.88)*(pr*0.88)){
-    p.x=cx+dx*0.95; p.y=cy+dy*0.95;
-  }
-  ctx.translate(p.x,p.y); ctx.rotate(p.rot+p.drift*0.28);
-  ctx.globalAlpha=p.a;
-  ctx.fillStyle=`hsl(${p.hue},52%,36%)`;
-  ctx.beginPath();
-  ctx.moveTo(0,-p.size);
-  ctx.bezierCurveTo(p.size*0.8,-p.size*0.3,p.size*0.6,p.size*0.5,0,p.size*0.8);
-  ctx.bezierCurveTo(-p.size*0.6,p.size*0.5,-p.size*0.8,-p.size*0.3,0,-p.size);
-  ctx.fill();
-  ctx.restore();
-}
-
-/* ════════════════════════════════════════════
-   Main render loop
-   ════════════════════════════════════════════ */
-function loop() {
-  t+=0.016;
-  ctx.clearRect(0,0,W,H);
-  const id=scenes[currentIdx].id;
-
-  if(id==='spring_tree'){
-    drawSpringBG();
-    // 최대 18장, 평균 6~7초에 하나씩
-    if(Math.random()<0.004&&particles.length<18) particles.push(makeLeaf(false));
-    particles.forEach(p=>{ updateLeaf(p); drawLeaf(p); });
-  }
-
-  else if(id==='shooting_stars'){
-    drawNightBG();
-    // 별 반짝임
-    particles.forEach(p=>{
-      p.twk+=p.twkS;
-      const alpha=p.a*(0.5+0.5*Math.sin(p.twk));
-      ctx.fillStyle=`rgba(255,253,220,${alpha})`;
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
-    });
-
-    // 별똥별 (궤적 포함)
-    extras=extras.filter(s=>{
-      if(s.type!=='shooter') return true;
-      s.life++;
-      s.x+=s.vx; s.y+=s.vy;
-      s.trail.push({x:s.x,y:s.y});
-      if(s.trail.length>55) s.trail.shift();
-
-      const prog=s.life/s.maxLife;
-      const baseA=prog<0.15?prog/0.15:prog>0.80?(1-prog)/0.20:1;
-
-      // 궤적 — 점점 투명해지는 꼬리
-      ctx.save();
-      for(let i=1;i<s.trail.length;i++){
-        const ta=i/s.trail.length;
-        ctx.globalAlpha=baseA*ta*0.82;
-        ctx.strokeStyle='rgba(255,250,195,1)';
-        ctx.lineWidth=1.6*ta; ctx.lineCap='round';
-        ctx.beginPath();
-        ctx.moveTo(s.trail[i-1].x,s.trail[i-1].y);
-        ctx.lineTo(s.trail[i].x,s.trail[i].y);
-        ctx.stroke();
+  const dd=buildDD(recs,days);
+  if(dd.some(d=>d.p>0||d.n>0)){
+    const mv=Math.max(...dd.map(d=>Math.max(d.p,d.n)),1);
+    const CW=340,CH=162,PL=28,PR=14,PT=14,PB=28,W=CW-PL-PR,H=CH-PT-PB,n=days.length;
+    const sx=n>1?W/(n-1):W/2,tx=i=>PL+i*sx,ty=v=>PT+H-(v/mv*H);
+    const yt=[...new Set([0,Math.round(mv/2),mv])];
+    let pp='',np='',pc='',nc='',xl='';
+    dd.forEach((d,i)=>{
+      pp+=(i===0?'M':'L')+tx(i).toFixed(1)+','+ty(d.p).toFixed(1);
+      np+=(i===0?'M':'L')+tx(i).toFixed(1)+','+ty(d.n).toFixed(1);
+      if(d.p>0||d.n>0){
+        pc+=`<circle cx="${tx(i).toFixed(1)}" cy="${ty(d.p).toFixed(1)}" r="3.5" fill="#7db87d"/>`;
+        nc+=`<circle cx="${tx(i).toFixed(1)}" cy="${ty(d.n).toFixed(1)}" r="3.5" fill="#e8a0a0"/>`;
       }
-      ctx.restore();
-
-      // 헤드 글로우
-      ctx.save(); ctx.globalAlpha=baseA*0.92;
-      const gw=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,8);
-      gw.addColorStop(0,'rgba(255,255,215,1)'); gw.addColorStop(1,'rgba(255,255,200,0)');
-      ctx.fillStyle=gw; ctx.beginPath(); ctx.arc(s.x,s.y,8,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='rgba(255,255,235,1)'; ctx.beginPath(); ctx.arc(s.x,s.y,1.8,0,Math.PI*2); ctx.fill();
-      ctx.restore();
-
-      if(s.x<-80||s.x>W+80||s.y>H+80||s.y<-80) return false;
-      return s.life<s.maxLife;
-    });
-    // 평균 7초에 1개
-    if(Math.random()<0.0025) spawnShooter();
-  }
-
-  else if(id==='snowfall'){
-    drawSnowBG();
-    particles.forEach(p=>{
-      p.swg+=p.swgS;
-      p.x+=p.vx+Math.sin(p.swg)*0.4;
-      p.y+=p.vy; p.rot+=0.006;
-      if(p.y>H+10) Object.assign(p,makeSnow(false));
-      if(p.r>2.5){
-        drawSnowflake(p.x,p.y,p.r*2.0,p.a,p.rot);
-      } else {
-        ctx.save(); ctx.globalAlpha=p.a;
-        ctx.fillStyle='rgba(215,232,255,0.92)';
-        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
-        ctx.restore();
+      if(i===0||i===n-1||i%Math.max(1,Math.floor(n/5))===0){
+        const dd2=parseDate(d.day);
+        const lb=days.length<=7?['월','화','수','목','금','토','일'][(dd2.getDay()+6)%7]:dd2.getDate()+'일';
+        xl+=`<text x="${tx(i).toFixed(1)}" y="${(PT+H+16).toFixed(1)}" text-anchor="middle" font-size="10" fill="#b89880" font-family="'Gamja Flower',cursive">${lb}</text>`;
       }
     });
+    const ytl=yt.map(v=>`
+      <line x1="${PL}" y1="${ty(v).toFixed(1)}" x2="${PL+W}" y2="${ty(v).toFixed(1)}" stroke="#f0ddd0" stroke-width="1"/>
+      <text x="${PL-4}" y="${(ty(v)+4).toFixed(1)}" text-anchor="end" font-size="10" fill="#b89880" font-family="'Gamja Flower',cursive">${v}</text>`).join('');
+    html+=`<div class="chart-card"><div class="chart-card-title">날짜별 감정 추이</div>
+      <div style="overflow-x:auto;">
+        <svg width="${CW}" height="${CH}" viewBox="0 0 ${CW} ${CH}" style="display:block;min-width:${CW}px;">
+          ${ytl}
+          <line x1="${PL}" y1="${PT}" x2="${PL}" y2="${PT+H}" stroke="#e8cdb8" stroke-width="1"/>
+          <line x1="${PL}" y1="${PT+H}" x2="${PL+W}" y2="${PT+H}" stroke="#e8cdb8" stroke-width="1"/>
+          <path d="${pp}" fill="none" stroke="#7db87d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="${np}" fill="none" stroke="#e8a0a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          ${pc}${nc}${xl}
+          <circle cx="${PL+W-52}" cy="${PT+9}" r="5" fill="#7db87d"/>
+          <text x="${PL+W-44}" y="${PT+13}" font-size="11" fill="#7db87d" font-family="'Gamja Flower',cursive">긍정</text>
+          <circle cx="${PL+W-16}" cy="${PT+9}" r="5" fill="#e8a0a0"/>
+          <text x="${PL+W-8}" y="${PT+13}" font-size="11" fill="#e8a0a0" font-family="'Gamja Flower',cursive">부정</text>
+        </svg>
+      </div></div>`;
   }
 
-  else if(id==='lake_rain'){
-    drawLakeBG();
-    const lakeY=H*0.44;
-
-    // 빗방울
-    particles.forEach(p=>{
-      if(p.type!=='raindrop') return;
-      p.y+=p.vy;
-      if(p.y>=lakeY){
-        spawnRipple(p.x,lakeY+Math.random()*5);
-        Object.assign(p,makeRaindrop(false));
-        p.y=-5; return;
-      }
-      ctx.save(); ctx.globalAlpha=p.a;
-      ctx.strokeStyle='rgba(175,208,238,0.88)';
-      ctx.lineWidth=p.w; ctx.lineCap='round';
-      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x,p.y-p.len); ctx.stroke();
-      ctx.restore();
-    });
-
-    // 파장
-    extras=extras.filter(r=>{
-      if(r.type!=='ripple') return true;
-      r.life++;
-      r.r=(r.life/r.maxLife)*r.maxR;
-      const a=r.a*(1-r.life/r.maxLife);
-      ctx.save(); ctx.globalAlpha=a;
-      ctx.strokeStyle='rgba(198,222,242,0.92)'; ctx.lineWidth=0.75;
-      ctx.beginPath(); ctx.ellipse(r.x,r.y,r.r,r.r*r.ryRatio,0,0,Math.PI*2); ctx.stroke();
-      // 이중 파장
-      if(r.maxR>30&&r.r>r.maxR*0.38){
-        ctx.globalAlpha=a*0.40;
-        ctx.beginPath(); ctx.ellipse(r.x,r.y,r.r*0.52,r.r*r.ryRatio*0.52,0,0,Math.PI*2); ctx.stroke();
-      }
-      ctx.restore();
-      return r.life<r.maxLife;
-    });
-
-    if(particles.length<28) particles.push(makeRaindrop(false));
-  }
-
-  else if(id==='autumn'){
-    drawAutumnBG();
-    if(Math.random()<0.006&&particles.length<20) particles.push(makeAutumnLeaf(false));
-    particles.forEach(p=>{ updateAutumnLeaf(p); drawAutumnLeaf(p); });
-  }
-
-  else if(id==='koi_pond'){
-    drawKoiScene();
-
-    // wake 파장
-    extras=extras.filter(e=>{
-      if(e.type==='leaf') return true;
-      if(e.type!=='wake') return true;
-      e.life++;
-      e.r=(e.life/e.maxLife)*e.maxR;
-      const a=e.a*(1-e.life/e.maxLife);
-      const cx=W*0.5, cy=H*0.5, pr=Math.min(W,H)*0.46;
-      ctx.save();
-      ctx.beginPath(); ctx.arc(cx,cy,pr,0,Math.PI*2); ctx.clip();
-      ctx.globalAlpha=a;
-      ctx.strokeStyle='rgba(175,215,205,0.85)'; ctx.lineWidth=0.7;
-      ctx.beginPath(); ctx.ellipse(e.x,e.y,e.r,e.r*0.42,0,0,Math.PI*2); ctx.stroke();
-      ctx.restore();
-      return e.life<e.maxLife;
-    });
-
-    // 수면 나뭇잎
-    extras.forEach(e=>{ if(e.type==='leaf') drawSurfaceLeaf(e); });
-    const leafN=extras.filter(e=>e.type==='leaf').length;
-    if(Math.random()<0.003&&leafN<7) extras.push(makeSurfaceLeaf());
-
-    // 물고기 실루엣
-    particles.forEach(p=>{ updateFish(p); drawFishSilhouette(p); });
-  }
-
-  animId=requestAnimationFrame(loop);
+  const hd=buildHD(recs),mh=Math.max(...hd.map(h=>h.total),1);
+  html+=`<div class="chart-card"><div class="chart-card-title">시간대별 감정 기록</div><div class="time-grid">`;
+  hd.forEach(h=>{
+    const bg=h.total===0?'#f5ebe0':`rgba(180,210,160,${0.15+(h.total/mh)*0.7})`;
+    const pc2=h.p>=h.n?'#2e7d32':'#c62828';
+    html+=`<div class="time-cell ${h.total>0?'has-data':''}" style="background:${bg};">
+      <span class="time-cell-label">${h.label}</span>
+      <span class="time-cell-count" style="color:${h.total>0?pc2:'#c4a992'}">${h.total||'·'}</span>
+    </div>`;
+  });
+  html+=`</div></div>`;
+  return html;
 }
 
-updateUI();
-resize();
+function renderWeek(){
+  const{start,end}=weekRange(weekOffset);
+  const m1=start.getMonth()+1,d1=start.getDate(),m2=end.getMonth()+1,d2=end.getDate();
+  document.getElementById('week-label').textContent=weekOffset===0?'이번 주':`${start.getFullYear()}년 ${m1}월`;
+  document.getElementById('week-sub').textContent=`${m1}/${d1} – ${m2}/${d2}`;
+  document.getElementById('week-prev').disabled=weekOffset<=-51;
+  document.getElementById('week-next').disabled=weekOffset>=0;
+  const days=[];
+  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1))days.push(dStr(new Date(d)));
+  document.getElementById('week-content').innerHTML=renderStats(getRange(start,end),days);
+}
 
+function renderMonth(){
+  const{start,end}=monthRange(monthYear,monthMonth);
+  const now=new Date(),isCur=monthYear===now.getFullYear()&&monthMonth===now.getMonth();
+  document.getElementById('month-label').textContent=isCur?'이번 달':`${monthYear}년 ${monthMonth+1}월`;
+  document.getElementById('month-sub').textContent=`${monthYear}.${String(monthMonth+1).padStart(2,'0')}`;
+  const mY=now.getFullYear()-1,mM=now.getMonth();
+  document.getElementById('month-prev').disabled=monthYear<mY||(monthYear===mY&&monthMonth<=mM);
+  document.getElementById('month-next').disabled=isCur;
+  const days=[];
+  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1))days.push(dStr(new Date(d)));
+  document.getElementById('month-content').innerHTML=renderStats(getRange(start,end),days);
+}
+
+/* ── 엔터키 ── */
+document.getElementById('emotion-input').addEventListener('keydown',function(e){
+  if(e.key==='Enter'){e.preventDefault();addEmotion();}
+});
+/* ── 통계탭 스크롤 허용 ── */
+document.querySelectorAll('.scroll-panel').forEach(el=>{
+  el.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:true});
+});
+
+drawTree();
 })();
 </script>
 </body>
