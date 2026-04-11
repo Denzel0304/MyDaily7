@@ -129,31 +129,46 @@ body{font-family:'Gamja Flower',cursive;background:#fdf6ee;overscroll-behavior:n
 <script>
 (function(){
 'use strict';
-const SK='haruemotion_v4';
+
+/* ── 스토리지 ── */
+const SK='haruemotion_v5';
 let records=[];
-function loadData(){try{const s=localStorage.getItem(SK);if(s)records=JSON.parse(s);}catch(e){records=[];}}
-function saveData(){pruneOldData();try{localStorage.setItem(SK,JSON.stringify(records));}catch(e){}}
-function pruneOldData(){const c=new Date();c.setFullYear(c.getFullYear()-1);const cs=dStr(c);records=records.filter(r=>r.date>=cs);}
+function loadData(){
+  try{const s=localStorage.getItem(SK);if(s)records=JSON.parse(s);}catch(e){records=[];}
+}
+function saveData(){
+  const cut=new Date();cut.setFullYear(cut.getFullYear()-1);
+  const cs=dStr(cut);
+  records=records.filter(r=>r.date>=cs);
+  try{localStorage.setItem(SK,JSON.stringify(records));}catch(e){}
+}
 loadData();
 
+/* ── 날짜 유틸 ── */
 function dStr(d){return d.toISOString().slice(0,10);}
 function todayStr(){return dStr(new Date());}
 function parseDate(s){return new Date(s+'T00:00:00');}
 function weekRange(off){
   const now=new Date(),day=now.getDay();
-  const mon=new Date(now);mon.setDate(now.getDate()-(day===0?6:day-1)+off*7);mon.setHours(0,0,0,0);
-  const sun=new Date(mon);sun.setDate(mon.getDate()+6);return{start:mon,end:sun};
+  const mon=new Date(now);
+  mon.setDate(now.getDate()-(day===0?6:day-1)+off*7);
+  mon.setHours(0,0,0,0);
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  return{start:mon,end:sun};
 }
 function monthRange(y,m){return{start:new Date(y,m,1),end:new Date(y,m+1,0)};}
 
+/* ── 상태 ── */
 let weekOffset=0,monthYear=new Date().getFullYear(),monthMonth=new Date().getMonth();
 
+/* ── 헤더 날짜 ── */
 (function(){
   const now=new Date(),days=['일','월','화','수','목','금','토'];
-  const el=document.getElementById('header-date');
-  el.innerHTML=`${now.getMonth()+1}월 ${now.getDate()}일<br><span style="font-size:13px;color:var(--text3)">${days[now.getDay()]}요일</span>`;
+  document.getElementById('header-date').innerHTML=
+    `${now.getMonth()+1}월 ${now.getDate()}일<br><span style="font-size:13px;color:var(--text3)">${days[now.getDay()]}요일</span>`;
 })();
 
+/* ── 탭 ── */
 window.switchTab=function(tab){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
@@ -162,177 +177,193 @@ window.switchTab=function(tab){
   if(tab==='month'){monthYear=new Date().getFullYear();monthMonth=new Date().getMonth();renderMonth();}
 };
 
-function getTodayEmotions(){return records.filter(r=>r.date===todayStr());}
+/* ── 오늘 감정 목록 ── */
+function getTodayFruits(){return records.filter(r=>r.date===todayStr());}
 
+/* ── 감정 추가
+   - count:0 으로 시작 (열매 생성 자체는 카운트 아님)
+   - 탭하면 +1
+   - 같은 이름이 있어도 새 슬롯에 새 열매
+── */
 window.addEmotion=function(){
   const input=document.getElementById('emotion-input');
   const type=document.getElementById('emotion-type').value;
   const label=input.value.trim();
   if(!label)return;
-  const td=todayStr(),hour=new Date().getHours();
-  const todayList=getTodayEmotions();
-  if(todayList.length>=13){alert('오늘 열매는 최대 13개까지 달 수 있어요 🌳');return;}
-  // 이미 같은 이름+타입이 있어도 무조건 새 열매로 추가
-  const usedSlots=new Set(todayList.map(r=>r.slot));
-  let freeSlot=-1;
-  for(let i=0;i<13;i++){if(!usedSlots.has(i)){freeSlot=i;break;}}
-  if(freeSlot<0)return;
-  const colorIdx=freeSlot%7;
-  // count:0 — 열매 생성 자체는 카운트 아님. 탭할 때 1이 됨
-  records.push({date:td,label,type,count:0,times:[],ts:Date.now(),slot:freeSlot,colorIdx});
-  saveData();input.value='';drawTree();
+  const list=getTodayFruits();
+  if(list.length>=13){alert('오늘 열매는 최대 13개예요 🌳');return;}
+  const used=new Set(list.map(r=>r.slot));
+  let slot=-1;
+  for(let i=0;i<13;i++){if(!used.has(i)){slot=i;break;}}
+  if(slot<0)return;
+  records.push({
+    date:todayStr(),label,type,
+    count:0,          // ← 0부터 시작, 탭해야 1
+    times:[],
+    slot,
+    colorIdx:slot%7,
+    ts:Date.now()
+  });
+  saveData();
+  input.value='';
+  drawTree();
+  // 드래그 힌트 잠깐 표시
   const h=document.getElementById('drag-hint');
-  h.classList.add('show');setTimeout(()=>h.classList.remove('show'),3500);
+  h.classList.add('show');
+  setTimeout(()=>h.classList.remove('show'),3000);
 };
 
-/* === DRAG-TO-DELETE === */
-let dragState=null,longPressTimer=null;
-
-function cancelLP(){if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null;}}
-function showDZ(v){document.getElementById('delete-zone').classList.toggle('active',v);}
-function overDZ(cy){const r=document.getElementById('delete-zone').getBoundingClientRect();return cy>=r.top;}
-function updateGhost(cx,cy,label,type){
-  const g=document.getElementById('drag-ghost');
-  g.style.left=cx+'px';g.style.top=cy+'px';
-  const col=type==='+'?'#b5d99c':'#f5b8b8';
-  g.innerHTML=`<circle cx="40" cy="40" r="34" fill="${col}" opacity="0.92"/>
-    <text x="40" y="45" text-anchor="middle" font-size="13" fill="#3d2b1f" font-family="'Gamja Flower',cursive">${label}</text>`;
+/* ── 열매 탭: count+1 ── */
+function tapFruit(label,type){
+  const rec=records.find(r=>r.date===todayStr()&&r.label===label&&r.type===type);
+  if(!rec)return;
+  rec.count++;
+  rec.times.push(new Date().getHours());
+  saveData();drawTree();
 }
 
-const treeArea=document.getElementById('tree-area');
-const treeSvg=document.getElementById('tree-svg');
+/* ── 열매 삭제 ── */
+function deleteFruit(label,type){
+  const idx=records.findIndex(r=>r.date===todayStr()&&r.label===label&&r.type===type);
+  if(idx>=0){records.splice(idx,1);saveData();drawTree();}
+}
 
-// SVG 뷰박스 기준으로 터치 좌표 변환
-function svgPoint(clientX, clientY){
-  const rect=treeSvg.getBoundingClientRect();
-  const vb=treeSvg.viewBox.baseVal; // 0 0 390 540
-  const scaleX=vb.width/rect.width;
-  const scaleY=vb.height/rect.height;
+/* ════════════════════════
+   드래그-투-삭제
+   핵심: SVG 좌표계 기반으로 열매 찾기
+════════════════════════ */
+const SVG_W=390, SVG_H=540;
+const R=34; // 열매 반지름
+
+const FIXED_SLOTS=[
+  {x:195,y:112},{x:118,y:168},{x:272,y:163},
+  {x:195,y:205},{x:76,y:248},{x:314,y:242},
+  {x:152,y:262},{x:238,y:258},{x:195,y:308},
+  {x:94,y:326},{x:296,y:321},{x:152,y:362},{x:238,y:358}
+];
+
+function clientToSvg(cx,cy){
+  const rect=document.getElementById('tree-svg').getBoundingClientRect();
   return{
-    x:(clientX-rect.left)*scaleX,
-    y:(clientY-rect.top)*scaleY
+    x:(cx-rect.left)/rect.width*SVG_W,
+    y:(cy-rect.top)/rect.height*SVG_H
   };
 }
 
-// 터치 좌표에서 가장 가까운 오늘 열매 찾기 (SVG 좌표계 기준)
-function findFruitAt(clientX, clientY){
-  const sp=svgPoint(clientX, clientY);
-  const fruits=getTodayEmotions();
-  for(let i=0;i<fruits.length;i++){
-    const fr=fruits[i];
-    const si=typeof fr.slot==='number'?fr.slot:0;
-    if(si>=FIXED_SLOTS.length)continue;
-    const p=FIXED_SLOTS[si];
-    const dx=sp.x-p.x, dy=sp.y-p.y;
-    if(dx*dx+dy*dy<=(R+10)*(R+10)){
-      return{label:fr.label,type:fr.type};
-    }
-  }
-  return null;
+function fruitAtClient(cx,cy){
+  const sp=clientToSvg(cx,cy);
+  return getTodayFruits().find(fr=>{
+    const p=FIXED_SLOTS[fr.slot];
+    if(!p)return false;
+    const dx=sp.x-p.x,dy=sp.y-p.y;
+    return dx*dx+dy*dy<=(R+12)*(R+12);
+  })||null;
 }
+
+function isOverDeleteZone(clientY){
+  const dz=document.getElementById('delete-zone');
+  return clientY>=dz.getBoundingClientRect().top;
+}
+
+function showDeleteZone(v){
+  document.getElementById('delete-zone').classList.toggle('active',v);
+}
+function setDeleteZoneOver(v){
+  document.getElementById('delete-zone').classList.toggle('over',v);
+}
+
+function updateGhost(cx,cy,label,type){
+  const g=document.getElementById('drag-ghost');
+  g.style.left=cx+'px';g.style.top=cy+'px';
+  g.innerHTML=`<circle cx="40" cy="40" r="34" fill="${type==='+'?'#b5d99c':'#f5b8b8'}" opacity="0.93"/>
+    <text x="40" y="45" text-anchor="middle" font-size="14" font-weight="700" fill="#3d2b1f" font-family="'Gamja Flower',cursive">${label}</text>`;
+}
+
+// 드래그 상태
+let drag=null;     // {label, type}
+let lpTimer=null;
+let tapTarget=null; // touchstart에서 찾은 열매 (탭용)
+
+const treeArea=document.getElementById('tree-area');
 
 treeArea.addEventListener('touchstart',function(e){
   const t=e.touches[0];
-  const found=findFruitAt(t.clientX,t.clientY);
+  const found=fruitAtClient(t.clientX,t.clientY);
+  tapTarget=found;
   if(!found)return;
-  startLP(e,found.label,found.type);
+
+  // 롱프레스 타이머
+  lpTimer=setTimeout(function(){
+    lpTimer=null;
+    tapTarget=null; // 롱프레스면 탭 무효화
+    drag={label:found.label,type:found.type};
+    showDeleteZone(true);
+    updateGhost(t.clientX,t.clientY,found.label,found.type);
+    document.getElementById('drag-ghost').style.display='block';
+    if(navigator.vibrate)navigator.vibrate(35);
+  },500);
 },{passive:true});
 
-// touchmove/touchend는 document에 붙여야 드래그 중 손가락이 treeArea 밖으로 나가도 끊기지 않음
-function onTouchMove(e){
-  if(!dragState){cancelLP();return;}
+// touchmove: document에 붙여야 손가락이 treeArea 밖으로 나가도 끊기지 않음
+document.addEventListener('touchmove',function(e){
+  if(lpTimer){
+    // 조금이라도 움직이면 롱프레스 취소
+    clearTimeout(lpTimer);lpTimer=null;tapTarget=null;
+    return;
+  }
+  if(!drag)return;
   e.preventDefault();
   const t=e.touches[0];
-  dragState.moved=true;
-  updateGhost(t.clientX,t.clientY,dragState.label,dragState.type);
-  document.getElementById('delete-zone').classList.toggle('over',overDZ(t.clientY));
-}
-function onTouchEnd(e){
-  cancelLP();
-  if(!dragState)return;
-  document.getElementById('drag-ghost').style.display='none';
-  const t=e.changedTouches[0];
-  if(dragState.moved&&overDZ(t.clientY)){
-    deleteFruit(dragState.label,dragState.type);
+  updateGhost(t.clientX,t.clientY,drag.label,drag.type);
+  setDeleteZoneOver(isOverDeleteZone(t.clientY));
+},{passive:false});
+
+document.addEventListener('touchend',function(e){
+  if(lpTimer){
+    // 짧게 뗀 것 = 탭
+    clearTimeout(lpTimer);lpTimer=null;
+    if(tapTarget){tapFruit(tapTarget.label,tapTarget.type);}
+    tapTarget=null;
+    return;
   }
-  dragState=null;showDZ(false);
-  document.getElementById('delete-zone').classList.remove('over');
-  document.removeEventListener('touchmove',onTouchMove);
-  document.removeEventListener('touchend',onTouchEnd);
-}
-function onTouchCancel(){
-  cancelLP();
-  if(dragState){document.getElementById('drag-ghost').style.display='none';showDZ(false);dragState=null;}
-  document.removeEventListener('touchmove',onTouchMove);
-  document.removeEventListener('touchend',onTouchEnd);
-}
+  if(!drag)return;
+  const t=e.changedTouches[0];
+  document.getElementById('drag-ghost').style.display='none';
+  if(isOverDeleteZone(t.clientY)){
+    deleteFruit(drag.label,drag.type);
+  }
+  drag=null;
+  showDeleteZone(false);
+  setDeleteZoneOver(false);
+  tapTarget=null;
+},{passive:true});
 
-// startLP에서 dragState 세팅 시 document 리스너 등록
-const _origStartLP=startLP;
-function startLP(e,label,type){
-  const t=e.touches?e.touches[0]:e;
-  longPressTimer=setTimeout(()=>{
-    dragState={label,type,moved:false};
-    showDZ(true);updateGhost(t.clientX,t.clientY,label,type);
-    document.getElementById('drag-ghost').style.display='block';
-    if(navigator.vibrate)navigator.vibrate(40);
-    // 드래그 추적을 document 레벨에서
-    document.addEventListener('touchmove',onTouchMove,{passive:false});
-    document.addEventListener('touchend',onTouchEnd,{passive:true});
-    document.addEventListener('touchcancel',onTouchCancel,{passive:true});
-  },480);
-}
+document.addEventListener('touchcancel',function(){
+  if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}
+  tapTarget=null;
+  if(drag){
+    document.getElementById('drag-ghost').style.display='none';
+    showDeleteZone(false);setDeleteZoneOver(false);
+    drag=null;
+  }
+},{passive:true});
 
-// 클릭 이벤트 위임 (마우스/데스크탑)
+// 마우스 클릭 (데스크탑)
 treeArea.addEventListener('click',function(e){
-  if(dragState)return;
-  const found=findFruitAt(e.clientX,e.clientY);
-  if(!found)return;
-  clickFruit(found.label,found.type);
+  if(drag)return;
+  const found=fruitAtClient(e.clientX,e.clientY);
+  if(found)tapFruit(found.label,found.type);
 });
 
-function clickFruit(label,type){
-  const rec=records.find(r=>r.date===todayStr()&&r.label===label&&r.type===type);
-  if(!rec)return;
-  rec.count=(rec.count||1)+1;
-  rec.times=rec.times||[];rec.times.push(new Date().getHours());
-  saveData();drawTree();
-}
-window.clickFruitDesktop=clickFruit;
-
-function deleteFruit(label,type){
-  const idx=records.findIndex(r=>r.date===todayStr()&&r.label===label&&r.type===type);
-  if(idx>=0){
-    records.splice(idx,1);
-    saveData();drawTree();
-  }
-}
-
-/* === TREE === */
+/* ════════════════════════
+   나무 그리기
+════════════════════════ */
 const PP=['#b5d99c','#aec6e8','#f5e4a0','#d4b8e8','#a8d8c8','#f5c2a8','#c8e0b8'];
 const NP=['#f5b8b8','#d4a8c8','#e8c4a8','#c8a8d8','#f5d0a8','#b8c8e8','#e8b8c8'];
-const R=34; // 고정 반지름
-
-// 슬롯 13개: 중심간 최소 거리 R*2+14=82 이상, 나뭇잎 안에 균형 배치
-const FIXED_SLOTS=[
-  {x:195,y:112},   // 0: 꼭대기 중앙
-  {x:118,y:168},   // 1: 좌상
-  {x:272,y:163},   // 2: 우상
-  {x:195,y:205},   // 3: 중앙 상
-  {x:76, y:248},   // 4: 좌중
-  {x:314,y:242},   // 5: 우중
-  {x:152,y:262},   // 6: 좌중하
-  {x:238,y:258},   // 7: 우중하
-  {x:195,y:308},   // 8: 중앙 중하
-  {x:94, y:326},   // 9: 좌하
-  {x:296,y:321},   // 10: 우하
-  {x:152,y:362},   // 11: 좌 최하
-  {x:238,y:358},   // 12: 우 최하
-];
 
 function drawTree(){
   const svg=document.getElementById('tree-svg');
-  const fruits=getTodayEmotions();
+  const fruits=getTodayFruits();
   let o='';
 
   // 그림자
@@ -348,7 +379,6 @@ function drawTree(){
   o+=`<path d="M190,275 C192,234 191,192 192,152" stroke="#c8a97a" stroke-width="9" fill="none" stroke-linecap="round"/>`;
   o+=`<path d="M192,165 C172,148 145,135 118,125" stroke="#c8a97a" stroke-width="6" fill="none" stroke-linecap="round"/>`;
   o+=`<path d="M192,165 C214,148 240,135 264,125" stroke="#c8a97a" stroke-width="6" fill="none" stroke-linecap="round"/>`;
-
   // 잎사귀
   [
     {cx:195,cy:255,rx:155,ry:138,op:0.17,c:'#5fa85f'},
@@ -366,34 +396,30 @@ function drawTree(){
     {cx:195,cy:110,rx:65, ry:58, op:0.30,c:'#c6eec6'},
   ].forEach(f=>o+=`<ellipse cx="${f.cx}" cy="${f.cy}" rx="${f.rx}" ry="${f.ry}" fill="${f.c}" opacity="${f.op}"/>`);
 
-  // 열매: onclick 없음 — 터치/클릭은 이벤트 위임으로만 처리
-  fruits.forEach((fr)=>{
+  // 열매
+  fruits.forEach(fr=>{
     const si=typeof fr.slot==='number'?fr.slot:0;
     if(si>=FIXED_SLOTS.length)return;
     const p=FIXED_SLOTS[si];
-    const ci=typeof fr.colorIdx==='number'?fr.colorIdx:(si%7);
+    const ci=typeof fr.colorIdx==='number'?fr.colorIdx:si%7;
     const col=fr.type==='+'?PP[ci]:NP[ci];
     const tcol=fr.type==='+'?'#2e7d32':'#c62828';
-    const tc=fr.type==='+'?'+':'−';
-    const cnt=fr.count||1;
+    const cnt=fr.count||0;
     const le=fr.label.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,'&apos;');
     // 줄기
     o+=`<line x1="${p.x}" y1="${p.y-R}" x2="${p.x+5}" y2="${p.y-R-14}" stroke="#b8956a" stroke-width="2.5" stroke-linecap="round"/>`;
-    // 히트박스 — onclick 제거, data 속성만 (이벤트 위임으로 처리)
-    o+=`<circle cx="${p.x}" cy="${p.y}" r="${R+8}" fill="transparent" data-fruit="${le}" data-type="${fr.type}"/>`;
-    // 열매 본체
-    o+=`<circle cx="${p.x}" cy="${p.y}" r="${R}" fill="${col}" stroke="rgba(0,0,0,0.06)" stroke-width="1" pointer-events="none"/>`;
-    // 텍스트: 볼드, 글자수별 크기
-    const ll=fr.label.length;
-    const fs=ll<=1?22:ll===2?19:16;
+    // 본체
+    o+=`<circle cx="${p.x}" cy="${p.y}" r="${R}" fill="${col}" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>`;
+    // 텍스트
+    const ll=fr.label.length,fs=ll<=1?22:ll===2?19:16;
     o+=`<text x="${p.x}" y="${p.y+fs*0.38}" text-anchor="middle" font-size="${fs}" font-weight="700" fill="#3d2b1f" font-family="'Gamja Flower',cursive" pointer-events="none">${fr.label}</text>`;
     // +/- 뱃지
     o+=`<circle cx="${p.x-R+12}" cy="${p.y-R+12}" r="12" fill="${fr.type==='+'?'#c8e6c9':'#ffcdd2'}" pointer-events="none"/>`;
-    o+=`<text x="${p.x-R+12}" y="${p.y-R+17}" text-anchor="middle" font-size="14" fill="${tcol}" font-weight="700" pointer-events="none">${tc}</text>`;
-    // 카운트 뱃지: 1 이상일 때 표시, 긍정=녹색 부정=빨간색
+    o+=`<text x="${p.x-R+12}" y="${p.y-R+17}" text-anchor="middle" font-size="14" fill="${tcol}" font-weight="700" pointer-events="none">${fr.type==='+'?'+':'−'}</text>`;
+    // 카운트 뱃지: 1 이상일 때만
     if(cnt>=1){
-      const badgeCol=fr.type==='+'?'#2e7d32':'#c62828';
-      o+=`<circle cx="${p.x+R-11}" cy="${p.y-R+11}" r="13" fill="${badgeCol}" pointer-events="none"/>`;
+      const bc=fr.type==='+'?'#2e7d32':'#c62828';
+      o+=`<circle cx="${p.x+R-11}" cy="${p.y-R+11}" r="13" fill="${bc}" pointer-events="none"/>`;
       o+=`<text x="${p.x+R-11}" y="${p.y-R+16}" text-anchor="middle" font-size="12" fill="white" font-weight="700" pointer-events="none">${cnt>99?'99+':cnt}</text>`;
     }
   });
@@ -401,7 +427,9 @@ function drawTree(){
   svg.innerHTML=o;
 }
 
-/* === STATS === */
+/* ════════════════════════
+   통계 탭
+════════════════════════ */
 window.changeWeek=function(d){weekOffset=Math.max(-51,Math.min(0,weekOffset+d));renderWeek();};
 window.changeMonth=function(d){
   monthMonth+=d;
@@ -413,39 +441,67 @@ window.changeMonth=function(d){
   renderMonth();
 };
 
-function getRange(s,e){const ss=dStr(s),ee=dStr(e);return records.filter(r=>r.date>=ss&&r.date<=ee);}
+function getRange(s,e){
+  const ss=dStr(s),ee=dStr(e);
+  return records.filter(r=>r.date>=ss&&r.date<=ee);
+}
 function buildEM(recs){
-  const m={};recs.forEach(r=>{const k=r.label+'|'+r.type;if(!m[k])m[k]={label:r.label,type:r.type,count:0};m[k].count+=r.count||1;});
+  const m={};
+  recs.forEach(r=>{
+    const k=r.label+'|'+r.type;
+    if(!m[k])m[k]={label:r.label,type:r.type,count:0};
+    m[k].count+=r.count||0;
+  });
   return Object.values(m).sort((a,b)=>b.count-a.count);
 }
 function buildDD(recs,days){
   return days.map(day=>{
     const it=recs.filter(r=>r.date===day);
-    return{day,p:it.filter(r=>r.type==='+').reduce((a,r)=>a+(r.count||1),0),n:it.filter(r=>r.type==='-').reduce((a,r)=>a+(r.count||1),0)};
+    const p=it.filter(r=>r.type==='+').reduce((a,r)=>a+(r.count||0),0);
+    const n=it.filter(r=>r.type==='-').reduce((a,r)=>a+(r.count||0),0);
+    return{day,p,n};
   });
 }
 function buildHD(recs){
-  return [{label:'새벽',h:[0,1,2,3,4,5]},{label:'오전',h:[6,7,8,9,10,11]},{label:'낮',h:[12,13,14,15,16,17]},{label:'저녁',h:[18,19,20,21,22,23]}].map(s=>{
-    let p=0,n=0;recs.forEach(r=>{(r.times||[]).forEach(h=>{if(s.h.includes(h)){if(r.type==='+')p++;else n++;}});});
+  return[
+    {label:'새벽',h:[0,1,2,3,4,5]},
+    {label:'오전',h:[6,7,8,9,10,11]},
+    {label:'낮',h:[12,13,14,15,16,17]},
+    {label:'저녁',h:[18,19,20,21,22,23]}
+  ].map(s=>{
+    let p=0,n=0;
+    recs.forEach(r=>(r.times||[]).forEach(h=>{if(s.h.includes(h)){r.type==='+'?p++:n++;}}));
     return{label:s.label,p,n,total:p+n};
   });
 }
 
 function renderStats(recs,days){
-  if(!recs.length)return '<div class="no-data">이 기간엔 기록된 감정이 없어요 🌱</div>';
-  let pos=0,neg=0;recs.forEach(r=>{if(r.type==='+')pos+=r.count||1;else neg+=r.count||1;});
-  const tot=pos+neg,pr=tot>0?Math.round(pos/tot*100):0,nr=100-pr;
+  if(!recs.length)return'<div class="no-data">이 기간엔 기록된 감정이 없어요 🌱</div>';
+  let pos=0,neg=0;
+  recs.forEach(r=>{r.type==='+'?pos+=r.count||0:neg+=r.count||0;});
+  const tot=pos+neg,pr=tot>0?Math.round(pos/tot*100):0;
   const cmt=pos>neg*1.5?'긍정적인 감정이 풍부했던 기간이에요 🌸':neg>pos*1.5?'힘든 감정이 많았어요. 수고 많으셨어요 💙':'긍정과 부정이 균형을 이뤘어요 🌿';
-  let html=`<div class="summary-card"><div class="summary-title">감정 요약</div>
-    <div class="badge-row"><span class="badge badge-pos">긍정 ${pos}회 (${pr}%)</span><span class="badge badge-neg">부정 ${neg}회 (${nr}%)</span></div>
-    <div class="summary-comment">${cmt}</div></div>`;
+  let html=`<div class="summary-card">
+    <div class="summary-title">감정 요약</div>
+    <div class="badge-row">
+      <span class="badge badge-pos">긍정 ${pos}회 (${pr}%)</span>
+      <span class="badge badge-neg">부정 ${neg}회 (${100-pr}%)</span>
+    </div>
+    <div class="summary-comment">${cmt}</div>
+  </div>`;
+
   const el=buildEM(recs),mc=Math.max(...el.map(e=>e.count),1);
   html+=`<div class="chart-card"><div class="chart-card-title">감정별 기록 횟수</div>`;
   el.forEach(e=>{
-    const pct=Math.max(14,Math.round(e.count/mc*100)),col=e.type==='+'?'#b5d99c':'#f5b8b8';
-    html+=`<div class="bar-row"><div class="bar-label">${e.label}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${col};"><span class="bar-num">${e.count}</span></div></div></div>`;
+    const pct=Math.max(14,Math.round(e.count/mc*100));
+    html+=`<div class="bar-row">
+      <div class="bar-label">${e.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${e.type==='+'?'#b5d99c':'#f5b8b8'};">
+        <span class="bar-num">${e.count}</span></div></div>
+    </div>`;
   });
   html+=`</div>`;
+
   const dd=buildDD(recs,days);
   if(dd.some(d=>d.p>0||d.n>0)){
     const mv=Math.max(...dd.map(d=>Math.max(d.p,d.n)),1);
@@ -456,48 +512,83 @@ function renderStats(recs,days){
     dd.forEach((d,i)=>{
       pp+=(i===0?'M':'L')+tx(i).toFixed(1)+','+ty(d.p).toFixed(1);
       np+=(i===0?'M':'L')+tx(i).toFixed(1)+','+ty(d.n).toFixed(1);
-      if(d.p>0||d.n>0){pc+=`<circle cx="${tx(i).toFixed(1)}" cy="${ty(d.p).toFixed(1)}" r="3.5" fill="#7db87d"/>`;nc+=`<circle cx="${tx(i).toFixed(1)}" cy="${ty(d.n).toFixed(1)}" r="3.5" fill="#e8a0a0"/>`;}
+      if(d.p>0||d.n>0){
+        pc+=`<circle cx="${tx(i).toFixed(1)}" cy="${ty(d.p).toFixed(1)}" r="3.5" fill="#7db87d"/>`;
+        nc+=`<circle cx="${tx(i).toFixed(1)}" cy="${ty(d.n).toFixed(1)}" r="3.5" fill="#e8a0a0"/>`;
+      }
       if(i===0||i===n-1||i%Math.max(1,Math.floor(n/5))===0){
-        const dd2=parseDate(d.day),lb=days.length<=7?['월','화','수','목','금','토','일'][(dd2.getDay()+6)%7]:dd2.getDate()+'일';
+        const dd2=parseDate(d.day);
+        const lb=days.length<=7?['월','화','수','목','금','토','일'][(dd2.getDay()+6)%7]:dd2.getDate()+'일';
         xl+=`<text x="${tx(i).toFixed(1)}" y="${(PT+H+16).toFixed(1)}" text-anchor="middle" font-size="10" fill="#b89880" font-family="'Gamja Flower',cursive">${lb}</text>`;
       }
     });
-    const ytl=yt.map(v=>`<line x1="${PL}" y1="${ty(v).toFixed(1)}" x2="${PL+W}" y2="${ty(v).toFixed(1)}" stroke="#f0ddd0" stroke-width="1"/><text x="${PL-4}" y="${(ty(v)+4).toFixed(1)}" text-anchor="end" font-size="10" fill="#b89880" font-family="'Gamja Flower',cursive">${v}</text>`).join('');
-    html+=`<div class="chart-card"><div class="chart-card-title">날짜별 감정 추이</div><div style="overflow-x:auto;"><svg width="${CW}" height="${CH}" viewBox="0 0 ${CW} ${CH}" style="display:block;min-width:${CW}px;">${ytl}<line x1="${PL}" y1="${PT}" x2="${PL}" y2="${PT+H}" stroke="#e8cdb8" stroke-width="1"/><line x1="${PL}" y1="${PT+H}" x2="${PL+W}" y2="${PT+H}" stroke="#e8cdb8" stroke-width="1"/><path d="${pp}" fill="none" stroke="#7db87d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="${np}" fill="none" stroke="#e8a0a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${pc}${nc}${xl}<circle cx="${PL+W-52}" cy="${PT+9}" r="5" fill="#7db87d"/><text x="${PL+W-44}" y="${PT+13}" font-size="11" fill="#7db87d" font-family="'Gamja Flower',cursive">긍정</text><circle cx="${PL+W-16}" cy="${PT+9}" r="5" fill="#e8a0a0"/><text x="${PL+W-8}" y="${PT+13}" font-size="11" fill="#e8a0a0" font-family="'Gamja Flower',cursive">부정</text></svg></div></div>`;
+    const ytl=yt.map(v=>`
+      <line x1="${PL}" y1="${ty(v).toFixed(1)}" x2="${PL+W}" y2="${ty(v).toFixed(1)}" stroke="#f0ddd0" stroke-width="1"/>
+      <text x="${PL-4}" y="${(ty(v)+4).toFixed(1)}" text-anchor="end" font-size="10" fill="#b89880" font-family="'Gamja Flower',cursive">${v}</text>`).join('');
+    html+=`<div class="chart-card"><div class="chart-card-title">날짜별 감정 추이</div>
+      <div style="overflow-x:auto;">
+        <svg width="${CW}" height="${CH}" viewBox="0 0 ${CW} ${CH}" style="display:block;min-width:${CW}px;">
+          ${ytl}
+          <line x1="${PL}" y1="${PT}" x2="${PL}" y2="${PT+H}" stroke="#e8cdb8" stroke-width="1"/>
+          <line x1="${PL}" y1="${PT+H}" x2="${PL+W}" y2="${PT+H}" stroke="#e8cdb8" stroke-width="1"/>
+          <path d="${pp}" fill="none" stroke="#7db87d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="${np}" fill="none" stroke="#e8a0a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          ${pc}${nc}${xl}
+          <circle cx="${PL+W-52}" cy="${PT+9}" r="5" fill="#7db87d"/>
+          <text x="${PL+W-44}" y="${PT+13}" font-size="11" fill="#7db87d" font-family="'Gamja Flower',cursive">긍정</text>
+          <circle cx="${PL+W-16}" cy="${PT+9}" r="5" fill="#e8a0a0"/>
+          <text x="${PL+W-8}" y="${PT+13}" font-size="11" fill="#e8a0a0" font-family="'Gamja Flower',cursive">부정</text>
+        </svg>
+      </div></div>`;
   }
+
   const hd=buildHD(recs),mh=Math.max(...hd.map(h=>h.total),1);
   html+=`<div class="chart-card"><div class="chart-card-title">시간대별 감정 기록</div><div class="time-grid">`;
   hd.forEach(h=>{
-    const bg=h.total===0?'#f5ebe0':`rgba(180,210,160,${0.15+Math.round(h.total/mh*100)/100*0.7})`;
+    const bg=h.total===0?'#f5ebe0':`rgba(180,210,160,${0.15+(h.total/mh)*0.7})`;
     const pc2=h.p>=h.n?'#2e7d32':'#c62828';
-    html+=`<div class="time-cell ${h.total>0?'has-data':''}" style="background:${bg};"><span class="time-cell-label">${h.label}</span><span class="time-cell-count" style="color:${h.total>0?pc2:'#c4a992'}">${h.total||'·'}</span></div>`;
+    html+=`<div class="time-cell ${h.total>0?'has-data':''}" style="background:${bg};">
+      <span class="time-cell-label">${h.label}</span>
+      <span class="time-cell-count" style="color:${h.total>0?pc2:'#c4a992'}">${h.total||'·'}</span>
+    </div>`;
   });
-  html+=`</div></div>`;return html;
+  html+=`</div></div>`;
+  return html;
 }
 
 function renderWeek(){
-  const {start,end}=weekRange(weekOffset),m1=start.getMonth()+1,d1=start.getDate(),m2=end.getMonth()+1,d2=end.getDate();
+  const{start,end}=weekRange(weekOffset);
+  const m1=start.getMonth()+1,d1=start.getDate(),m2=end.getMonth()+1,d2=end.getDate();
   document.getElementById('week-label').textContent=weekOffset===0?'이번 주':`${start.getFullYear()}년 ${m1}월`;
   document.getElementById('week-sub').textContent=`${m1}/${d1} – ${m2}/${d2}`;
   document.getElementById('week-prev').disabled=weekOffset<=-51;
   document.getElementById('week-next').disabled=weekOffset>=0;
-  const days=[];for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1))days.push(dStr(new Date(d)));
+  const days=[];
+  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1))days.push(dStr(new Date(d)));
   document.getElementById('week-content').innerHTML=renderStats(getRange(start,end),days);
 }
+
 function renderMonth(){
-  const {start,end}=monthRange(monthYear,monthMonth),now=new Date();
-  const isCur=monthYear===now.getFullYear()&&monthMonth===now.getMonth();
+  const{start,end}=monthRange(monthYear,monthMonth);
+  const now=new Date(),isCur=monthYear===now.getFullYear()&&monthMonth===now.getMonth();
   document.getElementById('month-label').textContent=isCur?'이번 달':`${monthYear}년 ${monthMonth+1}월`;
   document.getElementById('month-sub').textContent=`${monthYear}.${String(monthMonth+1).padStart(2,'0')}`;
   const mY=now.getFullYear()-1,mM=now.getMonth();
   document.getElementById('month-prev').disabled=monthYear<mY||(monthYear===mY&&monthMonth<=mM);
   document.getElementById('month-next').disabled=isCur;
-  const days=[];for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1))days.push(dStr(new Date(d)));
+  const days=[];
+  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1))days.push(dStr(new Date(d)));
   document.getElementById('month-content').innerHTML=renderStats(getRange(start,end),days);
 }
 
-document.getElementById('emotion-input').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();addEmotion();}});
-document.querySelectorAll('.scroll-panel').forEach(el=>el.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:true}));
+/* ── 엔터키 ── */
+document.getElementById('emotion-input').addEventListener('keydown',function(e){
+  if(e.key==='Enter'){e.preventDefault();addEmotion();}
+});
+/* ── 통계탭 스크롤 허용 ── */
+document.querySelectorAll('.scroll-panel').forEach(el=>{
+  el.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:true});
+});
 
 drawTree();
 })();
