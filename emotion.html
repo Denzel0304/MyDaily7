@@ -88,18 +88,17 @@ body{font-family:'Gamja Flower',cursive;background:#fdf6ee;overscroll-behavior:n
     <div class="tab-panel active" id="panel-today">
       <div class="input-area">
         <div class="input-row">
-          <input class="emotion-input" id="emotion-input" placeholder="지금 감정은?" maxlength="8"/>
           <select class="type-select" id="emotion-type">
             <option value="+">😊 긍정</option>
             <option value="-">😔 부정</option>
           </select>
+          <input class="emotion-input" id="emotion-input" placeholder="지금 감정은?" maxlength="8"/>
           <button class="add-btn" onclick="addEmotion()">+</button>
         </div>
       </div>
       <div class="tree-area" id="tree-area">
         <div class="drag-hint" id="drag-hint">길게 눌러 아래로 드래그하면 삭제돼요</div>
-        <canvas id="leaf-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;"></canvas>
-        <svg id="tree-svg" viewBox="0 0 390 540" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="position:relative;z-index:1;"></svg>
+        <svg id="tree-svg" viewBox="0 0 390 540" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"></svg>
         <div id="delete-zone">🗑 여기로 드래그하면 삭제돼요</div>
       </div>
     </div>
@@ -131,23 +130,9 @@ body{font-family:'Gamja Flower',cursive;background:#fdf6ee;overscroll-behavior:n
 (function(){
 'use strict';
 const SK='haruemotion_v4';
-const SK_DATE='haruemotion_lastdate';
 let records=[];
-function loadData(){
-  try{
-    const s=localStorage.getItem(SK);
-    if(s)records=JSON.parse(s);
-  }catch(e){records=[];}
-  // 자정 이후 새 날이면 모든 열매 카운트 0으로 리셋
-  const lastDate=localStorage.getItem(SK_DATE)||'';
-  const today=todayStr();
-  if(lastDate && lastDate!==today){
-    records.forEach(r=>{if(r.date===lastDate){r.count=0;r.times=[];}});
-    try{localStorage.setItem(SK,JSON.stringify(records));}catch(e){}
-  }
-  localStorage.setItem(SK_DATE,today);
-}
-function saveData(){pruneOldData();try{localStorage.setItem(SK,JSON.stringify(records));localStorage.setItem(SK_DATE,todayStr());}catch(e){}}
+function loadData(){try{const s=localStorage.getItem(SK);if(s)records=JSON.parse(s);}catch(e){records=[];}}
+function saveData(){pruneOldData();try{localStorage.setItem(SK,JSON.stringify(records));}catch(e){}}
 function pruneOldData(){const c=new Date();c.setFullYear(c.getFullYear()-1);const cs=dStr(c);records=records.filter(r=>r.date>=cs);}
 loadData();
 
@@ -177,7 +162,7 @@ window.switchTab=function(tab){
   if(tab==='month'){monthYear=new Date().getFullYear();monthMonth=new Date().getMonth();renderMonth();}
 };
 
-function getTodayEmotions(){const t=todayStr();return records.filter(r=>r.date===t&&r.deletedAt!==t);}
+function getTodayEmotions(){return records.filter(r=>r.date===todayStr());}
 
 window.addEmotion=function(){
   const input=document.getElementById('emotion-input');
@@ -203,15 +188,6 @@ window.addEmotion=function(){
 /* === DRAG-TO-DELETE === */
 let dragState=null,longPressTimer=null;
 
-function startLP(e,label,type){
-  const t=e.touches?e.touches[0]:e;
-  longPressTimer=setTimeout(()=>{
-    dragState={label,type,moved:false};
-    showDZ(true);updateGhost(t.clientX,t.clientY,label,type);
-    document.getElementById('drag-ghost').style.display='block';
-    if(navigator.vibrate)navigator.vibrate(40);
-  },480);
-}
 function cancelLP(){if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null;}}
 function showDZ(v){document.getElementById('delete-zone').classList.toggle('active',v);}
 function overDZ(cy){const r=document.getElementById('delete-zone').getBoundingClientRect();return cy>=r.top;}
@@ -224,20 +200,54 @@ function updateGhost(cx,cy,label,type){
 }
 
 const treeArea=document.getElementById('tree-area');
+const treeSvg=document.getElementById('tree-svg');
+
+// SVG 뷰박스 기준으로 터치 좌표 변환
+function svgPoint(clientX, clientY){
+  const rect=treeSvg.getBoundingClientRect();
+  const vb=treeSvg.viewBox.baseVal; // 0 0 390 540
+  const scaleX=vb.width/rect.width;
+  const scaleY=vb.height/rect.height;
+  return{
+    x:(clientX-rect.left)*scaleX,
+    y:(clientY-rect.top)*scaleY
+  };
+}
+
+// 터치 좌표에서 가장 가까운 오늘 열매 찾기 (SVG 좌표계 기준)
+function findFruitAt(clientX, clientY){
+  const sp=svgPoint(clientX, clientY);
+  const fruits=getTodayEmotions();
+  for(let i=0;i<fruits.length;i++){
+    const fr=fruits[i];
+    const si=typeof fr.slot==='number'?fr.slot:0;
+    if(si>=FIXED_SLOTS.length)continue;
+    const p=FIXED_SLOTS[si];
+    const dx=sp.x-p.x, dy=sp.y-p.y;
+    if(dx*dx+dy*dy<=(R+10)*(R+10)){
+      return{label:fr.label,type:fr.type};
+    }
+  }
+  return null;
+}
+
 treeArea.addEventListener('touchstart',function(e){
-  const el=e.target.closest('[data-fruit]');
-  if(!el)return;
-  startLP(e,el.dataset.fruit,el.dataset.type);
+  const t=e.touches[0];
+  const found=findFruitAt(t.clientX,t.clientY);
+  if(!found)return;
+  startLP(e,found.label,found.type);
 },{passive:true});
-treeArea.addEventListener('touchmove',function(e){
+
+// touchmove/touchend는 document에 붙여야 드래그 중 손가락이 treeArea 밖으로 나가도 끊기지 않음
+function onTouchMove(e){
   if(!dragState){cancelLP();return;}
   e.preventDefault();
   const t=e.touches[0];
   dragState.moved=true;
   updateGhost(t.clientX,t.clientY,dragState.label,dragState.type);
   document.getElementById('delete-zone').classList.toggle('over',overDZ(t.clientY));
-},{passive:false});
-treeArea.addEventListener('touchend',function(e){
+}
+function onTouchEnd(e){
   cancelLP();
   if(!dragState)return;
   document.getElementById('drag-ghost').style.display='none';
@@ -245,39 +255,57 @@ treeArea.addEventListener('touchend',function(e){
   if(dragState.moved&&overDZ(t.clientY)){
     deleteFruit(dragState.label,dragState.type);
   }
-  // 단순 탭은 여기서 처리 안 함 — click 이벤트 위임이 처리
   dragState=null;showDZ(false);
   document.getElementById('delete-zone').classList.remove('over');
-},{passive:true});
-treeArea.addEventListener('touchcancel',function(){
+  document.removeEventListener('touchmove',onTouchMove);
+  document.removeEventListener('touchend',onTouchEnd);
+}
+function onTouchCancel(){
   cancelLP();
   if(dragState){document.getElementById('drag-ghost').style.display='none';showDZ(false);dragState=null;}
-},{passive:true});
+  document.removeEventListener('touchmove',onTouchMove);
+  document.removeEventListener('touchend',onTouchEnd);
+}
 
-// 클릭 이벤트 위임 (터치/마우스 모두 처리, 단 드래그 중엔 무시)
+// startLP에서 dragState 세팅 시 document 리스너 등록
+const _origStartLP=startLP;
+function startLP(e,label,type){
+  const t=e.touches?e.touches[0]:e;
+  longPressTimer=setTimeout(()=>{
+    dragState={label,type,moved:false};
+    showDZ(true);updateGhost(t.clientX,t.clientY,label,type);
+    document.getElementById('drag-ghost').style.display='block';
+    if(navigator.vibrate)navigator.vibrate(40);
+    // 드래그 추적을 document 레벨에서
+    document.addEventListener('touchmove',onTouchMove,{passive:false});
+    document.addEventListener('touchend',onTouchEnd,{passive:true});
+    document.addEventListener('touchcancel',onTouchCancel,{passive:true});
+  },480);
+}
+
+// 클릭 이벤트 위임 (마우스/데스크탑)
 treeArea.addEventListener('click',function(e){
   if(dragState)return;
-  const el=e.target.closest('[data-fruit]');
-  if(!el)return;
-  clickFruit(el.dataset.fruit,el.dataset.type);
+  const found=findFruitAt(e.clientX,e.clientY);
+  if(!found)return;
+  clickFruit(found.label,found.type);
 });
 
 function clickFruit(label,type){
   const rec=records.find(r=>r.date===todayStr()&&r.label===label&&r.type===type);
   if(!rec)return;
-  rec.count=(rec.count||0)+1;
+  rec.count=(rec.count||1)+1;
   rec.times=rec.times||[];rec.times.push(new Date().getHours());
   saveData();drawTree();
 }
 window.clickFruitDesktop=clickFruit;
 
 function deleteFruit(label,type){
-  const today=todayStr();
-  const rec=records.find(r=>r.date===today&&r.label===label&&r.type===type);
-  if(!rec)return;
-  // 오늘 열매만 삭제 플래그. 과거 날짜 기록은 건드리지 않아 이번주/달 통계 보존
-  rec.deletedAt=today;
-  saveData();drawTree();
+  const idx=records.findIndex(r=>r.date===todayStr()&&r.label===label&&r.type===type);
+  if(idx>=0){
+    records.splice(idx,1);
+    saveData();drawTree();
+  }
 }
 
 /* === TREE === */
@@ -347,6 +375,7 @@ function drawTree(){
     const col=fr.type==='+'?PP[ci]:NP[ci];
     const tcol=fr.type==='+'?'#2e7d32':'#c62828';
     const tc=fr.type==='+'?'+':'−';
+    const cnt=fr.count||1;
     const le=fr.label.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,'&apos;');
     // 줄기
     o+=`<line x1="${p.x}" y1="${p.y-R}" x2="${p.x+5}" y2="${p.y-R-14}" stroke="#b8956a" stroke-width="2.5" stroke-linecap="round"/>`;
@@ -361,11 +390,12 @@ function drawTree(){
     // +/- 뱃지
     o+=`<circle cx="${p.x-R+12}" cy="${p.y-R+12}" r="12" fill="${fr.type==='+'?'#c8e6c9':'#ffcdd2'}" pointer-events="none"/>`;
     o+=`<text x="${p.x-R+12}" y="${p.y-R+17}" text-anchor="middle" font-size="14" fill="${tcol}" font-weight="700" pointer-events="none">${tc}</text>`;
-    // 카운트 뱃지: 항상 표시 (0부터 시작)
-    const badgeCol=fr.type==='+'?'#2e7d32':'#c62828';
-    const cnt2=fr.count||0;
-    o+=`<circle cx="${p.x+R-11}" cy="${p.y-R+11}" r="13" fill="${badgeCol}" pointer-events="none"/>`;
-    o+=`<text x="${p.x+R-11}" y="${p.y-R+16}" text-anchor="middle" font-size="12" fill="white" font-weight="700" pointer-events="none">${cnt2>99?'99+':cnt2}</text>`;
+    // 카운트 뱃지: 1 이상일 때 표시, 긍정=녹색 부정=빨간색
+    if(cnt>=1){
+      const badgeCol=fr.type==='+'?'#2e7d32':'#c62828';
+      o+=`<circle cx="${p.x+R-11}" cy="${p.y-R+11}" r="13" fill="${badgeCol}" pointer-events="none"/>`;
+      o+=`<text x="${p.x+R-11}" y="${p.y-R+16}" text-anchor="middle" font-size="12" fill="white" font-weight="700" pointer-events="none">${cnt>99?'99+':cnt}</text>`;
+    }
   });
 
   svg.innerHTML=o;
@@ -383,15 +413,15 @@ window.changeMonth=function(d){
   renderMonth();
 };
 
-function getRange(s,e){const ss=dStr(s),ee=dStr(e);return records.filter(r=>r.date>=ss&&r.date<=ee&&r.deletedAt!==r.date);}
+function getRange(s,e){const ss=dStr(s),ee=dStr(e);return records.filter(r=>r.date>=ss&&r.date<=ee);}
 function buildEM(recs){
-  const m={};recs.forEach(r=>{const k=r.label+'|'+r.type;if(!m[k])m[k]={label:r.label,type:r.type,count:0};m[k].count+=r.count||0;});
+  const m={};recs.forEach(r=>{const k=r.label+'|'+r.type;if(!m[k])m[k]={label:r.label,type:r.type,count:0};m[k].count+=r.count||1;});
   return Object.values(m).sort((a,b)=>b.count-a.count);
 }
 function buildDD(recs,days){
   return days.map(day=>{
     const it=recs.filter(r=>r.date===day);
-    return{day,p:it.filter(r=>r.type==='+').reduce((a,r)=>a+(r.count||0),0),n:it.filter(r=>r.type==='-').reduce((a,r)=>a+(r.count||0),0)};
+    return{day,p:it.filter(r=>r.type==='+').reduce((a,r)=>a+(r.count||1),0),n:it.filter(r=>r.type==='-').reduce((a,r)=>a+(r.count||1),0)};
   });
 }
 function buildHD(recs){
@@ -403,7 +433,7 @@ function buildHD(recs){
 
 function renderStats(recs,days){
   if(!recs.length)return '<div class="no-data">이 기간엔 기록된 감정이 없어요 🌱</div>';
-  let pos=0,neg=0;recs.forEach(r=>{if(r.type==='+')pos+=r.count||0;else neg+=r.count||0;});
+  let pos=0,neg=0;recs.forEach(r=>{if(r.type==='+')pos+=r.count||1;else neg+=r.count||1;});
   const tot=pos+neg,pr=tot>0?Math.round(pos/tot*100):0,nr=100-pr;
   const cmt=pos>neg*1.5?'긍정적인 감정이 풍부했던 기간이에요 🌸':neg>pos*1.5?'힘든 감정이 많았어요. 수고 많으셨어요 💙':'긍정과 부정이 균형을 이뤘어요 🌿';
   let html=`<div class="summary-card"><div class="summary-title">감정 요약</div>
@@ -474,88 +504,3 @@ drawTree();
 </script>
 </body>
 </html>
-
-<script>
-/* ===== 낙엽 애니메이션 ===== */
-(function(){
-  const canvas=document.getElementById('leaf-canvas');
-  const ctx=canvas.getContext('2d');
-  const area=document.getElementById('tree-area');
-
-  function resize(){
-    canvas.width=area.clientWidth;
-    canvas.height=area.clientHeight;
-  }
-  resize();
-  window.addEventListener('resize',resize);
-
-  const COLORS=['#78c878','#96dc96','#a4e0a4','#b5d99c','#88d288','#6ab86a','#bceabc','#c6eec6'];
-
-  function drawLeaf(x,y,size,angle,alpha,color){
-    ctx.save();
-    ctx.globalAlpha=alpha;
-    ctx.translate(x,y);
-    ctx.rotate(angle);
-    ctx.beginPath();
-    ctx.ellipse(0,0,size*0.42,size*0.22,0,0,Math.PI*2);
-    ctx.fillStyle=color;
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(-size*0.38,0);ctx.lineTo(size*0.38,0);
-    ctx.strokeStyle='rgba(60,120,60,0.35)';
-    ctx.lineWidth=0.7;
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  const MAX_LEAVES=18;
-  const MAX_PILE=40;
-  let leaves=[];
-  let pile=[];
-
-  function spawnLeaf(){
-    if(leaves.length>=MAX_LEAVES)return;
-    const w=canvas.width;
-    const x=w*0.18+Math.random()*w*0.64;
-    const y=canvas.height*0.05+Math.random()*canvas.height*0.42;
-    leaves.push({
-      x,y,
-      vx:(Math.random()-0.5)*0.5,
-      vy:0.35+Math.random()*0.45,
-      angle:Math.random()*Math.PI*2,
-      va:(Math.random()-0.5)*0.04,
-      swing:Math.random()*Math.PI*2,
-      swingSpeed:0.018+Math.random()*0.018,
-      swingAmp:0.6+Math.random()*0.9,
-      size:7+Math.random()*7,
-      alpha:0.55+Math.random()*0.3,
-      color:COLORS[Math.floor(Math.random()*COLORS.length)],
-    });
-  }
-
-  let frameCount=0;
-
-  function animate(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    frameCount++;
-    if(frameCount%90===0){spawnLeaf();}
-    const floor=canvas.height-14;
-    pile.forEach(p=>drawLeaf(p.x,p.y,p.size,p.angle,p.alpha*0.65,p.color));
-    leaves=leaves.filter(l=>{
-      l.swing+=l.swingSpeed;
-      l.x+=l.vx+Math.sin(l.swing)*l.swingAmp*0.3;
-      l.y+=l.vy;
-      l.angle+=l.va;
-      if(l.y>=floor){
-        l.y=floor;
-        if(pile.length<MAX_PILE)pile.push({x:l.x,y:l.y,size:l.size,angle:l.angle,alpha:l.alpha,color:l.color});
-        return false;
-      }
-      drawLeaf(l.x,l.y,l.size,l.angle,l.alpha,l.color);
-      return true;
-    });
-    requestAnimationFrame(animate);
-  }
-  animate();
-})();
-</script>
