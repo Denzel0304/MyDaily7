@@ -75,7 +75,7 @@ body{font-family:'Gamja Flower',cursive;background:#fdf6ee;overscroll-behavior:n
 </head>
 <body>
 <div id="app">
-  <div class="header">
+  <div class="header"><button onclick="confirmReset()" style="position:absolute;left:12px;background:none;border:none;font-size:18px;cursor:pointer;padding:4px;">⚙️</button>
     <h1><span class="header-icon">🌳</span>하루 감정</h1>
     <span class="header-date" id="header-date"></span>
   </div>
@@ -111,8 +111,6 @@ body{font-family:'Gamja Flower',cursive;background:#fdf6ee;overscroll-behavior:n
           <button class="nav-btn" id="week-next" onclick="changeWeek(1)">›</button>
         </div>
         <div id="week-content"></div>
-        <button onclick="debugStorage()" style="margin:10px;padding:8px 16px;font-family:'Gamja Flower',cursive;font-size:14px;background:#f5e6d3;border:1px solid #c9956a;border-radius:20px;color:#5a3e2b;">🔍 저장 데이터 확인</button>
-        <div id="debug-out" style="margin:10px;padding:10px;background:#fff;border-radius:10px;font-size:12px;word-break:break-all;display:none;"></div>
       </div>
     </div>
     <div class="tab-panel" id="panel-month">
@@ -152,8 +150,11 @@ function todayStr(){return dStr(new Date());}
 function parseDate(s){return new Date(s+'T00:00:00');}
 function weekRange(off){
   const now=new Date(),day=now.getDay();
-  const mon=new Date(now);mon.setDate(now.getDate()-(day===0?6:day-1)+off*7);mon.setHours(0,0,0,0);
-  const sun=new Date(mon);sun.setDate(mon.getDate()+6);return{start:mon,end:sun};
+  // 월~일 기준. 일요일(0)은 주의 마지막(+6)으로 처리
+  const diffToMon=day===0?-6:-(day-1);
+  const mon=new Date(now);mon.setDate(now.getDate()+diffToMon+off*7);mon.setHours(0,0,0,0);
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);sun.setHours(23,59,59,999);
+  return{start:mon,end:sun};
 }
 function monthRange(y,m){return{start:new Date(y,m,1),end:new Date(y,m+1,0)};}
 
@@ -380,7 +381,7 @@ window.changeMonth=function(d){
   renderMonth();
 };
 
-function getRange(s,e){const ss=dStr(s),ee=dStr(e);return records.filter(r=>r.date>=ss&&r.date<=ee&&r.deletedAt!==r.date);}
+function getRange(s,e){const ss=dStr(s),ee=dStr(e);return records.filter(r=>{if(r.date<ss||r.date>ee)return false;if(r.deletedAt&&r.deletedAt===r.date)return false;return true;});}
 function buildEM(recs){
   const m={};recs.forEach(r=>{const k=r.label+'|'+r.type;if(!m[k])m[k]={label:r.label,type:r.type,count:0};m[k].count+=(r.count||0);});
   return Object.values(m).sort((a,b)=>b.count-a.count);
@@ -468,22 +469,14 @@ document.querySelectorAll('.scroll-panel').forEach(el=>el.addEventListener('touc
 
 drawTree();
 
-window.debugStorage=function(){
-  const out=document.getElementById('debug-out');
-  out.style.display='block';
-  const raw=localStorage.getItem('haruemotion_v4');
-  if(!raw){out.textContent='저장된 데이터 없음';return;}
-  const recs=JSON.parse(raw);
-  const today=todayStr();
-  const {start,end}=weekRange(0);
-  const ss=dStr(start),ee=dStr(end);
-  let txt=`오늘: ${today}\n이번주: ${ss} ~ ${ee}\n전체 records: ${recs.length}개\n\n`;
-  const inWeek=recs.filter(r=>r.date>=ss&&r.date<=ee);
-  txt+=`이번주 범위 내 records: ${inWeek.length}개\n`;
-  inWeek.forEach(r=>{txt+=`  date:${r.date} label:${r.label} count:${r.count} deletedAt:${r.deletedAt||'없음'}\n`;});
-  txt+=`\n전체 목록:\n`;
-  recs.forEach(r=>{txt+=`  date:${r.date} label:${r.label} count:${r.count} deletedAt:${r.deletedAt||'없음'}\n`;});
-  out.textContent=txt;
+window.confirmReset=function(){
+  if(confirm("저장된 모든 감정 기록을 삭제할까요?\n이 작업은 되돌릴 수 없어요.")){
+    localStorage.removeItem("haruemotion_v4");
+    localStorage.removeItem("haruemotion_lastdate");
+    records=[];
+    drawTree();
+    alert("초기화 완료! 새로 시작해요 🌱");
+  }
 };
 })();
 </script>
