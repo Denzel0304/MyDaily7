@@ -135,16 +135,15 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 
+// 연못 제거: 5개 장면만
 const scenes = [
   { name:'봄 나무',      id:'spring_tree'    },
   { name:'별똥별',       id:'shooting_stars' },
   { name:'눈 내리는 밤', id:'snowfall'       },
   { name:'빗속의 호수',  id:'lake_rain'      },
   { name:'가을 낙엽',    id:'autumn'         },
-  { name:'연못의 잉어',  id:'koi_pond'       },
 ];
 
-// 7. 첫 화면 랜덤
 let currentIdx = Math.floor(Math.random()*scenes.length);
 let particles=[], extras=[], animId, t=0;
 
@@ -190,15 +189,14 @@ function initScene() {
   else if (id==='snowfall')       initSnowfall();
   else if (id==='lake_rain')      initLakeRain();
   else if (id==='autumn')         initAutumn();
-  else if (id==='koi_pond')       initKoiPond();
   loop();
 }
 
 /* ════════════════════════════════════════════
-   1. 봄 나무  — 잎 적게, 느리게, 하나 둘
+   1. 봄 나무
    ════════════════════════════════════════════ */
 function initSpringTree() {
-  extras=[]; // 바닥에 쌓인 잎
+  extras=[];
   for(let i=0;i<6;i++) particles.push(makeLeaf(true));
 }
 
@@ -216,6 +214,10 @@ function makeLeaf(scatter) {
     swg: Math.random()*Math.PI*2,
     swgS: 0.006+Math.random()*0.010,
     hue: 92+Math.random()*38,
+    // 바닥 쌓임 관련
+    landing: false,   // 착지 애니메이션 중
+    landY: 0,         // 목표 y
+    landAlpha: 0,     // 목표 alpha
   };
 }
 
@@ -225,7 +227,6 @@ function drawSpringTree(tx, ty, trunkH, trunkW, blobData, branchData) {
   ctx.beginPath(); ctx.moveTo(tx,ty);
   ctx.bezierCurveTo(tx+branchData.c1x,ty-trunkH*0.3,tx+branchData.c2x,ty-trunkH*0.6,tx+branchData.topX,ty-trunkH);
   ctx.stroke();
-  // 가지
   const brs=branchData.branches;
   brs.forEach(([bx,bd,bw])=>{
     ctx.lineWidth=bw;
@@ -234,7 +235,6 @@ function drawSpringTree(tx, ty, trunkH, trunkW, blobData, branchData) {
     ctx.quadraticCurveTo((tx+tx+bx)*0.5, ty-bd-12, tx+bx, ty-bd);
     ctx.stroke();
   });
-  // 잎 뭉치
   blobData.forEach(([bx,by,r,a])=>{
     ctx.globalAlpha=a;
     ctx.fillStyle='hsl(108,55%,52%)';
@@ -259,21 +259,18 @@ function drawSpringBG() {
   gr.addColorStop(0,'rgba(130,185,95,0.7)'); gr.addColorStop(1,'rgba(100,155,65,0.9)');
   ctx.fillStyle=gr; ctx.fillRect(0,H*0.8,W,H*0.2);
 
-  // 나무 1 (왼쪽, 작고 가지가 왼쪽으로 많이 뻗음)
   const t1x=W*0.25, t1y=H*0.84, t1h=H*0.32;
   drawSpringTree(t1x, t1y, t1h, 9,
     [[t1x-22,t1y-t1h*0.82,55,0.52],[t1x+18,t1y-t1h*0.72,48,0.50],[t1x-42,t1y-t1h*0.95,42,0.48],[t1x+8,t1y-t1h*1.05,38,0.46]],
     {c1x:-12,c2x:4,topX:-6,branches:[[-58,t1h*0.55,4],[-34,t1h*0.68,3.5],[+38,t1h*0.50,3.5],[+28,t1h*0.63,3]]}
   );
 
-  // 나무 2 (중앙, 크고 균형잡힌 모양)
   const t2x=W*0.52, t2y=H*0.83, t2h=H*0.44;
   drawSpringTree(t2x, t2y, t2h, 14,
     [[t2x,t2y-t2h*0.88,80,0.58],[t2x-68,t2y-t2h*0.75,65,0.54],[t2x+62,t2y-t2h*0.78,62,0.52],[t2x-30,t2y-t2h*1.00,55,0.50],[t2x+32,t2y-t2h*1.02,58,0.50],[t2x,t2y-t2h*1.12,48,0.46]],
     {c1x:-10,c2x:8,topX:0,branches:[[-62,t2h*0.48,5.5],[-38,t2h*0.60,4.5],[+55,t2h*0.46,5],[+30,t2h*0.58,4],[-18,t2h*0.72,3.5],[+16,t2h*0.70,3]]}
   );
 
-  // 나무 3 (오른쪽, 중간 크기, 가지가 오른쪽 위로 길게)
   const t3x=W*0.80, t3y=H*0.85, t3h=H*0.28;
   drawSpringTree(t3x, t3y, t3h, 8,
     [[t3x+16,t3y-t3h*0.80,44,0.50],[t3x-12,t3y-t3h*0.70,38,0.48],[t3x+36,t3y-t3h*0.95,35,0.46]],
@@ -298,25 +295,41 @@ function updateLeaf(p) {
   p.swg+=p.swgS;
   p.x+=p.vx+Math.sin(p.swg)*0.45;
   p.y+=p.vy; p.rot+=p.rotV;
-  if(p.y>H*0.82) {
-    extras.push({
-      type:'settled_spring',
-      x:p.x, y:H*0.82+Math.random()*H*0.10,
-      rot:p.rot+(Math.random()-0.5)*0.4,
-      size:p.size*0.85,
-      hue:p.hue,
-      alpha:p.alpha*0.78,
-    });
-    if(extras.filter(e=>e.type==='settled_spring').length>100) {
-      const idx=extras.findIndex(e=>e.type==='settled_spring');
-      if(idx>-1) extras.splice(idx,1);
+
+  // 바닥 근처: 속도 줄이며 착지
+  const floorY = H*0.80 + Math.random()*H*0.06;
+  if(p.y > H*0.78 && !p.landing) {
+    p.landing = true;
+    p.landY = floorY;
+    p.landAlpha = p.alpha * 0.78;
+  }
+  if(p.landing) {
+    // 속도를 점점 줄여 사뿐히 내려앉음
+    p.vy *= 0.88;
+    p.vx *= 0.90;
+    p.rotV *= 0.90;
+    if(p.vy < 0.015) {
+      // 완전 착지 → extras에 추가 후 리셋
+      extras.push({
+        type:'settled_spring',
+        x:p.x, y:p.y,
+        rot:p.rot,
+        size:p.size*0.85,
+        hue:p.hue,
+        alpha:p.alpha*0.78,
+        fadeIn: 0,  // 페이드인 진행
+      });
+      if(extras.filter(e=>e.type==='settled_spring').length>100) {
+        const idx=extras.findIndex(e=>e.type==='settled_spring');
+        if(idx>-1) extras.splice(idx,1);
+      }
+      Object.assign(p, makeLeaf(false));
     }
-    Object.assign(p,makeLeaf(false));
   }
 }
 
 /* ════════════════════════════════════════════
-   2. 별똥별 — 느리게, 랜덤 방향, 긴 궤적
+   2. 별똥별 — 초승달
    ════════════════════════════════════════════ */
 function initShootingStars() {
   for(let i=0;i<130;i++) particles.push({
@@ -324,30 +337,23 @@ function initShootingStars() {
     r:0.3+Math.random()*1.3, a:0.25+Math.random()*0.75,
     twk:Math.random()*Math.PI*2, twkS:0.005+Math.random()*0.015,
   });
-  // 처음 하나
   spawnShooter();
 }
 
 function spawnShooter() {
   const speed = 0.6 + Math.random()*1.0;
-  // 항상 위에서 아래 방향으로만 (vy > 0)
-  // 시작: 상단에서 출발, 좌우 각도 다양하게
   let sx, sy, angle;
   const edge = Math.floor(Math.random()*3);
-  if(edge===0){       // 상단
+  if(edge===0){
     sx = Math.random()*W; sy = -10;
-    // 아래쪽 방향: 25~155도 (vy = sin(angle) > 0)
     angle = (25+Math.random()*130)*Math.PI/180;
-  } else if(edge===1){ // 좌측 상단부
+  } else if(edge===1){
     sx = -10; sy = Math.random()*H*0.4;
-    // 우측+아래 방향: 10~75도
     angle = (10+Math.random()*65)*Math.PI/180;
-  } else {             // 우측 상단부
+  } else {
     sx = W+10; sy = Math.random()*H*0.4;
-    // 좌측+아래 방향: 180-75 ~ 180-10 = 105~170도
     angle = (105+Math.random()*65)*Math.PI/180;
   }
-
   extras.push({
     type:'shooter',
     x:sx, y:sy,
@@ -364,6 +370,7 @@ function drawNightBG() {
   sky.addColorStop(0,'#080620'); sky.addColorStop(0.45,'#100e38'); sky.addColorStop(1,'#181658');
   ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
 
+  // 은하수 느낌 희미한 안개
   ctx.save(); ctx.globalAlpha=0.06;
   const mw=ctx.createRadialGradient(W*0.5,H*0.32,0,W*0.5,H*0.32,W*0.7);
   mw.addColorStop(0,'#c8b8ee'); mw.addColorStop(1,'transparent');
@@ -371,13 +378,35 @@ function drawNightBG() {
   ctx.beginPath(); ctx.ellipse(W*0.5,H*0.32,W*0.72,H*0.22,-0.28,0,Math.PI*2); ctx.fill();
   ctx.restore();
 
-  ctx.save(); ctx.globalAlpha=0.9;
-  const mg=ctx.createRadialGradient(W*0.82,H*0.10,0,W*0.82,H*0.10,55);
-  mg.addColorStop(0,'rgba(255,248,215,0.32)'); mg.addColorStop(1,'transparent');
-  ctx.fillStyle=mg; ctx.beginPath(); ctx.arc(W*0.82,H*0.10,55,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='#fff9d8'; ctx.beginPath(); ctx.arc(W*0.82,H*0.10,26,0,Math.PI*2); ctx.fill();
+  // 초승달 — 부드럽고 따뜻한 크레센트
+  const mx = W*0.82, my = H*0.10, mr = 26;
+  // 달빛 후광
+  ctx.save();
+  const moonGlow = ctx.createRadialGradient(mx,my,0,mx,my,mr*2.8);
+  moonGlow.addColorStop(0,'rgba(255,245,200,0.13)');
+  moonGlow.addColorStop(0.5,'rgba(255,240,180,0.05)');
+  moonGlow.addColorStop(1,'transparent');
+  ctx.fillStyle=moonGlow; ctx.beginPath(); ctx.arc(mx,my,mr*2.8,0,Math.PI*2); ctx.fill();
   ctx.restore();
 
+  // 초승달 본체: 큰 원에서 약간 오프셋된 원을 빼서 자연스러운 초승달
+  ctx.save();
+  ctx.beginPath(); ctx.arc(mx,my,mr,0,Math.PI*2);
+  ctx.fillStyle='#fff8d8'; ctx.fill();
+  // 잘라낼 원 — 오프셋을 작게 해서 날카롭지 않은 초승달
+  ctx.globalCompositeOperation='destination-out';
+  ctx.beginPath(); ctx.arc(mx+mr*0.72, my-mr*0.12, mr*0.88, 0, Math.PI*2);
+  ctx.fillStyle='rgba(0,0,0,1)'; ctx.fill();
+  ctx.globalCompositeOperation='source-over';
+  ctx.restore();
+
+  // 달 테두리 미광
+  ctx.save(); ctx.globalAlpha=0.18;
+  ctx.strokeStyle='rgba(255,248,210,1)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(mx,my,mr,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+
+  // 지평선 아래 어두운 실루엣
   ctx.fillStyle='rgba(5,4,20,0.96)';
   ctx.beginPath(); ctx.moveTo(0,H);
   ctx.bezierCurveTo(W*0.1,H*0.84,W*0.22,H*0.80,W*0.32,H*0.86);
@@ -387,7 +416,7 @@ function drawNightBG() {
 }
 
 /* ════════════════════════════════════════════
-   3. 눈 내리는 밤 — 큰 나무 다양한 크기, 눈쌓임, 느린 눈송이
+   3. 눈 내리는 밤 — 자연스러운 침엽수
    ════════════════════════════════════════════ */
 function initSnowfall() {
   for(let i=0;i<60;i++) particles.push(makeSnow(true));
@@ -399,7 +428,7 @@ function makeSnow(scatter) {
     y:scatter?Math.random()*H:-8,
     r:1.4+Math.random()*3.8,
     vx:(Math.random()-0.5)*0.28,
-    vy:0.18+Math.random()*0.38,   // 느리게
+    vy:0.18+Math.random()*0.38,
     a:0.45+Math.random()*0.55,
     swg:Math.random()*Math.PI*2,
     swgS:0.003+Math.random()*0.008,
@@ -408,19 +437,16 @@ function makeSnow(scatter) {
 }
 
 function drawSnowflake(x,y,r,alpha,rot) {
-  // 거의 원형이지만 완전한 원은 아닌 부드러운 눈송이
   ctx.save(); ctx.globalAlpha=alpha;
   ctx.fillStyle='rgba(215,232,255,0.90)';
   ctx.translate(x,y); ctx.rotate(rot);
-  // 약간씩 다른 반지름을 가진 부드러운 원형
-  const seed = (x*13+y*7)%1; // 위치 기반 고정 변형
   const pts = 8;
   ctx.beginPath();
   for(let i=0;i<=pts;i++){
     const ang = (i/pts)*Math.PI*2;
     const wobble = 1 + (Math.sin(ang*2.3+rot*1.7)*0.06 + Math.cos(ang*1.7+rot)*0.05);
-    const rx = r*wobble*(1+seed*0.08);
-    const ry = r*(1/wobble)*(1+(1-seed)*0.06);
+    const rx = r*wobble;
+    const ry = r*(1/wobble);
     const px = Math.cos(ang)*rx;
     const py = Math.sin(ang)*ry;
     i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
@@ -429,34 +455,79 @@ function drawSnowflake(x,y,r,alpha,rot) {
   ctx.restore();
 }
 
-function drawPineSnow(px,py,sc) {
+// 자연스러운 침엽수 — 불규칙한 가지와 눈 쌓임
+function drawNaturalPine(px, py, treeH, sc) {
   // 줄기
-  ctx.strokeStyle='#5a3a22'; ctx.lineWidth=6*sc; ctx.lineCap='round';
-  ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px,py-H*0.07*sc); ctx.stroke();
-  // 크리스마스트리: 아래로 갈수록 넓어지는 다층 삼각형
-  const tiers=[
-    [py-H*0.07*sc,  18*sc, 0.72*sc],
-    [py-H*0.14*sc,  30*sc, 0.88*sc],
-    [py-H*0.22*sc,  44*sc, 1.05*sc],
-    [py-H*0.31*sc,  58*sc, 1.22*sc],
-    [py-H*0.41*sc,  72*sc, 1.40*sc],
-    [py-H*0.52*sc,  86*sc, 1.58*sc],
+  ctx.save();
+  ctx.strokeStyle='#4a3018'; ctx.lineWidth=7*sc; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py - treeH*0.10); ctx.stroke();
+
+  // 나무를 구성하는 레이어들 (아래에서 위로)
+  // 각 레이어는 불규칙한 윤곽으로 자연스럽게
+  const layers = [
+    { y: py - treeH*0.12, w: 0.88, h: 0.14 },
+    { y: py - treeH*0.24, w: 0.76, h: 0.14 },
+    { y: py - treeH*0.38, w: 0.63, h: 0.14 },
+    { y: py - treeH*0.52, w: 0.50, h: 0.14 },
+    { y: py - treeH*0.66, w: 0.37, h: 0.13 },
+    { y: py - treeH*0.79, w: 0.24, h: 0.12 },
+    { y: py - treeH*0.91, w: 0.13, h: 0.10 },
   ];
-  tiers.forEach(([ty,r,h],i)=>{
-    // 나무 색상: 위쪽은 진하고, 아래쪽은 조금 밝게
-    const g = 38 + i*8;
-    ctx.fillStyle=`rgba(18,${g},28,0.92)`;
-    ctx.beginPath(); ctx.moveTo(px,ty-r*h); ctx.lineTo(px-r,ty); ctx.lineTo(px+r,ty); ctx.closePath(); ctx.fill();
-    // 눈 쌓임
-    ctx.fillStyle='rgba(218,232,248,0.86)';
+
+  layers.forEach((layer, li) => {
+    const lw = layer.w * treeH * 0.55 * sc;
+    const lh = layer.h * treeH * sc;
+    const ly = layer.y;
+    const green = 28 + li*12;
+
+    // 나뭇잎 본체 — 약간 불규칙한 삼각형에 베지어 곡선으로 부드럽게
+    ctx.fillStyle = `rgba(15,${green},20,0.92)`;
     ctx.beginPath();
-    ctx.moveTo(px-r*0.10,ty-r*h+1.5);
-    ctx.quadraticCurveTo(px,ty-r*h-r*0.16,px+r*0.10,ty-r*h+1.5);
-    ctx.quadraticCurveTo(px+r*0.62,ty-r*h+r*0.28,px+r*0.80,ty-r*0.07);
-    ctx.quadraticCurveTo(px,ty+r*0.10,px-r*0.80,ty-r*0.07);
-    ctx.quadraticCurveTo(px-r*0.62,ty-r*h+r*0.28,px-r*0.10,ty-r*h+1.5);
+    // 꼭대기
+    ctx.moveTo(px, ly - lh);
+    // 오른쪽 가장자리: 살짝 곡선으로 자연스럽게
+    ctx.bezierCurveTo(
+      px + lw*0.35, ly - lh*0.5,
+      px + lw*0.88, ly - lh*0.05,
+      px + lw, ly
+    );
+    // 아랫부분 — 이전 레이어와 겹치는 자연스러운 처짐
+    ctx.bezierCurveTo(
+      px + lw*0.55, ly + lh*0.28,
+      px + lw*0.18, ly + lh*0.32,
+      px + lw*0.05, ly + lh*0.18
+    );
+    ctx.lineTo(px, ly + lh*0.05);
+    ctx.lineTo(px - lw*0.05, ly + lh*0.18);
+    ctx.bezierCurveTo(
+      px - lw*0.18, ly + lh*0.32,
+      px - lw*0.55, ly + lh*0.28,
+      px - lw, ly
+    );
+    ctx.bezierCurveTo(
+      px - lw*0.88, ly - lh*0.05,
+      px - lw*0.35, ly - lh*0.5,
+      px, ly - lh
+    );
+    ctx.fill();
+
+    // 눈 쌓임 — 가지 위에 부드럽게 쌓인 눈
+    ctx.fillStyle='rgba(210,228,248,0.88)';
+    ctx.beginPath();
+    // 꼭대기 근처 눈
+    ctx.moveTo(px - lw*0.08, ly - lh*0.85);
+    ctx.bezierCurveTo(px - lw*0.04, ly - lh*0.95, px + lw*0.04, ly - lh*0.95, px + lw*0.08, ly - lh*0.85);
+    // 오른쪽 눈 쌓임
+    ctx.bezierCurveTo(px + lw*0.42, ly - lh*0.45, px + lw*0.80, ly - lh*0.08, px + lw*0.72, ly);
+    ctx.bezierCurveTo(px + lw*0.50, ly - lh*0.05, px + lw*0.25, ly - lh*0.15, px + lw*0.05, ly - lh*0.22);
+    ctx.lineTo(px, ly - lh*0.20);
+    ctx.lineTo(px - lw*0.05, ly - lh*0.22);
+    ctx.bezierCurveTo(px - lw*0.25, ly - lh*0.15, px - lw*0.50, ly - lh*0.05, px - lw*0.72, ly);
+    ctx.bezierCurveTo(px - lw*0.80, ly - lh*0.08, px - lw*0.42, ly - lh*0.45, px - lw*0.08, ly - lh*0.85);
     ctx.fill();
   });
+
+  ctx.restore();
 }
 
 function drawSnowBG() {
@@ -464,11 +535,22 @@ function drawSnowBG() {
   sky.addColorStop(0,'#141e2e'); sky.addColorStop(0.55,'#1e2c48'); sky.addColorStop(1,'#2a3a5e');
   ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
 
-  ctx.fillStyle='rgba(180,200,220,0.18)';
-  ctx.beginPath(); ctx.ellipse(W*0.25,H*0.72,W*0.38,H*0.10,0,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='rgba(160,185,210,0.14)';
-  ctx.beginPath(); ctx.ellipse(W*0.78,H*0.75,W*0.34,H*0.09,0,0,Math.PI*2); ctx.fill();
+  // 달 — 초승달로 통일
+  const mx=W*0.78, my=H*0.12, mr=20;
+  ctx.save();
+  const moonGlow=ctx.createRadialGradient(mx,my,0,mx,my,mr*3);
+  moonGlow.addColorStop(0,'rgba(210,225,255,0.10)');
+  moonGlow.addColorStop(1,'transparent');
+  ctx.fillStyle=moonGlow; ctx.beginPath(); ctx.arc(mx,my,mr*3,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(mx,my,mr,0,Math.PI*2);
+  ctx.fillStyle='#e8f0ff'; ctx.fill();
+  ctx.globalCompositeOperation='destination-out';
+  ctx.beginPath(); ctx.arc(mx+mr*0.72, my-mr*0.08, mr*0.88, 0, Math.PI*2);
+  ctx.fillStyle='rgba(0,0,0,1)'; ctx.fill();
+  ctx.globalCompositeOperation='source-over';
+  ctx.restore();
 
+  // 눈 쌓인 지면
   const gd=ctx.createLinearGradient(0,H*0.82,0,H);
   gd.addColorStop(0,'#d8e4ee'); gd.addColorStop(1,'#e8f0f8');
   ctx.fillStyle=gd;
@@ -477,12 +559,14 @@ function drawSnowBG() {
   ctx.bezierCurveTo(W*0.8,H*0.81,W*0.9,H*0.84,W,H*0.83);
   ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fill();
 
-  // 가운데 크리스마스트리 한 그루
-  drawPineSnow(W*0.50, H*0.84, 1.0);
+  // 나무 3그루 — 크기와 위치 다양하게
+  drawNaturalPine(W*0.22, H*0.84, H*0.50, 0.82);
+  drawNaturalPine(W*0.50, H*0.83, H*0.58, 1.0);
+  drawNaturalPine(W*0.78, H*0.84, H*0.44, 0.74);
 }
 
 /* ════════════════════════════════════════════
-   4. 빗속의 호수 — 빗방울 천천히, 파장 다양
+   4. 빗속의 호수
    ════════════════════════════════════════════ */
 function initLakeRain() {
   for(let i=0;i<28;i++) particles.push(makeRaindrop(true));
@@ -493,7 +577,7 @@ function makeRaindrop(scatter) {
     type:'raindrop',
     x: W*0.04+Math.random()*W*0.92,
     y: scatter ? -Math.random()*H*0.5 : -20,
-    vy: 0.7+Math.random()*0.8,   // 느리게 (기존 1.5~3.0 → 0.7~1.5)
+    vy: 0.7+Math.random()*0.8,
     len: 7+Math.random()*9,
     a: 0.25+Math.random()*0.30,
     w: 0.5+Math.random()*0.6,
@@ -503,23 +587,24 @@ function makeRaindrop(scatter) {
 function spawnRipple(x,y) {
   extras.push({
     type:'ripple',
-    x,y,r:0,
+    x, y,
+    r: 0,
     maxR: 8+Math.random()*38,
     ryRatio: 0.22+Math.random()*0.22,
-    life:0, maxLife:160+Math.random()*120,  // 더 천천히 퍼지고 사라짐
-    a:0.45,
+    life: 0,
+    maxLife: 160+Math.random()*120,
+    a: 0.35,  // 시작 투명도 낮춤
+    born: t,  // 생성 시점 기록 — 갑작스러운 등장 방지
   });
 }
 
 function drawLakeBG() {
   const lakeY=H*0.44;
 
-  // 흐린 하늘
   const sky=ctx.createLinearGradient(0,0,0,lakeY);
   sky.addColorStop(0,'#3a4858'); sky.addColorStop(1,'#4e6070');
   ctx.fillStyle=sky; ctx.fillRect(0,0,W,lakeY);
 
-  // 안개낀 먼 산 실루엣
   ctx.fillStyle='rgba(55,75,95,0.55)';
   ctx.beginPath(); ctx.moveTo(0,lakeY);
   ctx.quadraticCurveTo(W*0.15,H*0.25,W*0.28,lakeY);
@@ -528,21 +613,18 @@ function drawLakeBG() {
   ctx.quadraticCurveTo(W*0.95,H*0.28,W,lakeY);
   ctx.lineTo(W,0); ctx.lineTo(0,0); ctx.closePath(); ctx.fill();
 
-  // 호수
   const lg=ctx.createLinearGradient(0,lakeY,0,H);
   lg.addColorStop(0,'rgba(72,102,132,0.95)');
   lg.addColorStop(0.4,'rgba(58,88,118,0.97)');
   lg.addColorStop(1,'rgba(40,65,98,1)');
   ctx.fillStyle=lg;
   ctx.beginPath();
-  // 출렁이는 수면선
   for(let x2=0;x2<=W;x2+=18){
     const wy=lakeY+Math.sin(t*0.7+x2*0.038)*2.2;
     x2===0?ctx.moveTo(x2,wy):ctx.lineTo(x2,wy);
   }
   ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fill();
 
-  // 수면 반사 광택
   ctx.save(); ctx.globalAlpha=0.055;
   ctx.strokeStyle='rgba(195,218,238,1)'; ctx.lineWidth=1.1;
   for(let i=0;i<5;i++){
@@ -555,23 +637,20 @@ function drawLakeBG() {
   }
   ctx.restore();
 
-  // 강변 나무 실루엣
   ctx.fillStyle='rgba(28,40,52,0.80)';
-  // 왼쪽 무리
   ctx.beginPath(); ctx.moveTo(0,lakeY); ctx.lineTo(W*0.10,lakeY);
   ctx.quadraticCurveTo(W*0.14,H*0.26,W*0.06,H*0.08);
   ctx.quadraticCurveTo(W*0.01,H*0.24,0,lakeY); ctx.fill();
-  // 오른쪽 무리
   ctx.beginPath(); ctx.moveTo(W,lakeY); ctx.lineTo(W*0.90,lakeY);
   ctx.quadraticCurveTo(W*0.85,H*0.26,W*0.93,H*0.07);
   ctx.quadraticCurveTo(W*0.99,H*0.23,W,lakeY); ctx.fill();
 }
 
 /* ════════════════════════════════════════════
-   5. 가을 낙엽 — 나무 중앙 배치, 적게 천천히
+   5. 가을 낙엽
    ════════════════════════════════════════════ */
 function initAutumn() {
-  extras=[]; // 쌓인 낙엽
+  extras=[];
   for(let i=0;i<10;i++) particles.push(makeAutumnLeaf(true));
 }
 const autumnHues=[8,18,26,33,42];
@@ -582,7 +661,7 @@ function makeAutumnLeaf(scatter) {
     x:Math.random()*W,
     y:scatter?Math.random()*H:-18,
     vx:(Math.random()-0.5)*0.48,
-    vy:0.14+Math.random()*0.30,       // 느리게
+    vy:0.14+Math.random()*0.30,
     rot:Math.random()*Math.PI*2,
     rotV:(Math.random()-0.5)*0.020,
     size:6+Math.random()*9,
@@ -590,6 +669,7 @@ function makeAutumnLeaf(scatter) {
     swg:Math.random()*Math.PI*2,
     swgS:0.007+Math.random()*0.012,
     hue:h, shape:Math.floor(Math.random()*3),
+    landing: false,
   };
 }
 
@@ -616,7 +696,6 @@ function drawAutumnBG() {
     ctx.restore();
   }
 
-  // 나무 — 중앙 쪽으로 (W*0.28, W*0.72)
   [[W*0.28,H*0.78,0],[W*0.72,H*0.80,1]].forEach(([tx,ty,idx])=>{
     ctx.strokeStyle='rgba(70,32,10,0.72)';
     ctx.lineWidth=11; ctx.lineCap='round';
@@ -665,289 +744,32 @@ function updateAutumnLeaf(p) {
   p.swg+=p.swgS;
   p.x+=p.vx+Math.sin(p.swg)*0.6;
   p.y+=p.vy; p.rot+=p.rotV;
-  if(p.y>H*0.82) {
-    // 바닥에 쌓임: extras에 추가하고 새 낙엽으로 리셋
-    extras.push({
-      type:'settled',
-      x:p.x, y:H*0.82+Math.random()*H*0.10,
-      rot:p.rot+(Math.random()-0.5)*0.5,
-      size:p.size*0.85,
-      hue:p.hue, shape:p.shape,
-      a:p.a*0.82,
-    });
-    if(extras.filter(e=>e.type==='settled').length>120) {
-      // 가장 오래된 쌓인 낙엽 제거
-      const idx=extras.findIndex(e=>e.type==='settled');
-      if(idx>-1) extras.splice(idx,1);
-    }
-    Object.assign(p,makeAutumnLeaf(false));
+
+  if(p.y > H*0.78 && !p.landing) {
+    p.landing = true;
   }
-}
-
-/* ════════════════════════════════════════════
-   6. 연못 — 위에서 내려다보기, 사실적인 비단잉어
-   ════════════════════════════════════════════ */
-// 비단잉어 색상 팔레트 (실제 비단잉어 색상)
-const koiPatterns=[
-  {base:'#e8503a',spots:['#fff8f0','#e03020'],finCol:'rgba(220,80,50,0.82)'},   // 홍백 (코하쿠)
-  {base:'#f5e8d0',spots:['#d04820','#2a1a0a'],finCol:'rgba(220,180,120,0.80)'}, // 대정삼색
-  {base:'#f8f0e0',spots:['#e04828','#181818'],finCol:'rgba(230,210,170,0.82)'}, // 소화삼색
-  {base:'#f5e4c0',spots:['#c8a840'],finCol:'rgba(218,178,100,0.82)'},            // 황금잉어
-  {base:'#e8e8e8',spots:['#aaaaaa','#555555'],finCol:'rgba(190,190,185,0.80)'}, // 은색
-  {base:'#e04030',spots:['#fff5ee'],finCol:'rgba(210,70,45,0.82)'},              // 단색 홍
-];
-
-function initKoiPond() {
-  const cx=W*0.5, cy=H*0.5;
-  for(let i=0;i<6;i++){
-    const ang=Math.random()*Math.PI*2;
-    const dist=Math.min(W,H)*(0.06+Math.random()*0.22);
-    const kp=koiPatterns[i%koiPatterns.length];
-    // 각 잉어마다 고유한 무늬 위치 생성
-    const spotCount=1+Math.floor(Math.random()*3);
-    const spots=[];
-    for(let s=0;s<spotCount;s++){
-      spots.push({
-        ox:(Math.random()-0.5)*0.55,
-        oy:(Math.random()-0.7)*0.6,
-        rx:0.18+Math.random()*0.22,
-        ry:0.14+Math.random()*0.16,
-        col:kp.spots[s%kp.spots.length],
+  if(p.landing) {
+    // 속도 서서히 감소
+    p.vy *= 0.88;
+    p.vx *= 0.90;
+    p.rotV *= 0.90;
+    if(p.vy < 0.015) {
+      extras.push({
+        type:'settled',
+        x:p.x, y:p.y,
+        rot:p.rot+(Math.random()-0.5)*0.3,
+        size:p.size*0.85,
+        hue:p.hue, shape:p.shape,
+        a:0,           // 페이드인 시작
+        targetA:p.a*0.82,
       });
+      if(extras.filter(e=>e.type==='settled').length>120) {
+        const idx=extras.findIndex(e=>e.type==='settled');
+        if(idx>-1) extras.splice(idx,1);
+      }
+      Object.assign(p,makeAutumnLeaf(false));
     }
-    particles.push({
-      type:'fish',
-      x:cx+Math.cos(ang)*dist,
-      y:cy+Math.sin(ang)*dist,
-      angle:ang,
-      speed:0.30+Math.random()*0.35,
-      turnRate:(Math.random()-0.5)*0.010,
-      len:42+Math.random()*26,
-      wid:15+Math.random()*9,
-      baseCol:kp.base,
-      finCol:kp.finCol,
-      spots,
-      tail:Math.random()*Math.PI*2,
-      tailS:0.032+Math.random()*0.022,
-      wakeTimer:0,
-    });
   }
-  for(let i=0;i<4;i++) extras.push(makeSurfaceLeaf());
-}
-
-function makeSurfaceLeaf() {
-  const cx=W*0.5, cy=H*0.5, pr=Math.min(W,H)*0.40;
-  const ang=Math.random()*Math.PI*2;
-  const dist=Math.random()*pr*0.85;
-  return {
-    type:'leaf',
-    x:cx+Math.cos(ang)*dist,
-    y:cy+Math.sin(ang)*dist,
-    rot:Math.random()*Math.PI*2,
-    drift:Math.random()*Math.PI*2,
-    driftS:0.002+Math.random()*0.004,
-    size:6+Math.random()*9,
-    hue:78+Math.random()*55,
-    a:0.52+Math.random()*0.38,
-  };
-}
-
-function drawKoiScene() {
-  const cx=W*0.5, cy=H*0.5;
-  const pr=Math.min(W,H)*0.46;
-
-  // 잔디 배경
-  ctx.fillStyle='#3a5a30';
-  ctx.fillRect(0,0,W,H);
-
-  // 돌 테두리
-  ctx.strokeStyle='rgba(88,78,62,0.85)'; ctx.lineWidth=20;
-  ctx.beginPath(); ctx.arc(cx,cy,pr+9,0,Math.PI*2); ctx.stroke();
-  ctx.strokeStyle='rgba(118,108,88,0.45)'; ctx.lineWidth=7;
-  ctx.beginPath(); ctx.arc(cx,cy,pr+16,0,Math.PI*2); ctx.stroke();
-
-  // 연못 클리핑
-  ctx.save();
-  ctx.beginPath(); ctx.arc(cx,cy,pr,0,Math.PI*2); ctx.clip();
-
-  const wg=ctx.createRadialGradient(cx,cy,0,cx,cy,pr);
-  wg.addColorStop(0,'#2a5a62'); wg.addColorStop(0.6,'#1e4a55'); wg.addColorStop(1,'#163848');
-  ctx.fillStyle=wg; ctx.fillRect(cx-pr,cy-pr,pr*2,pr*2);
-
-  // 수면 잔물결 (동심원)
-  ctx.globalAlpha=0.06;
-  ctx.strokeStyle='rgba(175,215,205,1)'; ctx.lineWidth=1;
-  for(let i=0;i<7;i++){
-    const rr=pr*(0.15+i*0.12)+Math.sin(t*0.4+i)*3.5;
-    ctx.beginPath(); ctx.arc(cx,cy,rr,0,Math.PI*2); ctx.stroke();
-  }
-  ctx.globalAlpha=1;
-
-  ctx.restore();
-
-  // 연꽃잎 (수면 위, 클립 안)
-  ctx.save();
-  ctx.beginPath(); ctx.arc(cx,cy,pr,0,Math.PI*2); ctx.clip();
-  const lilyData=[[0.28,0.62,13],[0.55,0.78,17],[0.82,0.55,11],[0.18,0.40,15],[0.68,0.30,10]];
-  lilyData.forEach(([angF,distF,lr],i)=>{
-    const ang2=angF*Math.PI*2+t*0.04;
-    const dist2=pr*distF*0.85;
-    const lx=cx+Math.cos(ang2)*dist2;
-    const ly=cy+Math.sin(ang2)*dist2;
-    ctx.globalAlpha=0.75;
-    ctx.fillStyle='rgba(38,108,48,0.88)';
-    ctx.beginPath(); ctx.arc(lx,ly,lr,0.3,Math.PI*1.82); ctx.lineTo(lx,ly); ctx.closePath(); ctx.fill();
-    if(i%2===0){
-      ctx.fillStyle='rgba(255,182,192,0.88)';
-      ctx.beginPath(); ctx.arc(lx,ly-lr*0.22,4.5,0,Math.PI*2); ctx.fill();
-    }
-  });
-  ctx.globalAlpha=1;
-  ctx.restore();
-}
-
-function drawKoi(p) {
-  const cx=W*0.5, cy=H*0.5, pr=Math.min(W,H)*0.46;
-  ctx.save();
-  ctx.beginPath(); ctx.arc(cx,cy,pr,0,Math.PI*2); ctx.clip();
-  ctx.translate(p.x,p.y);
-  ctx.rotate(p.angle+Math.PI*0.5);
-  const L=p.len, BW=p.wid;
-  const tw=Math.sin(p.tail)*BW*0.32; // 꼬리 흔들림
-
-  // === 몸통 ===
-  ctx.save();
-  ctx.beginPath();
-  // 앞쪽(머리) → 뒤쪽(꼬리 방향)
-  ctx.moveTo(0,-L*0.48);
-  ctx.bezierCurveTo(BW*0.55,-L*0.30, BW*0.60, L*0.05, tw*0.7, L*0.42);
-  ctx.bezierCurveTo(-BW*0.60, L*0.05, -BW*0.55,-L*0.30, 0,-L*0.48);
-  ctx.fillStyle=p.baseCol;
-  ctx.fill();
-
-  // 무늬 (클리핑을 몸통으로)
-  ctx.beginPath();
-  ctx.moveTo(0,-L*0.48);
-  ctx.bezierCurveTo(BW*0.55,-L*0.30, BW*0.60, L*0.05, tw*0.7, L*0.42);
-  ctx.bezierCurveTo(-BW*0.60, L*0.05, -BW*0.55,-L*0.30, 0,-L*0.48);
-  ctx.clip();
-  p.spots.forEach(s=>{
-    ctx.fillStyle=s.col;
-    ctx.beginPath();
-    ctx.ellipse(BW*s.ox, L*s.oy, BW*s.rx, L*s.ry, 0, 0, Math.PI*2);
-    ctx.fill();
-  });
-  ctx.restore();
-
-  // === 배지느러미 (복부 양옆) ===
-  ctx.globalAlpha=0.65;
-  ctx.fillStyle=p.finCol;
-  // 왼쪽 가슴지느러미
-  ctx.beginPath();
-  ctx.moveTo(-BW*0.42,-L*0.12);
-  ctx.bezierCurveTo(-BW*0.95,-L*0.05,-BW*1.05,L*0.10,-BW*0.50,L*0.18);
-  ctx.bezierCurveTo(-BW*0.32,L*0.05,-BW*0.28,-L*0.05,-BW*0.42,-L*0.12);
-  ctx.fill();
-  // 오른쪽 가슴지느러미
-  ctx.beginPath();
-  ctx.moveTo(BW*0.42,-L*0.12);
-  ctx.bezierCurveTo(BW*0.95,-L*0.05,BW*1.05,L*0.10,BW*0.50,L*0.18);
-  ctx.bezierCurveTo(BW*0.32,L*0.05,BW*0.28,-L*0.05,BW*0.42,-L*0.12);
-  ctx.fill();
-  ctx.globalAlpha=1;
-
-  // === 등지느러미 ===
-  ctx.save();
-  ctx.globalAlpha=0.55;
-  ctx.fillStyle=p.finCol;
-  ctx.beginPath();
-  ctx.moveTo(-BW*0.18,-L*0.18);
-  ctx.bezierCurveTo(-BW*0.08,-L*0.45,BW*0.08,-L*0.45,BW*0.18,-L*0.18);
-  ctx.bezierCurveTo(BW*0.10,-L*0.08,-BW*0.10,-L*0.08,-BW*0.18,-L*0.18);
-  ctx.fill();
-  ctx.restore();
-
-  // === 꼬리지느러미 ===
-  ctx.globalAlpha=0.72;
-  ctx.fillStyle=p.finCol;
-  ctx.beginPath();
-  ctx.moveTo(tw*0.8, L*0.40);
-  ctx.bezierCurveTo(BW*0.75+tw, L*0.60, BW*0.55+tw, L*0.78, BW*0.30+tw, L*0.88);
-  ctx.bezierCurveTo(tw, L*0.68, -BW*0.30+tw, L*0.88, -BW*0.55+tw, L*0.78);
-  ctx.bezierCurveTo(-BW*0.75+tw, L*0.60, tw*0.8, L*0.40, tw*0.8, L*0.40);
-  ctx.fill();
-  ctx.globalAlpha=1;
-
-  // === 머리 디테일 ===
-  // 눈
-  const eyeX=BW*0.30, eyeY=-L*0.40;
-  ctx.fillStyle='#1a1a1a';
-  ctx.beginPath(); ctx.arc(eyeX,eyeY,BW*0.12,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='rgba(255,255,255,0.5)';
-  ctx.beginPath(); ctx.arc(eyeX-BW*0.04,eyeY-BW*0.05,BW*0.04,0,Math.PI*2); ctx.fill();
-  // 반대쪽 눈 (약간 보임)
-  ctx.globalAlpha=0.45;
-  ctx.fillStyle='#1a1a1a';
-  ctx.beginPath(); ctx.arc(-BW*0.30,eyeY,BW*0.10,0,Math.PI*2); ctx.fill();
-  ctx.globalAlpha=1;
-
-  // 비늘 반짝임 (하이라이트)
-  const hlg=ctx.createRadialGradient(0,-L*0.12,0,0,-L*0.12,BW*0.55);
-  hlg.addColorStop(0,'rgba(255,255,255,0.18)');
-  hlg.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.fillStyle=hlg;
-  ctx.beginPath();
-  ctx.moveTo(0,-L*0.48);
-  ctx.bezierCurveTo(BW*0.55,-L*0.30, BW*0.60, L*0.05, tw*0.7, L*0.42);
-  ctx.bezierCurveTo(-BW*0.60, L*0.05, -BW*0.55,-L*0.30, 0,-L*0.48);
-  ctx.fill();
-
-  ctx.restore();
-}
-
-function updateFish(p) {
-  p.tail+=p.tailS;
-  p.angle+=p.turnRate;
-  p.turnRate+=(Math.random()-0.5)*0.002;
-  p.turnRate=Math.max(-0.025,Math.min(0.025,p.turnRate));
-  p.x+=Math.cos(p.angle-Math.PI*0.5)*p.speed;
-  p.y+=Math.sin(p.angle-Math.PI*0.5)*p.speed;
-
-  const cx=W*0.5, cy=H*0.5, pr=Math.min(W,H)*0.38;
-  const dx=p.x-cx, dy=p.y-cy;
-  if(dx*dx+dy*dy>pr*pr){
-    const da=Math.atan2(cy-p.y,cx-p.x)-(p.angle-Math.PI*0.5);
-    p.angle+=Math.sin(da)*0.06;
-  }
-
-  p.wakeTimer++;
-  if(p.wakeTimer>35){
-    p.wakeTimer=0;
-    extras.push({type:'wake',x:p.x,y:p.y,r:0,maxR:5+Math.random()*14,life:0,maxLife:80+Math.random()*50,a:0.25});
-  }
-}
-
-function drawSurfaceLeaf(p) {
-  const cx=W*0.5, cy=H*0.5, pr=Math.min(W,H)*0.46;
-  ctx.save();
-  ctx.beginPath(); ctx.arc(cx,cy,pr,0,Math.PI*2); ctx.clip();
-  p.drift+=p.driftS;
-  p.x+=Math.sin(p.drift)*0.22;
-  p.y+=Math.cos(p.drift*0.7)*0.18;
-  // 연못 안에 가두기
-  const dx=p.x-cx, dy=p.y-cy;
-  if(dx*dx+dy*dy>(pr*0.88)*(pr*0.88)){
-    p.x=cx+dx*0.95; p.y=cy+dy*0.95;
-  }
-  ctx.translate(p.x,p.y); ctx.rotate(p.rot+p.drift*0.28);
-  ctx.globalAlpha=p.a;
-  ctx.fillStyle=`hsl(${p.hue},52%,36%)`;
-  ctx.beginPath();
-  ctx.moveTo(0,-p.size);
-  ctx.bezierCurveTo(p.size*0.8,-p.size*0.3,p.size*0.6,p.size*0.5,0,p.size*0.8);
-  ctx.bezierCurveTo(-p.size*0.6,p.size*0.5,-p.size*0.8,-p.size*0.3,0,-p.size);
-  ctx.fill();
-  ctx.restore();
 }
 
 /* ════════════════════════════════════════════
@@ -960,10 +782,11 @@ function loop() {
 
   if(id==='spring_tree'){
     drawSpringBG();
-    // 바닥에 쌓인 잎 먼저
+    // 쌓인 잎 (페이드인 포함)
     extras.forEach(e=>{
       if(e.type!=='settled_spring') return;
-      ctx.save(); ctx.translate(e.x,e.y); ctx.rotate(e.rot); ctx.globalAlpha=e.alpha;
+      if(e.fadeIn < 1) e.fadeIn = Math.min(1, e.fadeIn + 0.012);
+      ctx.save(); ctx.translate(e.x,e.y); ctx.rotate(e.rot); ctx.globalAlpha=e.alpha*e.fadeIn;
       ctx.fillStyle=`hsl(${e.hue},58%,46%)`;
       ctx.beginPath();
       ctx.moveTo(0,-e.size);
@@ -971,14 +794,12 @@ function loop() {
       ctx.bezierCurveTo(-e.size*0.7,e.size*0.5,-e.size*0.9,-e.size*0.4,0,-e.size);
       ctx.fill(); ctx.restore();
     });
-    // 최대 18장, 평균 6~7초에 하나씩
     if(Math.random()<0.004&&particles.length<18) particles.push(makeLeaf(false));
     particles.forEach(p=>{ updateLeaf(p); drawLeaf(p); });
   }
 
   else if(id==='shooting_stars'){
     drawNightBG();
-    // 별 반짝임
     particles.forEach(p=>{
       p.twk+=p.twkS;
       const alpha=p.a*(0.5+0.5*Math.sin(p.twk));
@@ -986,7 +807,6 @@ function loop() {
       ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
     });
 
-    // 별똥별 (궤적 포함)
     extras=extras.filter(s=>{
       if(s.type!=='shooter') return true;
       s.life++;
@@ -997,7 +817,6 @@ function loop() {
       const prog=s.life/s.maxLife;
       const baseA=prog<0.15?prog/0.15:prog>0.80?(1-prog)/0.20:1;
 
-      // 궤적 — 점점 투명해지는 꼬리
       ctx.save();
       for(let i=1;i<s.trail.length;i++){
         const ta=i/s.trail.length;
@@ -1011,7 +830,6 @@ function loop() {
       }
       ctx.restore();
 
-      // 헤드 글로우
       ctx.save(); ctx.globalAlpha=baseA*0.92;
       const gw=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,8);
       gw.addColorStop(0,'rgba(255,255,215,1)'); gw.addColorStop(1,'rgba(255,255,200,0)');
@@ -1022,7 +840,6 @@ function loop() {
       if(s.x<-80||s.x>W+80||s.y>H+80||s.y<-80) return false;
       return s.life<s.maxLife;
     });
-    // 평균 7초에 1개
     if(Math.random()<0.0025) spawnShooter();
   }
 
@@ -1041,12 +858,11 @@ function loop() {
     drawLakeBG();
     const lakeY=H*0.44;
 
-    // 빗방울
     particles.forEach(p=>{
       if(p.type!=='raindrop') return;
       p.y+=p.vy;
       if(p.y>=lakeY){
-        spawnRipple(p.x,lakeY+Math.random()*5);
+        spawnRipple(p.x, lakeY+Math.random()*5);
         Object.assign(p,makeRaindrop(false));
         p.y=-5; return;
       }
@@ -1057,18 +873,20 @@ function loop() {
       ctx.restore();
     });
 
-    // 파장
+    // 파장 — 생성 직후 페이드인으로 갑작스러운 등장 방지
     extras=extras.filter(r=>{
       if(r.type!=='ripple') return true;
       r.life++;
       r.r=(r.life/r.maxLife)*r.maxR;
-      const a=r.a*(1-r.life/r.maxLife);
+      const lifeRatio = r.life/r.maxLife;
+      // 처음 8프레임 동안 페이드인, 이후 서서히 페이드아웃
+      const fadeIn = Math.min(1, r.life / 8);
+      const a = r.a * fadeIn * (1 - lifeRatio);
       ctx.save(); ctx.globalAlpha=a;
-      ctx.strokeStyle='rgba(198,222,242,0.92)'; ctx.lineWidth=0.75;
+      ctx.strokeStyle='rgba(175,205,225,0.85)'; ctx.lineWidth=0.8;
       ctx.beginPath(); ctx.ellipse(r.x,r.y,r.r,r.r*r.ryRatio,0,0,Math.PI*2); ctx.stroke();
-      // 이중 파장
       if(r.maxR>30&&r.r>r.maxR*0.38){
-        ctx.globalAlpha=a*0.40;
+        ctx.globalAlpha=a*0.38;
         ctx.beginPath(); ctx.ellipse(r.x,r.y,r.r*0.52,r.r*r.ryRatio*0.52,0,0,Math.PI*2); ctx.stroke();
       }
       ctx.restore();
@@ -1080,9 +898,10 @@ function loop() {
 
   else if(id==='autumn'){
     drawAutumnBG();
-    // 쌓인 낙엽 먼저 (배경)
+    // 쌓인 낙엽 — 페이드인으로 자연스럽게 등장
     extras.forEach(e=>{
       if(e.type!=='settled') return;
+      if(e.a < e.targetA) e.a = Math.min(e.targetA, e.a + 0.010);
       ctx.save(); ctx.translate(e.x,e.y); ctx.rotate(e.rot); ctx.globalAlpha=e.a;
       ctx.fillStyle=`hsl(${e.hue},72%,46%)`;
       ctx.beginPath();
@@ -1104,35 +923,6 @@ function loop() {
     });
     if(Math.random()<0.006&&particles.length<20) particles.push(makeAutumnLeaf(false));
     particles.forEach(p=>{ updateAutumnLeaf(p); drawAutumnLeaf(p); });
-  }
-
-  else if(id==='koi_pond'){
-    drawKoiScene();
-
-    // wake 파장
-    extras=extras.filter(e=>{
-      if(e.type==='leaf') return true;
-      if(e.type!=='wake') return true;
-      e.life++;
-      e.r=(e.life/e.maxLife)*e.maxR;
-      const a=e.a*(1-e.life/e.maxLife);
-      const cx=W*0.5, cy=H*0.5, pr=Math.min(W,H)*0.46;
-      ctx.save();
-      ctx.beginPath(); ctx.arc(cx,cy,pr,0,Math.PI*2); ctx.clip();
-      ctx.globalAlpha=a;
-      ctx.strokeStyle='rgba(175,215,205,0.85)'; ctx.lineWidth=0.7;
-      ctx.beginPath(); ctx.ellipse(e.x,e.y,e.r,e.r*0.42,0,0,Math.PI*2); ctx.stroke();
-      ctx.restore();
-      return e.life<e.maxLife;
-    });
-
-    // 수면 나뭇잎
-    extras.forEach(e=>{ if(e.type==='leaf') drawSurfaceLeaf(e); });
-    const leafN=extras.filter(e=>e.type==='leaf').length;
-    if(Math.random()<0.003&&leafN<7) extras.push(makeSurfaceLeaf());
-
-    // 물고기
-    particles.forEach(p=>{ updateFish(p); drawKoi(p); });
   }
 
   animId=requestAnimationFrame(loop);
