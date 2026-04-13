@@ -134,18 +134,57 @@ const SK='haruemotion_v4';
 const SK_DATE='haruemotion_lastdate';
 let records=[];
 function loadData(){
-  try{
-    const s=localStorage.getItem(SK);
-    if(s)records=JSON.parse(s);
-  }catch(e){records=[];}
-  // 날짜 저장 (자정 리셋 불필요: 오늘 탭은 todayStr()로 필터링하므로 새 날이면 자동으로 빈 상태)
-  localStorage.setItem(SK_DATE,todayStr());
+  try{const s=localStorage.getItem(SK);if(s)records=JSON.parse(s);}catch(e){records=[];}
+  midnightRollover();
 }
 function saveData(){pruneOldData();try{localStorage.setItem(SK,JSON.stringify(records));localStorage.setItem(SK_DATE,todayStr());}catch(e){}}
+
+// 자정 롤오버: 마지막 저장일 != 오늘이면 어제 열매를 오늘 날짜로 복사(count:0), 어제 기록은 그대로 보존
+function midnightRollover(){
+  const today=todayStr();
+  const lastDate=localStorage.getItem(SK_DATE);
+  // 이미 오늘 날짜로 롤오버됐거나, 첫 실행이면 스킵
+  if(!lastDate||lastDate===today)return;
+  // lastDate 기준 살아있던 열매(삭제 안 된 것)를 오늘 날짜로 복사
+  const prevFruits=records.filter(r=>r.date===lastDate&&r.deletedAt!==lastDate);
+  prevFruits.forEach(fr=>{
+    // 오늘 날짜에 같은 slot이 이미 없을 때만 복사
+    const already=records.some(r=>r.date===today&&r.slot===fr.slot);
+    if(!already){
+      records.push({
+        date:today,
+        label:fr.label,
+        type:fr.type,
+        count:0,
+        times:[],
+        ts:Date.now(),
+        slot:fr.slot,
+        colorIdx:fr.colorIdx
+      });
+    }
+  });
+  localStorage.setItem(SK_DATE,today);
+  try{localStorage.setItem(SK,JSON.stringify(records));}catch(e){}
+}
+
+// 앱이 켜진 채로 자정을 넘길 때 자동 롤오버
+function scheduleNextMidnight(){
+  const now=new Date();
+  const next=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1,0,0,1);
+  const ms=next-now;
+  setTimeout(function(){
+    midnightRollover();
+    drawTree();
+    // 헤더 날짜 갱신
+    const d=new Date(),days=['일','월','화','수','목','금','토'];
+    document.getElementById('header-date').innerHTML=`${d.getMonth()+1}월 ${d.getDate()}일<br><span style="font-size:13px;color:var(--text3)">${days[d.getDay()]}요일</span>`;
+    scheduleNextMidnight();
+  },ms);
+}
 function pruneOldData(){const c=new Date();c.setFullYear(c.getFullYear()-1);const cs=dStr(c);records=records.filter(r=>r.date>=cs);}
 loadData();
 
-function dStr(d){return d.toISOString().slice(0,10);}
+function dStr(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return`${y}-${m}-${day}`;}
 function todayStr(){return dStr(new Date());}
 function parseDate(s){return new Date(s+'T00:00:00');}
 function weekRange(off){
@@ -468,6 +507,7 @@ document.getElementById('emotion-input').addEventListener('keydown',function(e){
 document.querySelectorAll('.scroll-panel').forEach(el=>el.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:true}));
 
 drawTree();
+scheduleNextMidnight();
 
 window.confirmReset=function(){
   if(confirm("저장된 모든 감정 기록을 삭제할까요?\n이 작업은 되돌릴 수 없어요.")){
