@@ -441,7 +441,9 @@ function buildHD(recs){
 function renderStats(recs,days){
   if(!recs.length)return '<div class="no-data">이 기간엔 기록된 감정이 없어요 🌱</div>';
   let pos=0,neg=0;recs.forEach(r=>{if(r.type==='+')pos+=(r.count||0);else neg+=(r.count||0);});
-  const tot=pos+neg,pr=tot>0?Math.round(pos/tot*100):0,nr=100-pr;
+  const tot=pos+neg;
+  if(tot===0)return '<div class="no-data">아직 기록된 횟수가 없어요 🌱</div>';
+  const pr=Math.round(pos/tot*100),nr=100-pr;
   const cmt=pos>neg*1.5?'긍정적인 감정이 풍부했던 기간이에요 🌸':neg>pos*1.5?'힘든 감정이 많았어요. 수고 많으셨어요 💙':'긍정과 부정이 균형을 이뤘어요 🌿';
   let html=`<div class="summary-card"><div class="summary-title">감정 요약</div>
     <div class="badge-row"><span class="badge badge-pos">긍정 ${pos}회 (${pr}%)</span><span class="badge badge-neg">부정 ${neg}회 (${nr}%)</span></div>
