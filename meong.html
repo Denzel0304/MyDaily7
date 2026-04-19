@@ -354,37 +354,51 @@ function drawNightBG() {
   ctx.beginPath(); ctx.ellipse(W*0.5,H*0.32,W*0.72,H*0.22,-0.28,0,Math.PI*2); ctx.fill();
   ctx.restore();
 
-  const mx = W*0.82, my = H*0.10, mr = 26;
-  // 달빛 글로우
+  const mx = W*0.82, my = H*0.10, mr = 28;
+
+  // 달빛 글로우 — 부드럽고 따뜻한 여운
   ctx.save();
-  const moonGlow = ctx.createRadialGradient(mx,my,0,mx,my,mr*3.5);
-  moonGlow.addColorStop(0,'rgba(255,245,200,0.18)');
-  moonGlow.addColorStop(0.4,'rgba(255,240,180,0.07)');
+  const moonGlow = ctx.createRadialGradient(mx,my,0,mx,my,mr*5);
+  moonGlow.addColorStop(0,'rgba(255,248,210,0.22)');
+  moonGlow.addColorStop(0.3,'rgba(255,242,190,0.10)');
+  moonGlow.addColorStop(0.6,'rgba(255,238,170,0.04)');
   moonGlow.addColorStop(1,'transparent');
-  ctx.fillStyle=moonGlow; ctx.beginPath(); ctx.arc(mx,my,mr*3.5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=moonGlow; ctx.beginPath(); ctx.arc(mx,my,mr*5,0,Math.PI*2); ctx.fill();
   ctx.restore();
 
-  // 초승달 — offscreen canvas로 깔끔하게
-  {
-    const oc = document.createElement('canvas');
-    oc.width = Math.round((mr*8)*dpr); oc.height = Math.round((mr*8)*dpr);
-    const oc2 = oc.getContext('2d');
-    oc2.scale(dpr,dpr);
-    const cx=mr*4, cy=mr*4;
-    oc2.clearRect(0,0,mr*8,mr*8);
-    // 달 본체
-    oc2.beginPath(); oc2.arc(cx,cy,mr,0,Math.PI*2);
-    oc2.fillStyle='#fff8d8'; oc2.fill();
-    // 그림자 부분 지우기
-    oc2.globalCompositeOperation='destination-out';
-    oc2.beginPath(); oc2.arc(cx+mr*0.72, cy-mr*0.12, mr*0.88, 0, Math.PI*2);
-    oc2.fillStyle='rgba(0,0,0,1)'; oc2.fill();
-    // offscreen을 메인에 합성
-    ctx.save();
-    ctx.drawImage(oc, Math.round((mx-mr*4)*dpr), Math.round((my-mr*4)*dpr), Math.round(mr*8*dpr), Math.round(mr*8*dpr),
-                  mx-mr*4, my-mr*4, mr*8, mr*8);
-    ctx.restore();
-  }
+  // 초승달 — clip으로 달 모양 잘라내기 (destination-out 없이)
+  ctx.save();
+  // 달 전체 영역 clip
+  ctx.beginPath(); ctx.arc(mx,my,mr,0,Math.PI*2); ctx.clip();
+
+  // 달 본체 (따뜻한 크림색, 가장자리로 갈수록 약간 진하게)
+  const moonBody = ctx.createRadialGradient(mx-mr*0.15,my-mr*0.15,0,mx,my,mr);
+  moonBody.addColorStop(0,'#fffbe8');
+  moonBody.addColorStop(0.6,'#fff4cc');
+  moonBody.addColorStop(1,'#ffe8a0');
+  ctx.fillStyle=moonBody;
+  ctx.fillRect(mx-mr,my-mr,mr*2,mr*2);
+
+  // 그림자 — 밤하늘 색으로 부드럽게 덮어서 초승달 형태 만들기
+  // 뾰족하지 않게 하기 위해 그림자 원을 살짝 안쪽으로만
+  const shadowX = mx + mr*0.58;
+  const shadowY = my - mr*0.05;
+  const shadowR = mr*0.96;
+  const shadowGrad = ctx.createRadialGradient(shadowX-shadowR*0.1, shadowY, shadowR*0.1, shadowX, shadowY, shadowR);
+  shadowGrad.addColorStop(0,'rgba(8,6,32,1)');
+  shadowGrad.addColorStop(0.85,'rgba(10,8,35,1)');
+  shadowGrad.addColorStop(1,'rgba(12,10,38,0.0)');
+  ctx.fillStyle=shadowGrad;
+  ctx.beginPath(); ctx.arc(shadowX,shadowY,shadowR,0,Math.PI*2); ctx.fill();
+
+  ctx.restore();
+
+  // 초승달 테두리 — 아주 은은하게
+  ctx.save();
+  ctx.globalAlpha=0.22;
+  ctx.strokeStyle='rgba(255,248,200,1)'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.arc(mx,my,mr,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
 
   ctx.fillStyle='rgba(5,4,20,0.96)';
   ctx.beginPath(); ctx.moveTo(0,H);
@@ -530,7 +544,95 @@ function drawNaturalPine(px, py, treeH, sc) {
   ctx.restore();
 }
 
-function drawSnowBG() {
+// 눈 쌓인 부드러운 나무 — 봄 나무처럼 둥글고 편안한 형태
+function drawSnowTree(px, py, treeH) {
+  ctx.save();
+  ctx.lineCap='round'; ctx.lineJoin='round';
+
+  const sx = px, sy = py;
+  const trunkH = treeH*0.28;
+  const trunkW = treeH*0.038;
+
+  // 줄기 — 살짝 굽은 곡선
+  ctx.strokeStyle='#3a2a1a'; ctx.lineWidth=trunkW*1.1;
+  ctx.beginPath();
+  ctx.moveTo(sx, sy);
+  ctx.bezierCurveTo(sx-trunkW, sy-trunkH*0.4, sx+trunkW*0.5, sy-trunkH*0.7, sx-trunkW*0.3, sy-trunkH);
+  ctx.stroke();
+
+  const topY = sy - trunkH;
+
+  // 가지 — 5개, 봄 나무처럼 bezier로 부드럽게
+  const branchDefs = [
+    { dy:0.08, angle:-1.15, len:treeH*0.28, w:trunkW*0.48 },
+    { dy:0.14, angle: 1.10, len:treeH*0.26, w:trunkW*0.44 },
+    { dy:0.22, angle:-0.85, len:treeH*0.22, w:trunkW*0.38 },
+    { dy:0.30, angle: 0.80, len:treeH*0.20, w:trunkW*0.33 },
+    { dy:0.38, angle:-0.20, len:treeH*0.16, w:trunkW*0.26 },
+  ];
+
+  // 가지 먼저 그리고 그 위에 잎 클러스터 올리기
+  const leafClusters = [];
+  branchDefs.forEach((b,bi) => {
+    const bStartX = sx + (bi%2===0?-1:1)*trunkW*0.4;
+    const bStartY = topY + treeH*b.dy;
+    const bEndX = bStartX + Math.cos(b.angle - Math.PI/2)*b.len;
+    const bEndY = bStartY + Math.sin(b.angle - Math.PI/2)*b.len;
+    const midX = (bStartX+bEndX)*0.5 + (bi%2===0?-1:1)*b.len*0.12;
+    const midY = (bStartY+bEndY)*0.5 - b.len*0.08;
+
+    ctx.strokeStyle='rgba(42,30,16,0.82)'; ctx.lineWidth=b.w;
+    ctx.beginPath(); ctx.moveTo(bStartX,bStartY);
+    ctx.quadraticCurveTo(midX,midY,bEndX,bEndY);
+    ctx.stroke();
+
+    // 세부 가지
+    const subX = bEndX + Math.cos(b.angle-Math.PI/2-0.6)*b.len*0.32;
+    const subY = bEndY + Math.sin(b.angle-Math.PI/2-0.6)*b.len*0.32;
+    ctx.lineWidth=b.w*0.45;
+    ctx.beginPath(); ctx.moveTo(bEndX,bEndY); ctx.lineTo(subX,subY); ctx.stroke();
+
+    leafClusters.push({x:bEndX, y:bEndY, r:b.len*0.52, bi});
+    leafClusters.push({x:subX,  y:subY,  r:b.len*0.30, bi:bi+10});
+  });
+
+  // 나무 상단 중심 잎 덩어리
+  leafClusters.push({x:sx-trunkW*0.3, y:topY-treeH*0.02, r:treeH*0.17, bi:99});
+
+  // 잎 클러스터 — 봄 나무처럼 타원 레이어로 쌓기 (어두운 것부터)
+  leafClusters.forEach(({x:cx2,y:cy2,r,bi}) => {
+    const offsets = [
+      {ox:-r*0.22,oy:r*0.12,rx:r*0.68,ry:r*0.58,op:0.22,c:'#1a3a2a'},
+      {ox: r*0.18,oy:r*0.08,rx:r*0.62,ry:r*0.52,op:0.24,c:'#1e4030'},
+      {ox:-r*0.08,oy:-r*0.1,rx:r*0.70,ry:r*0.60,op:0.28,c:'#224838'},
+      {ox: r*0.05,oy:-r*0.2,rx:r*0.60,ry:r*0.50,op:0.32,c:'#285040'},
+      {ox:-r*0.05,oy:-r*0.3,rx:r*0.50,ry:r*0.42,op:0.30,c:'#305848'},
+    ];
+    offsets.forEach(o => {
+      ctx.save(); ctx.globalAlpha=o.op;
+      ctx.fillStyle=o.c;
+      ctx.beginPath(); ctx.ellipse(cx2+o.ox, cy2+o.oy, o.rx, o.ry, 0, 0, Math.PI*2);
+      ctx.fill(); ctx.restore();
+    });
+
+    // 눈 쌓인 부분 — 위에 흰 타원으로 자연스럽게
+    const snowOffsets = [
+      {ox:-r*0.05,oy:-r*0.25,rx:r*0.42,ry:r*0.18,op:0.82},
+      {ox: r*0.18,oy:-r*0.18,rx:r*0.28,ry:r*0.12,op:0.72},
+      {ox:-r*0.22,oy:-r*0.12,rx:r*0.22,ry:r*0.10,op:0.60},
+    ];
+    snowOffsets.forEach(o => {
+      ctx.save(); ctx.globalAlpha=o.op;
+      ctx.fillStyle='rgba(228,238,252,0.95)';
+      ctx.beginPath(); ctx.ellipse(cx2+o.ox, cy2+o.oy, o.rx, o.ry, o.ox*0.02, 0, Math.PI*2);
+      ctx.fill(); ctx.restore();
+    });
+  });
+
+  ctx.restore();
+}
+
+
   const sky=ctx.createLinearGradient(0,0,0,H);
   sky.addColorStop(0,'#141e2e'); sky.addColorStop(0.55,'#1e2c48'); sky.addColorStop(1,'#2a3a5e');
   ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
@@ -575,9 +677,7 @@ function drawSnowBG() {
   ctx.bezierCurveTo(W*0.8,H*0.81,W*0.9,H*0.84,W,H*0.83);
   ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fill();
 
-  drawNaturalPine(W*0.22, H*0.84, H*0.50, 0.82);
-  drawNaturalPine(W*0.50, H*0.83, H*0.58, 1.0);
-  drawNaturalPine(W*0.78, H*0.84, H*0.44, 0.74);
+  drawSnowTree(W*0.50, H*0.83, H*0.52);
 }
 
 /* ════════════════════════════════════════════
@@ -727,114 +827,97 @@ function drawAutumnBG() {
 function drawLeafShape(x, y, size, shape){
   ctx.beginPath();
   if(shape===0){
-    // 타원형 잎
-    ctx.ellipse(x, y, size*0.58, size*0.88, 0, 0, Math.PI*2);
+    // 타원형 잎 — 가장 자연스러운
+    ctx.ellipse(x, y, size*0.52, size*0.82, 0, 0, Math.PI*2);
   } else if(shape===1){
-    // 단풍잎형
-    ctx.moveTo(x, y-size);
-    ctx.bezierCurveTo(x+size*0.9, y-size*0.25, x+size*0.7, y+size*0.55, x, y+size*0.85);
-    ctx.bezierCurveTo(x-size*0.7, y+size*0.55, x-size*0.9, y-size*0.25, x, y-size);
+    // 부드러운 물방울형 잎
+    ctx.moveTo(x, y-size*0.88);
+    ctx.bezierCurveTo(x+size*0.52, y-size*0.38, x+size*0.62, y+size*0.32, x, y+size*0.88);
+    ctx.bezierCurveTo(x-size*0.62, y+size*0.32, x-size*0.52, y-size*0.38, x, y-size*0.88);
   } else {
-    // 작은 뾰족 단풍잎
-    const pts=5;
-    for(let i=0;i<pts;i++){
-      const a0=(i/pts)*Math.PI*2 - Math.PI/2;
-      const a1=((i+0.5)/pts)*Math.PI*2 - Math.PI/2;
-      const ox=x+Math.cos(a0)*size, oy=y+Math.sin(a0)*size;
-      const ix=x+Math.cos(a1)*size*0.42, iy=y+Math.sin(a1)*size*0.42;
-      i===0?ctx.moveTo(ox,oy):ctx.lineTo(ox,oy);
-      ctx.lineTo(ix,iy);
-    }
-    ctx.closePath();
+    // 둥근 하트형 잎 — 살짝 넓고 따뜻한 느낌
+    ctx.moveTo(x, y+size*0.72);
+    ctx.bezierCurveTo(x-size*0.80, y+size*0.10, x-size*0.92, y-size*0.52, x-size*0.28, y-size*0.72);
+    ctx.bezierCurveTo(x-size*0.08, y-size*0.82, x, y-size*0.62, x, y-size*0.42);
+    ctx.bezierCurveTo(x, y-size*0.62, x+size*0.08, y-size*0.82, x+size*0.28, y-size*0.72);
+    ctx.bezierCurveTo(x+size*0.92, y-size*0.52, x+size*0.80, y+size*0.10, x, y+size*0.72);
   }
   ctx.fill();
 }
 
 function drawAutumnTree(tx, ty, treeH, treeIdx) {
-  // 줄기 — 불규칙한 곡선
-  const seed2 = tx * 53.7;
-  function sr2(i){ return Math.sin(seed2+i*7.3)*0.5+0.5; }
-
   ctx.save();
   ctx.lineCap='round'; ctx.lineJoin='round';
 
-  // 두꺼운 줄기
-  const trunkW = treeH * 0.045;
-  ctx.strokeStyle='rgba(52,24,8,0.90)';
-  ctx.lineWidth = trunkW;
+  const trunkW = treeH * 0.042;
+  const lean = treeIdx===0 ? -trunkW*0.8 : trunkW*0.8;
+
+  // 줄기 — 봄 나무처럼 부드러운 베지어
+  ctx.strokeStyle='rgba(58,28,10,0.88)'; ctx.lineWidth=trunkW*1.1;
   ctx.beginPath();
   ctx.moveTo(tx, ty);
-  ctx.bezierCurveTo(
-    tx + (sr2(1)-0.5)*trunkW*3, ty - treeH*0.28,
-    tx + (sr2(2)-0.5)*trunkW*4, ty - treeH*0.52,
-    tx + (sr2(3)-0.5)*treeH*0.08, ty - treeH*0.65
-  );
+  ctx.bezierCurveTo(tx+lean, ty-treeH*0.30, tx+lean*0.5, ty-treeH*0.55, tx+lean*0.3, ty-treeH*0.68);
   ctx.stroke();
 
-  // 주요 가지 4~5개
-  const branches = [
-    { fromY: 0.32, angle: treeIdx===0?-0.9:0.85, len: treeH*0.30, thick: trunkW*0.55 },
-    { fromY: 0.42, angle: treeIdx===0?0.7:-0.75, len: treeH*0.28, thick: trunkW*0.50 },
-    { fromY: 0.52, angle: treeIdx===0?-0.6:0.65, len: treeH*0.24, thick: trunkW*0.42 },
-    { fromY: 0.60, angle: treeIdx===0?0.5:-0.55, len: treeH*0.20, thick: trunkW*0.35 },
-    { fromY: 0.65, angle: 0, len: treeH*0.18, thick: trunkW*0.30 },
+  const topY = ty - treeH*0.68;
+
+  // 주요 가지 — 베지어 곡선, 자연스럽게 뻗는 느낌
+  const branchDefs = [
+    { sy:0.10, angle:treeIdx===0?-1.0:1.0, len:treeH*0.30, w:trunkW*0.50 },
+    { sy:0.18, angle:treeIdx===0?0.8:-0.85, len:treeH*0.27, w:trunkW*0.44 },
+    { sy:0.27, angle:treeIdx===0?-0.7:0.72, len:treeH*0.23, w:trunkW*0.38 },
+    { sy:0.36, angle:treeIdx===0?0.5:-0.55, len:treeH*0.20, w:trunkW*0.32 },
+    { sy:0.44, angle:lean>0?0.15:-0.15,    len:treeH*0.15, w:trunkW*0.26 },
   ];
 
-  branches.forEach((b, bi) => {
-    const bx = tx + (sr2(bi*3+4)-0.5)*treeH*0.06;
-    const by = ty - treeH * b.fromY;
+  const clusters = [];
+  branchDefs.forEach((b,bi) => {
+    const bx = tx + lean*0.3 + (bi%2===0?-1:1)*trunkW*0.5;
+    const by = topY + treeH*b.sy;
     const ex = bx + Math.cos(b.angle - Math.PI/2)*b.len;
     const ey = by + Math.sin(b.angle - Math.PI/2)*b.len;
+    const cx2=(bx+ex)*0.5 + (bi%2===0?-1:1)*b.len*0.10;
+    const cy2=(by+ey)*0.5 - b.len*0.06;
 
-    ctx.strokeStyle='rgba(52,24,8,0.80)';
-    ctx.lineWidth = b.thick;
-    ctx.beginPath(); ctx.moveTo(bx,by);
-    ctx.bezierCurveTo(
-      bx+(ex-bx)*0.35+(sr2(bi*2)-0.5)*b.len*0.18,
-      by+(ey-by)*0.35+(sr2(bi*2+1)-0.5)*b.len*0.18,
-      bx+(ex-bx)*0.65+(sr2(bi*3)-0.5)*b.len*0.12,
-      by+(ey-by)*0.65+(sr2(bi*3+1)-0.5)*b.len*0.12,
-      ex, ey
-    );
-    ctx.stroke();
+    ctx.strokeStyle='rgba(52,24,8,0.80)'; ctx.lineWidth=b.w;
+    ctx.beginPath(); ctx.moveTo(bx,by); ctx.quadraticCurveTo(cx2,cy2,ex,ey); ctx.stroke();
 
-    // 각 가지 끝에 잎 클러스터
-    const clusterSize = b.len * (0.55 + sr2(bi*5)*0.30);
-    drawLeafCluster(ex, ey, clusterSize, sr2, bi*10);
+    // 잔가지
+    const subX = ex + Math.cos(b.angle-Math.PI/2+(bi%2===0?0.7:-0.7))*b.len*0.30;
+    const subY = ey + Math.sin(b.angle-Math.PI/2+(bi%2===0?0.7:-0.7))*b.len*0.30;
+    ctx.lineWidth=b.w*0.42;
+    ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(subX,subY); ctx.stroke();
 
-    // 작은 세부 가지
-    if(bi < 4){
-      const mx2=(bx+ex)*0.55, my2=(by+ey)*0.55;
-      const sx2=mx2+Math.cos(b.angle-Math.PI/2+1.0)*b.len*0.38;
-      const sy2=my2+Math.sin(b.angle-Math.PI/2+1.0)*b.len*0.38;
-      ctx.lineWidth=b.thick*0.45;
-      ctx.beginPath(); ctx.moveTo(mx2,my2); ctx.lineTo(sx2,sy2); ctx.stroke();
-      drawLeafCluster(sx2,sy2,clusterSize*0.55, sr2, bi*7+20);
-    }
+    clusters.push({x:ex,   y:ey,   r:b.len*0.58});
+    clusters.push({x:subX, y:subY, r:b.len*0.34});
+  });
+  // 상단 중심 잎뭉치
+  clusters.push({x:tx+lean*0.3, y:topY-treeH*0.03, r:treeH*0.18});
+
+  // 잎 뭉치 — 봄 나무처럼 타원 레이어로 (가을 색으로)
+  clusters.forEach(({x:cx2,y:cy2,r}) => {
+    const layers = [
+      {ox:-r*0.18,oy:r*0.10,rx:r*0.72,ry:r*0.62,op:0.20,h:0},
+      {ox: r*0.14,oy:r*0.06,rx:r*0.66,ry:r*0.55,op:0.23,h:1},
+      {ox:-r*0.06,oy:-r*0.08,rx:r*0.74,ry:r*0.63,op:0.26,h:2},
+      {ox: r*0.04,oy:-r*0.18,rx:r*0.64,ry:r*0.53,op:0.30,h:3},
+      {ox:-r*0.04,oy:-r*0.28,rx:r*0.54,ry:r*0.44,op:0.28,h:4},
+    ];
+    layers.forEach(o => {
+      const hue = autumnHues[o.h % autumnHues.length];
+      const light = 38 + o.h*4;
+      ctx.save(); ctx.globalAlpha=o.op*1.8;
+      ctx.fillStyle=`hsl(${hue},68%,${light}%)`;
+      ctx.beginPath(); ctx.ellipse(cx2+o.ox, cy2+o.oy, o.rx, o.ry, 0, 0, Math.PI*2);
+      ctx.fill(); ctx.restore();
+    });
   });
 
   ctx.restore();
 }
 
 function drawLeafCluster(cx2, cy2, radius, sr2, seedOff) {
-  const count = 7 + Math.floor(sr2(seedOff)*5);
-  for(let i=0;i<count;i++){
-    const angle = (i/count)*Math.PI*2 + sr2(seedOff+i)*0.8;
-    const dist = radius*(0.25 + sr2(seedOff+i+1)*0.75);
-    const lx2 = cx2 + Math.cos(angle)*dist;
-    const ly2 = cy2 + Math.sin(angle)*dist;
-    const lsize = radius*(0.18 + sr2(seedOff+i+2)*0.20);
-    const hue = autumnHues[Math.floor(sr2(seedOff+i+3)*autumnHues.length)];
-    const shape = Math.floor(sr2(seedOff+i+4)*3);
-
-    ctx.save();
-    ctx.globalAlpha = 0.78 + sr2(seedOff+i+5)*0.18;
-    ctx.fillStyle = `hsl(${hue},70%,${42+Math.floor(sr2(seedOff+i+6)*14)}%)`;
-    ctx.translate(lx2,ly2);
-    ctx.rotate(sr2(seedOff+i+7)*Math.PI*2);
-    drawLeafShape(0,0,lsize,shape);
-    ctx.restore();
-  }
+  // autumn tree 내부에서만 쓰이던 함수 — drawAutumnTree로 통합됨
 }
 
 function drawAutumnLeaf(p) {
