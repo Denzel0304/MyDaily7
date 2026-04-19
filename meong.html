@@ -23,7 +23,6 @@
   canvas#c {
     position:absolute; top:0; left:0; width:100%; height:100%; display:block;
   }
-  /* 낙엽 캔버스 — 봄 나무 테마 전용, 메인 캔버스 위 */
   canvas#leaf-canvas {
     position:absolute; top:0; left:0; width:100%; height:100%;
     pointer-events:none; z-index:2; display:block;
@@ -137,7 +136,6 @@ function resize() {
   canvas.height = Math.round(H*dpr);
   canvas.style.width = W+'px'; canvas.style.height = H+'px';
   ctx.scale(dpr,dpr);
-  // 낙엽 캔버스 리사이즈
   const lc = document.getElementById('leaf-canvas');
   lc.width  = Math.round(W*dpr);
   lc.height = Math.round(H*dpr);
@@ -146,7 +144,6 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 
-// 연못 제거: 5개 장면만
 const scenes = [
   { name:'봄 나무',      id:'spring_tree'    },
   { name:'별똥별',       id:'shooting_stars' },
@@ -204,15 +201,11 @@ function initScene() {
 }
 
 /* ════════════════════════════════════════════
-   1. 봄 나무 — 하루 감정 나무+낙엽 이식
-      파티클 없음: 낙엽은 leaf-canvas에서 처리
+   1. 봄 나무
    ════════════════════════════════════════════ */
-function initSpringTree() {
-  // 파티클/extras 불필요 — 낙엽은 별도 leaf-canvas 루프에서 관리
-}
+function initSpringTree() {}
 
 function drawSpringBG() {
-  // 배경 하늘 — 하루 감정과 동일한 색상
   const sky = ctx.createLinearGradient(0, 0, 0, H);
   sky.addColorStop(0, '#bde8a8');
   sky.addColorStop(0.5, '#d8f0c8');
@@ -220,14 +213,12 @@ function drawSpringBG() {
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, W, H);
 
-  // 잔디
   const gr = ctx.createLinearGradient(0, H*0.78, 0, H);
   gr.addColorStop(0, 'rgba(130,185,95,0.7)');
   gr.addColorStop(1, 'rgba(100,155,65,0.9)');
   ctx.fillStyle = gr;
   ctx.fillRect(0, H*0.80, W, H*0.20);
 
-  // 하루 감정 SVG 좌표계(390×540)를 현재 화면 크기로 스케일
   const sx = W / 390;
   const sy = H / 540;
 
@@ -235,7 +226,6 @@ function drawSpringBG() {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  // 그림자
   ctx.globalAlpha = 0.3;
   ctx.fillStyle = '#d4c4a8';
   ctx.beginPath();
@@ -243,21 +233,18 @@ function drawSpringBG() {
   ctx.fill();
   ctx.globalAlpha = 1;
 
-  // 줄기 (왼쪽 밝은 면)
   ctx.strokeStyle = '#c8a97a'; ctx.lineWidth = 26*Math.min(sx,sy);
   ctx.beginPath();
   ctx.moveTo(174*sx, 496*sy);
   ctx.bezierCurveTo(175*sx,430*sy, 179*sx,368*sy, 181*sx,328*sy);
   ctx.stroke();
 
-  // 줄기 (오른쪽 어두운 면)
   ctx.strokeStyle = '#b8956a'; ctx.lineWidth = 19*Math.min(sx,sy);
   ctx.beginPath();
   ctx.moveTo(216*sx, 496*sy);
   ctx.bezierCurveTo(215*sx,430*sy, 211*sx,368*sy, 209*sx,328*sy);
   ctx.stroke();
 
-  // 가지
   ctx.strokeStyle = '#c8a97a';
   [
     {w:12, pts:[181,328, 158,286, 122,242, 84,198]},
@@ -273,12 +260,10 @@ function drawSpringBG() {
     ctx.stroke();
   });
 
-  // 작은 가지 (상단 좌우)
   ctx.lineWidth = 6*Math.min(sx,sy);
   ctx.beginPath(); ctx.moveTo(192*sx,165*sy); ctx.lineTo(118*sx,125*sy); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(192*sx,165*sy); ctx.lineTo(264*sx,125*sy); ctx.stroke();
 
-  // 잎사귀 타원 레이어 (하루 감정 SVG 그대로)
   [
     {cx:195,cy:255,rx:155,ry:138,op:0.17,c:'#5fa85f'},
     {cx:148,cy:232,rx:135,ry:120,op:0.19,c:'#6ab86a'},
@@ -306,7 +291,7 @@ function drawSpringBG() {
 }
 
 /* ════════════════════════════════════════════
-   2. 별똥별 — 원본 그대로
+   2. 별똥별 — 달 거울 대칭 (그림자 왼쪽으로)
    ════════════════════════════════════════════ */
 function initShootingStars() {
   for(let i=0;i<130;i++) particles.push({
@@ -343,9 +328,9 @@ function spawnShooter() {
 }
 
 function drawNightBG() {
-  const sky=ctx.createLinearGradient(0,0,0,H);
-  sky.addColorStop(0,'#080620'); sky.addColorStop(0.45,'#100e38'); sky.addColorStop(1,'#181658');
-  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+  const skyG=ctx.createLinearGradient(0,0,0,H);
+  skyG.addColorStop(0,'#080620'); skyG.addColorStop(0.45,'#100e38'); skyG.addColorStop(1,'#181658');
+  ctx.fillStyle=skyG; ctx.fillRect(0,0,W,H);
 
   ctx.save(); ctx.globalAlpha=0.06;
   const mw=ctx.createRadialGradient(W*0.5,H*0.32,0,W*0.5,H*0.32,W*0.7);
@@ -355,7 +340,7 @@ function drawNightBG() {
   ctx.restore();
 
   const mx = W*0.82, my = H*0.10, mr = 26;
-  // 달빛 글로우
+
   ctx.save();
   const moonGlow = ctx.createRadialGradient(mx,my,0,mx,my,mr*4);
   moonGlow.addColorStop(0,'rgba(255,248,210,0.20)');
@@ -364,22 +349,19 @@ function drawNightBG() {
   ctx.fillStyle=moonGlow; ctx.beginPath(); ctx.arc(mx,my,mr*4,0,Math.PI*2); ctx.fill();
   ctx.restore();
 
-  // 초승달 — offscreen canvas 방식 (배경을 건드리지 않음)
+  // 달 — 그림자 원을 왼쪽으로 이동 (거울 대칭)
   const oc=document.createElement('canvas');
   const ocSize=mr*10;
   oc.width=ocSize; oc.height=ocSize;
   const oc2=oc.getContext('2d');
   const ocCx=ocSize/2, ocCy=ocSize/2;
-  // 달 본체
   oc2.beginPath(); oc2.arc(ocCx,ocCy,mr,0,Math.PI*2);
   const mg=oc2.createRadialGradient(ocCx-mr*0.1,ocCy-mr*0.1,0,ocCx,ocCy,mr);
   mg.addColorStop(0,'#fffef0'); mg.addColorStop(0.7,'#fff8d8'); mg.addColorStop(1,'#ffe8a8');
   oc2.fillStyle=mg; oc2.fill();
-  // 그림자로 초승달 형태 — destination-out을 offscreen에서만 사용
   oc2.globalCompositeOperation='destination-out';
-  oc2.beginPath(); oc2.arc(ocCx+mr*0.62, ocCy-mr*0.08, mr*0.92, 0, Math.PI*2);
+  oc2.beginPath(); oc2.arc(ocCx - mr*0.62, ocCy - mr*0.08, mr*0.92, 0, Math.PI*2);
   oc2.fillStyle='rgba(0,0,0,1)'; oc2.fill();
-  // offscreen → 메인 canvas
   ctx.save();
   ctx.drawImage(oc, mx-ocCx, my-ocCy);
   ctx.restore();
@@ -393,7 +375,7 @@ function drawNightBG() {
 }
 
 /* ════════════════════════════════════════════
-   3. 눈 내리는 밤 — 원본 그대로
+   3. 눈 내리는 밤
    ════════════════════════════════════════════ */
 function initSnowfall() {
   for(let i=0;i<60;i++) particles.push(makeSnow(true));
@@ -432,66 +414,16 @@ function drawSnowflake(x,y,r,alpha,rot) {
   ctx.restore();
 }
 
-function drawNaturalPine(px, py, treeH, sc) {
-  ctx.save();
-  ctx.strokeStyle='#4a3018'; ctx.lineWidth=7*sc; ctx.lineCap='round';
-  ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py - treeH*0.10); ctx.stroke();
-
-  const layers = [
-    { y: py - treeH*0.12, w: 0.88, h: 0.14 },
-    { y: py - treeH*0.24, w: 0.76, h: 0.14 },
-    { y: py - treeH*0.38, w: 0.63, h: 0.14 },
-    { y: py - treeH*0.52, w: 0.50, h: 0.14 },
-    { y: py - treeH*0.66, w: 0.37, h: 0.13 },
-    { y: py - treeH*0.79, w: 0.24, h: 0.12 },
-    { y: py - treeH*0.91, w: 0.13, h: 0.10 },
-  ];
-
-  layers.forEach((layer, li) => {
-    const lw = layer.w * treeH * 0.55 * sc;
-    const lh = layer.h * treeH * sc;
-    const ly = layer.y;
-    const green = 28 + li*12;
-
-    ctx.fillStyle = `rgba(15,${green},20,0.92)`;
-    ctx.beginPath();
-    ctx.moveTo(px, ly - lh);
-    ctx.bezierCurveTo(px + lw*0.35, ly - lh*0.5, px + lw*0.88, ly - lh*0.05, px + lw, ly);
-    ctx.bezierCurveTo(px + lw*0.55, ly + lh*0.28, px + lw*0.18, ly + lh*0.32, px + lw*0.05, ly + lh*0.18);
-    ctx.lineTo(px, ly + lh*0.05);
-    ctx.lineTo(px - lw*0.05, ly + lh*0.18);
-    ctx.bezierCurveTo(px - lw*0.18, ly + lh*0.32, px - lw*0.55, ly + lh*0.28, px - lw, ly);
-    ctx.bezierCurveTo(px - lw*0.88, ly - lh*0.05, px - lw*0.35, ly - lh*0.5, px, ly - lh);
-    ctx.fill();
-
-    ctx.fillStyle='rgba(210,228,248,0.88)';
-    ctx.beginPath();
-    ctx.moveTo(px - lw*0.08, ly - lh*0.85);
-    ctx.bezierCurveTo(px - lw*0.04, ly - lh*0.95, px + lw*0.04, ly - lh*0.95, px + lw*0.08, ly - lh*0.85);
-    ctx.bezierCurveTo(px + lw*0.42, ly - lh*0.45, px + lw*0.80, ly - lh*0.08, px + lw*0.72, ly);
-    ctx.bezierCurveTo(px + lw*0.50, ly - lh*0.05, px + lw*0.25, ly - lh*0.15, px + lw*0.05, ly - lh*0.22);
-    ctx.lineTo(px, ly - lh*0.20);
-    ctx.lineTo(px - lw*0.05, ly - lh*0.22);
-    ctx.bezierCurveTo(px - lw*0.25, ly - lh*0.15, px - lw*0.50, ly - lh*0.05, px - lw*0.72, ly);
-    ctx.bezierCurveTo(px - lw*0.80, ly - lh*0.08, px - lw*0.42, ly - lh*0.45, px - lw*0.08, ly - lh*0.85);
-    ctx.fill();
-  });
-  ctx.restore();
-}
-
-// 눈 쌓인 부드러운 나무 (봄 나무 스타일 — 타원 레이어)
 function drawSoftSnowTree(px, py, treeH) {
   ctx.save();
   ctx.lineCap='round'; ctx.lineJoin='round';
 
-  // 줄기
   ctx.strokeStyle='#2e1e0e'; ctx.lineWidth=treeH*0.035;
   ctx.beginPath();
   ctx.moveTo(px, py);
   ctx.bezierCurveTo(px-4, py-treeH*0.32, px+5, py-treeH*0.58, px-2, py-treeH*0.70);
   ctx.stroke();
 
-  // 가지 3개 (베지어, 부드럽게)
   const branches=[
     {bx:px-2,by:py-treeH*0.70,ex:px-treeH*0.26,ey:py-treeH*0.54,w:treeH*0.018},
     {bx:px-2,by:py-treeH*0.70,ex:px+treeH*0.22,ey:py-treeH*0.50,w:treeH*0.016},
@@ -504,7 +436,6 @@ function drawSoftSnowTree(px, py, treeH) {
     ctx.stroke();
   });
 
-  // 잎 뭉치 — 타원 레이어 (봄 나무와 동일한 방식, 어두운 녹색)
   const clusters=[
     {x:px+treeH*0.02, y:py-treeH*0.55, rx:treeH*0.28, ry:treeH*0.22},
     {x:px-treeH*0.14, y:py-treeH*0.62, rx:treeH*0.22, ry:treeH*0.18},
@@ -513,7 +444,6 @@ function drawSoftSnowTree(px, py, treeH) {
     {x:px+treeH*0.00, y:py-treeH*0.88, rx:treeH*0.12, ry:treeH*0.10},
   ];
 
-  // 잎 (어두운 녹색 레이어)
   clusters.forEach(c=>{
     const layers=[
       {op:0.18,c:'#1a3520'},{op:0.22,c:'#1e3e26'},{op:0.26,c:'#224830'},
@@ -538,20 +468,17 @@ function drawSnowBG() {
 
   const mx=W*0.72, my=H*0.14, mr=26;
   ctx.save();
-  // 보름달 글로우
   const moonGlow=ctx.createRadialGradient(mx,my,0,mx,my,mr*4.5);
   moonGlow.addColorStop(0,'rgba(210,228,255,0.18)');
   moonGlow.addColorStop(0.5,'rgba(200,218,255,0.07)');
   moonGlow.addColorStop(1,'transparent');
   ctx.fillStyle=moonGlow; ctx.beginPath(); ctx.arc(mx,my,mr*4.5,0,Math.PI*2); ctx.fill();
-  // 보름달 본체
   const moonBody=ctx.createRadialGradient(mx-mr*0.2,my-mr*0.2,0,mx,my,mr);
   moonBody.addColorStop(0,'#f2f8ff');
   moonBody.addColorStop(0.6,'#ddeaff');
   moonBody.addColorStop(1,'#c2d4f0');
   ctx.beginPath(); ctx.arc(mx,my,mr,0,Math.PI*2);
   ctx.fillStyle=moonBody; ctx.fill();
-  // 크레이터 (매우 연하게)
   ctx.globalAlpha=0.06; ctx.fillStyle='#8899bb';
   ctx.beginPath(); ctx.arc(mx+mr*0.25,my-mr*0.2,mr*0.18,0,Math.PI*2); ctx.fill();
   ctx.beginPath(); ctx.arc(mx-mr*0.28,my+mr*0.28,mr*0.12,0,Math.PI*2); ctx.fill();
@@ -572,7 +499,7 @@ function drawSnowBG() {
 }
 
 /* ════════════════════════════════════════════
-   4. 빗속의 호수 — 원본 그대로
+   4. 빗속의 호수
    ════════════════════════════════════════════ */
 function initLakeRain() {
   for(let i=0;i<28;i++) particles.push(makeRaindrop(true));
@@ -653,29 +580,38 @@ function drawLakeBG() {
 }
 
 /* ════════════════════════════════════════════
-   5. 가을 낙엽 — 원본 그대로
+   5. 가을 낙엽 — 리셋
+      큰 나무 좌측 / 작은 나무 우측
+      낙엽 없다가 하나씩 떨어져 바닥에 쌓임
    ════════════════════════════════════════════ */
 function initAutumn() {
-  extras=[];
-  for(let i=0;i<10;i++) particles.push(makeAutumnLeaf(true));
+  extras = [];
+  particles = [];
 }
+
 const autumnHues=[8,18,26,33,42];
-function makeAutumnLeaf(scatter) {
+
+function makeAutumnLeaf() {
   const h=autumnHues[Math.floor(Math.random()*autumnHues.length)];
+  const fromLeft = Math.random() < 0.6;
+  const spawnX = fromLeft
+    ? W*0.05 + Math.random()*W*0.40
+    : W*0.55 + Math.random()*W*0.40;
   return {
     type:'autumn',
-    x:Math.random()*W,
-    y:scatter?Math.random()*H:-18,
-    vx:(Math.random()-0.5)*0.48,
-    vy:0.14+Math.random()*0.30,
+    x: spawnX,
+    y: H*0.08 + Math.random()*H*0.30,
+    vx:(Math.random()-0.5)*0.5,
+    vy:0.14+Math.random()*0.28,
     rot:Math.random()*Math.PI*2,
-    rotV:(Math.random()-0.5)*0.020,
+    rotV:(Math.random()-0.5)*0.022,
     size:6+Math.random()*9,
-    a:0.78+Math.random()*0.22,
+    a:0.82+Math.random()*0.18,
     swg:Math.random()*Math.PI*2,
     swgS:0.007+Math.random()*0.012,
     hue:h, shape:Math.floor(Math.random()*3),
     landing: false,
+    _done: false,
   };
 }
 
@@ -693,19 +629,10 @@ function drawAutumnBG() {
   gr.addColorStop(0,'rgba(148,80,22,0.85)'); gr.addColorStop(1,'rgba(95,48,10,0.95)');
   ctx.fillStyle=gr; ctx.fillRect(0,H*0.78,W,H*0.22);
 
-  // 바닥 낙엽 — 타원으로만 (부드럽게)
-  for(let i=0;i<22;i++){
-    const lx=(i/22)*W*1.04-W*0.02;
-    const ly=H*0.83+Math.sin(i*1.4)*H*0.05;
-    ctx.save(); ctx.translate(lx,ly); ctx.rotate(i*0.58); ctx.globalAlpha=0.50;
-    ctx.fillStyle=`hsl(${autumnHues[i%autumnHues.length]},65%,44%)`;
-    ctx.beginPath(); ctx.ellipse(0,0,6,3.5,0,0,Math.PI*2); ctx.fill();
-    ctx.restore();
-  }
-
-  // 나무 2그루 — 부드러운 타원 수관
-  drawSoftAutumnTree(W*0.28, H*0.78, H*0.40, 0);
-  drawSoftAutumnTree(W*0.72, H*0.80, H*0.36, 1);
+  // 큰 나무 — 좌측
+  drawSoftAutumnTree(W*0.22, H*0.78, H*0.52, 0);
+  // 작은 나무 — 우측
+  drawSoftAutumnTree(W*0.76, H*0.80, H*0.34, 1);
 }
 
 function drawSoftAutumnTree(tx, ty, treeH, idx) {
@@ -713,7 +640,6 @@ function drawSoftAutumnTree(tx, ty, treeH, idx) {
   ctx.lineCap='round'; ctx.lineJoin='round';
   const lean = idx===0 ? -4 : 4;
 
-  // 줄기
   ctx.strokeStyle='rgba(58,26,8,0.88)'; ctx.lineWidth=treeH*0.040;
   ctx.beginPath();
   ctx.moveTo(tx, ty);
@@ -722,7 +648,6 @@ function drawSoftAutumnTree(tx, ty, treeH, idx) {
 
   const topX=tx+lean*0.4, topY=ty-treeH*0.66;
 
-  // 가지 4개
   const brs=[
     {angle:idx===0?-1.05:1.05, len:treeH*0.28, w:treeH*0.018, from:0.08},
     {angle:idx===0? 0.80:-0.80, len:treeH*0.24, w:treeH*0.016, from:0.16},
@@ -742,7 +667,6 @@ function drawSoftAutumnTree(tx, ty, treeH, idx) {
   });
   clusters.push({x:topX,y:topY-treeH*0.04,r:treeH*0.16});
 
-  // 잎 뭉치 — 봄 나무와 동일한 타원 레이어 방식, 가을 색
   clusters.forEach(c=>{
     const leafLayers=[
       {dy:0.10,op:0.18,hi:0},{dy:0.05,op:0.22,hi:1},
@@ -766,19 +690,15 @@ function drawAutumnLeaf(p) {
   ctx.fillStyle=`hsl(${p.hue},70%,46%)`;
   ctx.beginPath();
   if(p.shape===0){
-    // 타원형
     ctx.ellipse(0,0,p.size*0.58,p.size*0.88,0,0,Math.PI*2);
   } else if(p.shape===1){
-    // 부드러운 물방울형
     ctx.moveTo(0,-p.size*0.88);
     ctx.bezierCurveTo(p.size*0.52,-p.size*0.35, p.size*0.60,p.size*0.32, 0,p.size*0.88);
     ctx.bezierCurveTo(-p.size*0.60,p.size*0.32,-p.size*0.52,-p.size*0.35, 0,-p.size*0.88);
   } else {
-    // 둥근 달걀형
     ctx.ellipse(0,p.size*0.08,p.size*0.52,p.size*0.80,0,0,Math.PI*2);
   }
   ctx.fill();
-  // 잎맥 한 줄 (연하게)
   ctx.globalAlpha=p.a*0.25;
   ctx.strokeStyle=`hsl(${p.hue},40%,30%)`;
   ctx.lineWidth=0.7; ctx.lineCap='round';
@@ -788,36 +708,39 @@ function drawAutumnLeaf(p) {
 
 function updateAutumnLeaf(p) {
   p.swg+=p.swgS;
-  p.x+=p.vx+Math.sin(p.swg)*0.6;
+  p.x+=p.vx+Math.sin(p.swg)*0.55;
   p.y+=p.vy; p.rot+=p.rotV;
-  if(p.y > H*0.78 && !p.landing) {
+
+  const floorY = H*0.78;
+
+  if(p.y > floorY && !p.landing) {
     p.landing = true;
   }
   if(p.landing) {
-    p.vy *= 0.88;
-    p.vx *= 0.90;
-    p.rotV *= 0.90;
-    if(p.vy < 0.015) {
+    p.vy *= 0.85;
+    p.vx *= 0.88;
+    p.rotV *= 0.88;
+    if(p.vy < 0.012) {
       extras.push({
         type:'settled',
         x:p.x, y:p.y,
-        rot:p.rot+(Math.random()-0.5)*0.3,
-        size:p.size*0.85,
+        rot:p.rot+(Math.random()-0.5)*0.4,
+        size:p.size*0.88,
         hue:p.hue, shape:p.shape,
         a:0,
-        targetA:p.a*0.82,
+        targetA:p.a*0.80,
       });
-      if(extras.filter(e=>e.type==='settled').length>120) {
-        const idx=extras.findIndex(e=>e.type==='settled');
-        if(idx>-1) extras.splice(idx,1);
+      if(extras.filter(e=>e.type==='settled').length>200) {
+        const fi=extras.findIndex(e=>e.type==='settled');
+        if(fi>-1) extras.splice(fi,1);
       }
-      Object.assign(p,makeAutumnLeaf(false));
+      p._done = true;
     }
   }
 }
 
 /* ════════════════════════════════════════════
-   Main render loop — 원본 그대로
+   Main loop
    ════════════════════════════════════════════ */
 function loop() {
   t+=0.016;
@@ -826,7 +749,6 @@ function loop() {
 
   if(id==='spring_tree'){
     drawSpringBG();
-    // 낙엽은 leaf-canvas에서 독립적으로 처리
   }
 
   else if(id==='shooting_stars'){
@@ -927,10 +849,11 @@ function loop() {
 
   else if(id==='autumn'){
     drawAutumnBG();
-    // settled 낙엽 — 배경 위에 그려야 보임
+
+    // 쌓인 낙엽 먼저
     extras.forEach(e=>{
       if(e.type!=='settled') return;
-      if(e.a < e.targetA) e.a = Math.min(e.targetA, e.a + 0.010);
+      if(e.a < e.targetA) e.a = Math.min(e.targetA, e.a + 0.008);
       ctx.save(); ctx.translate(e.x,e.y); ctx.rotate(e.rot); ctx.globalAlpha=e.a;
       ctx.fillStyle=`hsl(${e.hue},70%,46%)`;
       ctx.beginPath();
@@ -945,7 +868,14 @@ function loop() {
       }
       ctx.fill(); ctx.restore();
     });
-    if(Math.random()<0.006&&particles.length<20) particles.push(makeAutumnLeaf(false));
+
+    // 낙엽 생성 — 동시 낙하 최대 3개, 약 3초마다 1개
+    const fallingCount = particles.filter(p=>!p._done).length;
+    if(fallingCount < 3 && Math.random()<0.004) {
+      particles.push(makeAutumnLeaf());
+    }
+
+    particles = particles.filter(p=>!p._done);
     particles.forEach(p=>{ updateAutumnLeaf(p); drawAutumnLeaf(p); });
   }
 
@@ -958,7 +888,7 @@ resize();
 })();
 </script>
 
-<!-- 낙엽 애니메이션 — 하루 감정에서 이식, 봄 나무 테마일 때만 동작 -->
+<!-- 낙엽 애니메이션 — 봄 나무 테마 전용 -->
 <script>
 (function(){
   const canvas = document.getElementById('leaf-canvas');
