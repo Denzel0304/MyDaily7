@@ -610,7 +610,6 @@ function makeAutumnLeaf() {
     swg:Math.random()*Math.PI*2,
     swgS:0.007+Math.random()*0.012,
     hue:h, shape:Math.floor(Math.random()*3),
-    landing: false,
     _done: false,
   };
 }
@@ -714,29 +713,22 @@ function updateAutumnLeaf(p) {
 
   const floorY = H*0.78;
 
-  if(p.y > floorY && !p.landing) {
-    p.landing = true;
-  }
-  if(p.landing) {
-    p.vy *= 0.85;
-    p.vx *= 0.88;
-    p.rotV *= 0.88;
-    if(p.vy < 0.012) {
-      extras.push({
-        type:'settled',
-        x:p.x, y:p.y,
-        rot:p.rot+(Math.random()-0.5)*0.4,
-        size:p.size*0.88,
-        hue:p.hue, shape:p.shape,
-        a:0,
-        targetA:p.a*0.80,
-      });
-      if(extras.filter(e=>e.type==='settled').length>200) {
-        const fi=extras.findIndex(e=>e.type==='settled');
-        if(fi>-1) extras.splice(fi,1);
-      }
-      p._done = true;
+  if(p.y >= floorY) {
+    p.y = floorY;
+    extras.push({
+      type:'settled',
+      x:p.x, y:p.y,
+      rot:p.rot+(Math.random()-0.5)*0.4,
+      size:p.size*0.88,
+      hue:p.hue, shape:p.shape,
+      a:p.a,
+      targetA:p.a*0.80,
+    });
+    if(extras.filter(e=>e.type==='settled').length>200) {
+      const fi=extras.findIndex(e=>e.type==='settled');
+      if(fi>-1) extras.splice(fi,1);
     }
+    p._done = true;
   }
 }
 
@@ -854,7 +846,7 @@ function loop() {
     // 쌓인 낙엽 먼저
     extras.forEach(e=>{
       if(e.type!=='settled') return;
-      if(e.a < e.targetA) e.a = Math.min(e.targetA, e.a + 0.008);
+
       ctx.save(); ctx.translate(e.x,e.y); ctx.rotate(e.rot); ctx.globalAlpha=e.a;
       ctx.fillStyle=`hsl(${e.hue},70%,46%)`;
       ctx.beginPath();
