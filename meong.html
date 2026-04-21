@@ -1769,7 +1769,7 @@ function drawRainBG() {
   ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
 
   // 보름달
-  const mx=W*0.68, my=H*0.18, mr=38;
+  const mx=W*0.28, my=H*0.18, mr=38;
 
   // 달 구름 뒤 은은한 후광
   ctx.save();
@@ -1824,19 +1824,7 @@ function drawRainBG() {
   wg.addColorStop(0,'rgba(12,20,36,0.97)'); wg.addColorStop(1,'rgba(5,10,20,1)');
   ctx.fillStyle=wg; ctx.fillRect(0,H*0.76,W,H*0.24);
 
-  // 수면 달 반사 — 수직으로 흔들리는 은빛 반사
-  ctx.save();
-  const refG=ctx.createLinearGradient(mx,H*0.76,mx,H);
-  refG.addColorStop(0,  'rgba(220,235,255,0.18)');
-  refG.addColorStop(0.2,'rgba(200,220,255,0.08)');
-  refG.addColorStop(0.6,'rgba(180,210,240,0.02)');
-  refG.addColorStop(1,  'rgba(0,0,0,0)');
-  ctx.fillStyle=refG;
-  ctx.beginPath();
-  ctx.moveTo(mx-14, H*0.76); ctx.lineTo(mx+14, H*0.76);
-  ctx.lineTo(mx+36, H);      ctx.lineTo(mx-36, H);
-  ctx.closePath(); ctx.fill();
-  ctx.restore();
+
 
   // 수평선 은은한 달빛 번짐
   ctx.save(); ctx.globalAlpha=0.04;
@@ -2047,7 +2035,7 @@ function drawMoonCloudBG() {
   }
   ctx.restore();
   // 달
-  const mx=W*0.68,my=H*0.22,mr=36;
+  const mx=W*0.28,my=H*0.22,mr=36;
   ctx.save();
   const ma=ctx.createRadialGradient(mx,my,0,mx,my,mr*5);
   ma.addColorStop(0,'rgba(230,240,255,0.12)'); ma.addColorStop(0.4,'rgba(200,220,255,0.05)'); ma.addColorStop(1,'transparent');
@@ -2055,11 +2043,11 @@ function drawMoonCloudBG() {
   const oc=document.createElement('canvas'); oc.width=mr*8; oc.height=mr*8;
   const oc2=oc.getContext('2d'); const ocC=mr*4;
   oc2.beginPath(); oc2.arc(ocC,ocC,mr,0,Math.PI*2);
-  const mg=oc2.createRadialGradient(ocC-mr*0.1,ocC-mr*0.15,0,ocC,ocC,mr);
+  const mg=oc2.createRadialGradient(ocC+mr*0.1,ocC-mr*0.15,0,ocC,ocC,mr);
   mg.addColorStop(0,'#fffef5'); mg.addColorStop(0.65,'#fff8e0'); mg.addColorStop(1,'#ffe8b0');
   oc2.fillStyle=mg; oc2.fill();
   oc2.globalCompositeOperation='destination-out';
-  oc2.beginPath(); oc2.arc(ocC-mr*0.58,ocC-mr*0.08,mr*0.90,0,Math.PI*2);
+  oc2.beginPath(); oc2.arc(ocC+mr*0.58,ocC-mr*0.08,mr*0.90,0,Math.PI*2);
   oc2.fillStyle='rgba(0,0,0,1)'; oc2.fill();
   ctx.save(); ctx.drawImage(oc,mx-ocC,my-ocC); ctx.restore();
   ctx.fillStyle='rgba(4,5,12,0.97)';
