@@ -167,6 +167,8 @@ const scenes = [
 ];
 
 let currentIdx = Math.floor(Math.random()*scenes.length);
+// leaf-canvas 클로저에서 접근할 수 있도록 window에 노출
+window._nmeong = { get currentIdx(){ return currentIdx; }, get scenes(){ return scenes; } };
 let particles=[], extras=[], animId, t=0;
 
 /* buildDots: 하단 점 인디케이터 생성 함수 (숨김 처리됨)
@@ -2460,9 +2462,9 @@ resize();
   let frameCount=0;
 
   function isSpringScene(){
-    // scene-label이 숨겨진 경우에도 동작하도록 전역 currentIdx + scenes 배열로 직접 판단
+    // window._nmeong을 통해 메인 스크립트의 currentIdx/scenes에 접근
     try {
-      return typeof currentIdx !== 'undefined' && scenes[currentIdx].id === 'spring_tree';
+      return window._nmeong.scenes[window._nmeong.currentIdx].id === 'spring_tree';
     } catch(e) { return false; }
   }
 
