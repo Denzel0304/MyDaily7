@@ -2460,7 +2460,10 @@ resize();
   let frameCount=0;
 
   function isSpringScene(){
-    return document.getElementById('scene-label').textContent==='봄 나무';
+    // scene-label이 숨겨진 경우에도 동작하도록 전역 currentIdx + scenes 배열로 직접 판단
+    try {
+      return typeof currentIdx !== 'undefined' && scenes[currentIdx].id === 'spring_tree';
+    } catch(e) { return false; }
   }
 
   function animate(){
