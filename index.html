@@ -61,7 +61,7 @@
       z-index: 1;
       width: 100%;
       max-width: 420px;
-      padding: 0 14px 40px; /* 좌우 패딩 미세 조정 */
+      padding: 0 14px 40px;
       display: flex;
       flex-direction: column;
       height: 100vh;
@@ -122,8 +122,8 @@
 
     .menu-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr; /* 2열에서 3열로 변경 */
-      gap: 10px; /* 3열 배열을 위해 간격 미세 축소 */
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
       margin-top: 18px;
     }
 
@@ -131,11 +131,11 @@
       background: var(--card-bg);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: 12px 8px 10px; /* 패딩 축소 */
+      padding: 12px 8px 10px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center; /* 중앙 정렬 강조 */
+      justify-content: center;
       cursor: pointer;
       text-decoration: none;
       transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s;
@@ -144,7 +144,7 @@
       border: 1.5px solid rgba(255,255,255,0.7);
       position: relative;
       overflow: hidden;
-      min-height: 100px; /* 높이 미세 조정 */
+      min-height: 100px;
     }
     .menu-card:active {
       transform: scale(0.95);
@@ -164,12 +164,13 @@
     .card-habit::before    { background: linear-gradient(90deg, #c4b5fd, #ddd6fe); }
     .card-soso::before     { background: linear-gradient(90deg, #f9a870, #fcc9a0); }
     .card-emotion::before  { background: linear-gradient(90deg, #d4a882, #e8c4a0); }
+    .card-meong::before    { background: linear-gradient(90deg, #6366f1, #a5b4fc); } /* 새로운 보라색 띠 */
 
     .card-icon-wrap {
-      width: 42px; height: 42px; /* 아이콘 크기 미세 축소 */
+      width: 42px; height: 42px;
       border-radius: 11px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 22px; /* 폰트 크기 조정 */
+      font-size: 22px;
       margin: 0 auto;
     }
     .card-economy  .card-icon-wrap { background: #d4f5e3; }
@@ -178,10 +179,11 @@
     .card-habit    .card-icon-wrap { background: #ede9fe; }
     .card-soso     .card-icon-wrap { background: #fdecd8; }
     .card-emotion  .card-icon-wrap { background: #f5e6d8; }
+    .card-meong    .card-icon-wrap { background: #e0e7ff; } /* 새로운 아이콘 배경색 */
 
     .card-label {
-      font-family: 'Nunito', sans-serif;
-      font-size: 13px; /* 텍스트 크기 조정 */
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 13px;
       font-weight: 800;
       color: var(--text-dark);
       line-height: 1.2;
@@ -201,6 +203,7 @@
     .menu-card:nth-child(4) { animation: fadeUp 0.45s 0.28s ease both; }
     .menu-card:nth-child(5) { animation: fadeUp 0.45s 0.34s ease both; }
     .menu-card:nth-child(6) { animation: fadeUp 0.45s 0.40s ease both; }
+    .menu-card:nth-child(7) { animation: fadeUp 0.45s 0.46s ease both; }
   </style>
 </head>
 <body>
@@ -250,6 +253,11 @@
       <a href="emotion.html" class="menu-card card-emotion">
         <div class="card-icon-wrap">🌳</div>
         <div class="card-label">하루 감정</div>
+      </a>
+
+      <a href="meong.html" class="menu-card card-meong">
+        <div class="card-icon-wrap">🌙</div>
+        <div class="card-label">멍</div>
       </a>
 
     </div>
