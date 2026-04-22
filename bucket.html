@@ -332,6 +332,7 @@ function load() {
 // ── Tab ──
 let currentTab = 'bucket';
 function switchTab(tab) {
+  cleanupDrag();
   currentTab = tab;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
@@ -504,106 +505,153 @@ function importData(event) {
   event.target.value = '';
 }
 
-// ── Drag & Drop (touch + mouse) ──
+// ── Drag & Drop ──
+let drag = null;
+
+function cleanupDrag() {
+  // 혹시 남아있는 ghost 전부 제거
+  document.querySelectorAll('.drag-ghost').forEach(el => el.remove());
+  // 카드 스타일 복원
+  document.querySelectorAll('.item-card').forEach(c => {
+    c.style.opacity = '';
+    c.style.background = '';
+    c.classList.remove('drag-over');
+  });
+  drag = null;
+}
+
+function getCY(e) {
+  if (e.touches && e.touches.length) return e.touches[0].clientY;
+  if (e.changedTouches && e.changedTouches.length) return e.changedTouches[0].clientY;
+  return e.clientY;
+}
+
 function initDrag(tab) {
   const container = document.getElementById('list-' + tab);
   container.querySelectorAll('.drag-handle').forEach(handle => {
-    handle.addEventListener('mousedown', e => startDrag(e, handle, tab));
-    handle.addEventListener('touchstart', e => startDrag(e, handle, tab), { passive: false });
+    handle.addEventListener('mousedown', onHandleDown);
+    handle.addEventListener('touchstart', onHandleDown, { passive: false });
   });
 }
 
-let drag = null;
-
-function getClientY(e) {
-  return e.touches ? e.touches[0].clientY : (e.changedTouches ? e.changedTouches[0].clientY : e.clientY);
-}
-
-function startDrag(e, handle, tab) {
+function onHandleDown(e) {
   e.preventDefault();
-  const card = handle.closest('.item-card');
-  const rect = card.getBoundingClientRect();
-  const clientY = getClientY(e);
+  e.stopPropagation();
 
+  // 이전 드래그 찌꺼기 청소
+  cleanupDrag();
+
+  const handle = e.currentTarget;
+  const card = handle.closest('.item-card');
+  const tab = card.dataset.tab;
+  const rect = card.getBoundingClientRect();
+  const cy = getCY(e);
+
+  // Ghost 생성
   const ghost = card.cloneNode(true);
-  ghost.style.cssText = [
-    'position:fixed',
-    'left:' + rect.left + 'px',
-    'top:' + rect.top + 'px',
-    'width:' + rect.width + 'px',
-    'z-index:9999',
-    'opacity:0.96',
-    'transform:scale(1.03) rotate(0.8deg)',
-    'box-shadow:0 12px 36px rgba(91,163,201,0.4)',
-    'border:2px solid #5BA3C9',
-    'pointer-events:none',
-    'border-radius:10px',
-    'background:white',
-    'will-change:top'
-  ].join(';');
+  ghost.className = 'drag-ghost';
+  ghost.style.cssText =
+    'position:fixed;left:' + rect.left + 'px;top:' + rect.top + 'px;' +
+    'width:' + rect.width + 'px;z-index:9999;pointer-events:none;' +
+    'opacity:0.95;border-radius:10px;background:#fff;' +
+    'border:2px solid #5BA3C9;' +
+    'box-shadow:0 10px 32px rgba(91,163,201,0.45);' +
+    'transform:scale(1.02) rotate(0.6deg);';
   document.body.appendChild(ghost);
 
-  card.style.opacity = '0.35';
+  // 원본 카드 흐리게
+  card.style.opacity = '0.3';
   card.style.background = '#EAF6FD';
 
-  drag = { tab, card, ghost, offsetY: clientY - rect.top, movingId: card.dataset.id };
+  drag = {
+    tab,
+    card,
+    ghost,
+    offsetY: cy - rect.top,
+    id: card.dataset.id
+  };
 
   document.addEventListener('mousemove', onDragMove, { passive: false });
-  document.addEventListener('mouseup', onDragEnd);
   document.addEventListener('touchmove', onDragMove, { passive: false });
-  document.addEventListener('touchend', onDragEnd);
+  document.addEventListener('mouseup', onDragUp);
+  document.addEventListener('touchend', onDragUp);
+  document.addEventListener('touchcancel', onDragUp);
 }
 
 function onDragMove(e) {
   if (!drag) return;
   e.preventDefault();
-  const clientY = getClientY(e);
-  drag.ghost.style.top = (clientY - drag.offsetY) + 'px';
+  const cy = getCY(e);
+  drag.ghost.style.top = (cy - drag.offsetY) + 'px';
 
+  // 드롭 위치 표시
   const container = document.getElementById('list-' + drag.tab);
-  const others = [...container.querySelectorAll('.item-card')].filter(c => c !== drag.card);
-  others.forEach(c => c.classList.remove('drag-over'));
-  for (const c of others) {
+  const cards = [...container.querySelectorAll('.item-card')];
+  cards.forEach(c => c.classList.remove('drag-over'));
+  for (const c of cards) {
+    if (c === drag.card) continue;
     const r = c.getBoundingClientRect();
-    if (clientY >= r.top && clientY <= r.bottom) { c.classList.add('drag-over'); break; }
+    if (cy >= r.top && cy <= r.bottom) {
+      c.classList.add('drag-over');
+      break;
+    }
   }
 }
 
-function onDragEnd(e) {
+function onDragUp(e) {
   document.removeEventListener('mousemove', onDragMove);
-  document.removeEventListener('mouseup', onDragEnd);
   document.removeEventListener('touchmove', onDragMove);
-  document.removeEventListener('touchend', onDragEnd);
+  document.removeEventListener('mouseup', onDragUp);
+  document.removeEventListener('touchend', onDragUp);
+  document.removeEventListener('touchcancel', onDragUp);
+
   if (!drag) return;
 
-  const clientY = getClientY(e);
-  const { tab, card, ghost, movingId } = drag;
+  const cy = getCY(e);
+  const { tab, card, ghost, id } = drag;
+
+  // 먼저 drag 참조 null 처리 (renderList 재진입 방지)
   drag = null;
 
+  // ghost 제거
   ghost.remove();
+
+  // 카드 스타일 복원
   card.style.opacity = '';
   card.style.background = '';
 
+  // drag-over 표시 제거
   const container = document.getElementById('list-' + tab);
-  const others = [...container.querySelectorAll('.item-card')].filter(c => c !== card);
-  others.forEach(c => c.classList.remove('drag-over'));
+  container.querySelectorAll('.item-card').forEach(c => c.classList.remove('drag-over'));
 
+  // 드롭 위치 계산 (현재 DOM 기준)
+  const cards = [...container.querySelectorAll('.item-card')].filter(c => c !== card);
   let insertBeforeId = null;
-  for (const c of others) {
+  for (const c of cards) {
     const r = c.getBoundingClientRect();
-    if (clientY < r.top + r.height / 2) { insertBeforeId = c.dataset.id; break; }
+    if (cy < r.top + r.height / 2) {
+      insertBeforeId = c.dataset.id;
+      break;
+    }
   }
 
+  // data 배열 재정렬
   const items = data[tab];
-  const fromIdx = items.findIndex(it => it.id === movingId);
+  const fromIdx = items.findIndex(it => it.id === id);
   if (fromIdx === -1) return;
   const [moved] = items.splice(fromIdx, 1);
+
   if (insertBeforeId === null) {
     items.push(moved);
   } else {
     const toIdx = items.findIndex(it => it.id === insertBeforeId);
-    items.splice(toIdx, 0, moved);
+    if (toIdx === -1) {
+      items.push(moved);
+    } else {
+      items.splice(toIdx, 0, moved);
+    }
   }
+
   save();
   renderList(tab);
 }
