@@ -255,7 +255,7 @@ function exportData() {
   const date = new Date();
   const ds = `${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}`;
   const filename = `soso_dday_${ds}.json`;
-  const blob = new Blob([JSON.stringify(S.dd, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ _sig: 'soso_dday_v1', data: S.dd }, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = filename;
@@ -269,10 +269,9 @@ function importData(file) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const data = JSON.parse(e.target.result);
-      if (!Array.isArray(data)) { alert('올바른 파일이 아니에요.'); return; }
-      const hasAnnivFields = data.length > 0 && data[0].month !== undefined;
-      if (hasAnnivFields) { alert('형식이 다릅니다. 디데이 파일을 선택해주세요.'); return; }
+      const parsed = JSON.parse(e.target.result);
+      if (!parsed || parsed._sig !== 'soso_dday_v1' || !Array.isArray(parsed.data)) { alert('올바른 파일이 아니에요.'); return; }
+      const data = parsed.data;
       if (confirm(`디데이 ${data.length}개를 불러올까요?\n기존 데이터는 덮어씌워져요.`)) {
         S.dd = data;
         save();
