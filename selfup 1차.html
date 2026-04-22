@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>나를 채우는 시간</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=Gowun+Dodum&display=swap');
+
+  :root {
+    --bg: #f5f0e8;
+    --bg2: #ede5d4;
+    --green-deep: #3d6b4f;
+    --green-mid: #5a8a6a;
+    --green-light: #a8c5a0;
+    --beige: #c9b99a;
+    --beige-light: #e8dcc8;
+    --text: #3a3228;
+    --text-soft: #7a6a5a;
+    --glass-stroke: rgba(100,140,110,0.35);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    font-family: 'Gowun Dodum', serif;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+  }
+
+  /* Subtle background texture */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(90,138,106,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(61,107,79,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 50%, rgba(201,185,154,0.12) 0%, transparent 80%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    padding: 20px 16px 12px;
+    gap: 0;
+  }
+
+  .title-area {
+    text-align: center;
+    margin-bottom: 8px;
+    animation: fadeDown 1.2s ease both;
+  }
+
+  .title-area h1 {
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: clamp(18px, 5vw, 24px);
+    color: var(--green-deep);
+    letter-spacing: 0.12em;
+    font-weight: 700;
+  }
+
+  .title-area p {
+    font-size: clamp(11px, 3vw, 13px);
+    color: var(--text-soft);
+    margin-top: 4px;
+    letter-spacing: 0.06em;
+    line-height: 1.6;
+  }
+
+  /* Count display */
+  .count-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(90,138,106,0.12);
+    border: 1px solid rgba(90,138,106,0.25);
+    border-radius: 20px;
+    padding: 5px 14px;
+    margin-bottom: 10px;
+    animation: fadeDown 1.4s ease both;
+  }
+
+  .count-badge .num {
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: clamp(14px, 4vw, 18px);
+    color: var(--green-deep);
+    font-weight: 700;
+    min-width: 24px;
+    text-align: center;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  .count-badge .num.pop {
+    transform: scale(1.4);
+  }
+
+  .count-badge .label {
+    font-size: clamp(10px, 3vw, 12px);
+    color: var(--text-soft);
+    letter-spacing: 0.05em;
+  }
+
+  /* Jar container */
+  .jar-wrap {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-height: calc(100vh - 180px);
+    animation: fadeUp 1.0s ease both;
+  }
+
+  .jar-svg-container {
+    position: relative;
+    cursor: pointer;
+    filter: drop-shadow(0 12px 32px rgba(61,107,79,0.18)) drop-shadow(0 4px 8px rgba(61,107,79,0.10));
+    transition: filter 0.3s ease;
+    touch-action: none;
+  }
+
+  .jar-svg-container:active {
+    filter: drop-shadow(0 8px 20px rgba(61,107,79,0.22)) drop-shadow(0 2px 6px rgba(61,107,79,0.14));
+  }
+
+  /* Jar SVG dims — responsive */
+  .jar-svg-container svg {
+    width: min(260px, 68vw);
+    height: auto;
+    display: block;
+  }
+
+  /* Marble canvas inside the jar */
+  #marbleCanvas {
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    border-radius: 4px;
+  }
+
+  /* Overflow canvas — full screen */
+  #overflowCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* Click spark canvas */
+  #sparkCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 99;
+  }
+
+  /* Ripple effect */
+  .ripple {
+    position: fixed;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(168,197,160,0.6) 0%, rgba(90,138,106,0.2) 50%, transparent 70%);
+    transform: scale(0);
+    animation: rippleAnim 0.7s ease-out forwards;
+    pointer-events: none;
+    z-index: 98;
+  }
+
+  @keyframes rippleAnim {
+    to { transform: scale(4); opacity: 0; }
+  }
+
+  /* Floating marble on click */
+  .float-marble {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 101;
+    animation: floatUp 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  @keyframes floatUp {
+    0%   { transform: scale(0) translateY(0); opacity: 1; }
+    40%  { transform: scale(1.1) translateY(-30px); opacity: 1; }
+    100% { transform: scale(0.7) translateY(-90px); opacity: 0; }
+  }
+
+  /* Message area */
+  .msg-area {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 6px;
+    animation: fadeDown 1.6s ease both;
+  }
+
+  .msg {
+    font-size: clamp(12px, 3.5vw, 14px);
+    color: var(--green-mid);
+    letter-spacing: 0.08em;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    text-align: center;
+  }
+
+  .msg.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Overflow full message */
+  .overflow-msg {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(245,240,232,0.0);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1s ease, background 1s ease;
+  }
+
+  .overflow-msg.show {
+    opacity: 1;
+    pointer-events: auto;
+    background: rgba(245,240,232,0.85);
+  }
+
+  .overflow-msg h2 {
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: clamp(22px, 6vw, 32px);
+    color: var(--green-deep);
+    letter-spacing: 0.15em;
+    margin-bottom: 12px;
+    animation: none;
+  }
+
+  .overflow-msg p {
+    font-size: clamp(13px, 3.5vw, 16px);
+    color: var(--text-soft);
+    letter-spacing: 0.08em;
+    line-height: 1.8;
+    text-align: center;
+    padding: 0 32px;
+  }
+
+  .overflow-msg .reset-btn {
+    margin-top: 28px;
+    padding: 12px 32px;
+    background: var(--green-deep);
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    font-family: 'Gowun Dodum', serif;
+    font-size: clamp(13px, 3.5vw, 15px);
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+
+  .overflow-msg .reset-btn:active {
+    transform: scale(0.96);
+    background: var(--green-mid);
+  }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Glow pulse on jar when full */
+  .jar-svg-container.full {
+    animation: jarGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes jarGlow {
+    0%, 100% { filter: drop-shadow(0 12px 32px rgba(61,107,79,0.18)) drop-shadow(0 4px 8px rgba(90,138,106,0.15)); }
+    50%       { filter: drop-shadow(0 16px 40px rgba(90,138,106,0.40)) drop-shadow(0 4px 12px rgba(168,197,160,0.35)); }
+  }
+
+  /* Water level fill indicator */
+  .fill-bar {
+    width: min(200px, 55vw);
+    height: 4px;
+    background: rgba(201,185,154,0.35);
+    border-radius: 4px;
+    margin-top: 10px;
+    overflow: hidden;
+    animation: fadeDown 1.8s ease both;
+  }
+
+  .fill-bar-inner {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green-light), var(--green-mid));
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1);
+    width: 0%;
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="title-area">
+    <h1>나를 채우는 시간</h1>
+    <p>오늘도 잘 버텼어요 ·  하나씩 채워가요</p>
+  </div>
+
+  <div class="count-badge">
+    <span class="num" id="countNum">0</span>
+    <span class="label">/ <span id="maxCount">50</span> 개</span>
+  </div>
+
+  <div class="jar-wrap">
+    <div class="jar-svg-container" id="jarContainer">
+      <!-- Glass jar SVG -->
+      <svg viewBox="0 0 200 280" xmlns="http://www.w3.org/2000/svg" id="jarSvg">
+        <defs>
+          <!-- Jar interior clip path -->
+          <clipPath id="jarClip">
+            <path d="M 55 44 Q 52 44 50 48 L 42 68 Q 30 80 28 100 L 24 200 Q 22 230 28 248 Q 34 264 50 268 L 150 268 Q 166 264 172 248 Q 178 230 176 200 L 172 100 Q 170 80 158 68 L 150 48 Q 148 44 145 44 Z"/>
+          </clipPath>
+
+          <!-- Marble shimmer gradient -->
+          <radialGradient id="mg0" cx="35%" cy="30%" r="60%">
+            <stop offset="0%" stop-color="#d4f0e8"/>
+            <stop offset="40%" stop-color="#7ec8a0"/>
+            <stop offset="100%" stop-color="#3d8a68"/>
+          </radialGradient>
+          <radialGradient id="mg1" cx="35%" cy="30%" r="60%">
+            <stop offset="0%" stop-color="#c8e8f8"/>
+            <stop offset="40%" stop-color="#70b8e0"/>
+            <stop offset="100%" stop-color="#3070b0"/>
+          </radialGradient>
+          <radialGradient id="mg2" cx="35%" cy="30%" r="60%">
+            <stop offset="0%" stop-color="#e8f4d0"/>
+            <stop offset="40%" stop-color="#a8d870"/>
+            <stop offset="100%" stop-color="#5a9830"/>
+          </radialGradient>
+          <radialGradient id="mg3" cx="35%" cy="30%" r="60%">
+            <stop offset="0%" stop-color="#f0e8d8"/>
+            <stop offset="40%" stop-color="#d8c090"/>
+            <stop offset="100%" stop-color="#987840"/>
+          </radialGradient>
+          <radialGradient id="mg4" cx="35%" cy="30%" r="60%">
+            <stop offset="0%" stop-color="#d8f0f8"/>
+            <stop offset="40%" stop-color="#88c8e0"/>
+            <stop offset="100%" stop-color="#4890b8"/>
+          </radialGradient>
+          <radialGradient id="mg5" cx="35%" cy="30%" r="60%">
+            <stop offset="0%" stop-color="#e0f8e8"/>
+            <stop offset="40%" stop-color="#90d8a8"/>
+            <stop offset="100%" stop-color="#4898 68"/>
+          </radialGradient>
+
+          <!-- Glass gradient -->
+          <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.55)"/>
+            <stop offset="30%" stop-color="rgba(255,255,255,0.08)"/>
+            <stop offset="70%" stop-color="rgba(255,255,255,0.04)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0.45)"/>
+          </linearGradient>
+
+          <!-- Fill gradient -->
+          <linearGradient id="fillGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="rgba(90,138,106,0.25)"/>
+            <stop offset="100%" stop-color="rgba(61,107,79,0.38)"/>
+          </linearGradient>
+
+          <!-- Neck highlight -->
+          <linearGradient id="neckGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.6)"/>
+            <stop offset="50%" stop-color="rgba(255,255,255,0.05)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0.5)"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Jar shadow -->
+        <ellipse cx="100" cy="276" rx="55" ry="8" fill="rgba(61,107,79,0.12)"/>
+
+        <!-- JAR BODY FILL (animated water level) -->
+        <g clip-path="url(#jarClip)">
+          <rect id="fillRect" x="24" y="268" width="152" height="0" fill="url(#fillGrad)" opacity="0.9"/>
+          <!-- Marble layer rendered via canvas overlay -->
+        </g>
+
+        <!-- JAR BODY OUTLINE -->
+        <path d="M 55 44 Q 52 44 50 48 L 42 68 Q 30 80 28 100 L 24 200 Q 22 230 28 248 Q 34 264 50 268 L 150 268 Q 166 264 172 248 Q 178 230 176 200 L 172 100 Q 170 80 158 68 L 150 48 Q 148 44 145 44 Z"
+              fill="rgba(220,235,225,0.18)"
+              stroke="rgba(90,138,106,0.50)" stroke-width="2.5" stroke-linejoin="round"/>
+
+        <!-- Glass sheen overlay -->
+        <path d="M 55 44 Q 52 44 50 48 L 42 68 Q 30 80 28 100 L 24 200 Q 22 230 28 248 Q 34 264 50 268 L 150 268 Q 166 264 172 248 Q 178 230 176 200 L 172 100 Q 170 80 158 68 L 150 48 Q 148 44 145 44 Z"
+              fill="url(#glassGrad)" opacity="0.7"/>
+
+        <!-- Left glass highlight streak -->
+        <path d="M 38 90 Q 36 140 37 200 Q 37.5 230 40 245" stroke="rgba(255,255,255,0.55)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <!-- Right glass highlight streak -->
+        <path d="M 162 90 Q 164 140 163 200 Q 162.5 230 160 245" stroke="rgba(255,255,255,0.30)" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+        <!-- Neck / shoulder area -->
+        <rect x="50" y="38" width="100" height="8" rx="4"
+              fill="rgba(200,220,210,0.5)" stroke="rgba(90,138,106,0.45)" stroke-width="2"/>
+        <rect x="50" y="38" width="100" height="8" rx="4" fill="url(#neckGrad)" opacity="0.8"/>
+
+        <!-- Lid -->
+        <rect x="46" y="26" width="108" height="16" rx="5"
+              fill="rgba(90,138,106,0.55)" stroke="rgba(61,107,79,0.7)" stroke-width="2"/>
+        <rect x="52" y="30" width="96" height="6" rx="3"
+              fill="rgba(255,255,255,0.25)"/>
+
+        <!-- Marble canvas area (positioned over jar interior) -->
+      </svg>
+
+      <!-- Canvas for marbles inside jar -->
+      <canvas id="marbleCanvas"></canvas>
+    </div>
+  </div>
+
+  <div class="msg-area">
+    <p class="msg" id="msgText"></p>
+  </div>
+
+  <div class="fill-bar">
+    <div class="fill-bar-inner" id="fillBarInner"></div>
+  </div>
+</div>
+
+<!-- Full-screen canvases -->
+<canvas id="sparkCanvas"></canvas>
+<canvas id="overflowCanvas"></canvas>
+
+<!-- Overflow celebration overlay -->
+<div class="overflow-msg" id="overflowMsg">
+  <h2>가득 찼어요 🌊</h2>
+  <p>당신이 스스로에게 준<br>소중한 순간들이에요.<br><br>이제 흘러넘칠 만큼<br>충분히 채웠어요.</p>
+  <button class="reset-btn" id="resetBtn">다시 채워나가기</button>
+</div>
+
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+const MAX = 50;
+const MARBLE_COLORS = [
+  { base: '#7ec8a0', light: '#d4f0e8', dark: '#3d8a68' }, // mint green
+  { base: '#70b8e0', light: '#c8e8f8', dark: '#3070b0' }, // sky blue
+  { base: '#a8d870', light: '#e8f4d0', dark: '#5a9830' }, // lime
+  { base: '#d8c090', light: '#f0e8d8', dark: '#987840' }, // warm sand
+  { base: '#88c8e0', light: '#d8f0f8', dark: '#4890b8' }, // aqua
+  { base: '#b0d898', light: '#e0f8e8', dark: '#508858' }, // sage
+  { base: '#98d0c0', light: '#d0f0e8', dark: '#409080' }, // seafoam
+];
+
+const MESSAGES = [
+  '잘 하고 있어요 ✨', '당신은 충분해요', '오늘도 수고했어요',
+  '하나씩, 천천히 🌿', '스스로를 믿어요', '그것만으로도 대단해요',
+  '숨 한 번 쉬어요', '당신 편이에요 💚', '잘 버티고 있어요',
+  '조금씩 나아가고 있어요', '오늘도 살아있어요', '충분히 잘하고 있어요',
+  '당신은 소중해요 🌱', '포근히 안아줄게요', '여기 있어요',
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let count = parseInt(localStorage.getItem('selfup_count') || '0');
+if (count > MAX) count = MAX;
+
+// ─── DOM REFS ─────────────────────────────────────────────────────────────────
+const jarContainer = document.getElementById('jarContainer');
+const marbleCanvas = document.getElementById('marbleCanvas');
+const sparkCanvas = document.getElementById('sparkCanvas');
+const overflowCanvas = document.getElementById('overflowCanvas');
+const countNum = document.getElementById('countNum');
+const fillBarInner = document.getElementById('fillBarInner');
+const msgText = document.getElementById('msgText');
+const overflowMsg = document.getElementById('overflowMsg');
+const resetBtn = document.getElementById('resetBtn');
+const fillRect = document.getElementById('fillRect');
+const jarSvg = document.getElementById('jarSvg');
+
+const mCtx = marbleCanvas.getContext('2d');
+const sCtx = sparkCanvas.getContext('2d');
+const oCtx = overflowCanvas.getContext('2d');
+
+// ─── RESIZE ──────────────────────────────────────────────────────────────────
+function resizeCanvases() {
+  // Marble canvas matches jar container
+  const rect = jarContainer.getBoundingClientRect();
+  marbleCanvas.width = rect.width;
+  marbleCanvas.height = rect.height;
+  marbleCanvas.style.width = rect.width + 'px';
+  marbleCanvas.style.height = rect.height + 'px';
+
+  // Full screen canvases
+  sparkCanvas.width = overflowCanvas.width = window.innerWidth;
+  sparkCanvas.height = overflowCanvas.height = window.innerHeight;
+
+  drawMarbles();
+}
+
+window.addEventListener('resize', () => { setTimeout(resizeCanvases, 100); });
+
+// ─── JAR GEOMETRY (in canvas coords) ─────────────────────────────────────────
+function getJarBounds() {
+  const rect = jarContainer.getBoundingClientRect();
+  const svgRect = jarSvg.getBoundingClientRect();
+
+  // SVG viewBox: 200x280. Jar interior approx x:28-172, y:46-266
+  const scaleX = svgRect.width / 200;
+  const scaleY = svgRect.height / 280;
+  const offsetX = svgRect.left - rect.left;
+  const offsetY = svgRect.top - rect.top;
+
+  return {
+    left: offsetX + 30 * scaleX,
+    right: offsetX + 170 * scaleX,
+    top: offsetY + 50 * scaleY,
+    bottom: offsetY + 264 * scaleY,
+    scaleX, scaleY, offsetX, offsetY
+  };
+}
+
+// ─── MARBLES DATA ─────────────────────────────────────────────────────────────
+let marbles = [];
+
+function generateMarblePositions(n) {
+  const bounds = getJarBounds();
+  if (!bounds) return [];
+
+  const W = bounds.right - bounds.left;
+  const H = bounds.bottom - bounds.top;
+
+  // Marble radius: fit nicely
+  const radius = Math.min(W / 10, H / 22, 14);
+  const result = [];
+
+  // Simple stacking simulation: rows
+  const cols = Math.floor(W / (radius * 2.1));
+  const rowH = radius * 1.85;
+
+  for (let i = 0; i < n; i++) {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+
+    const jitter = (Math.random() - 0.5) * radius * 0.5;
+    const jitterY = (Math.random() - 0.5) * radius * 0.3;
+
+    const x = bounds.left + radius + col * (radius * 2.1) + (row % 2) * radius * 0.55 + jitter;
+    const y = bounds.bottom - radius - row * rowH + jitterY;
+
+    const colorIdx = (i * 3 + row * 2 + col) % MARBLE_COLORS.length;
+    result.push({ x, y, r: radius, color: MARBLE_COLORS[colorIdx], id: i });
+  }
+
+  return result;
+}
+
+function drawMarble(ctx, x, y, r, color) {
+  // Base sphere
+  const grad = ctx.createRadialGradient(x - r*0.3, y - r*0.3, r*0.05, x, y, r);
+  grad.addColorStop(0, color.light);
+  grad.addColorStop(0.45, color.base);
+  grad.addColorStop(1, color.dark);
+
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Specular highlight
+  ctx.beginPath();
+  ctx.arc(x - r*0.28, y - r*0.28, r * 0.28, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  ctx.fill();
+
+  // Tiny top-right sparkle
+  ctx.beginPath();
+  ctx.arc(x + r*0.18, y - r*0.18, r * 0.10, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.fill();
+
+  // Subtle shadow at bottom
+  const shadowGrad = ctx.createRadialGradient(x, y + r*0.5, 0, x, y + r*0.5, r*0.6);
+  shadowGrad.addColorStop(0, 'rgba(0,0,0,0.18)');
+  shadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.beginPath();
+  ctx.arc(x, y + r*0.5, r*0.6, 0, Math.PI * 2);
+  ctx.fillStyle = shadowGrad;
+  ctx.fill();
+}
+
+function drawMarbles() {
+  if (!marbleCanvas.width) return;
+  mCtx.clearRect(0, 0, marbleCanvas.width, marbleCanvas.height);
+
+  marbles = generateMarblePositions(count);
+  marbles.forEach(m => drawMarble(mCtx, m.x, m.y, m.r, m.color));
+
+  // Update fill rect (subtle liquid tint)
+  updateFillRect();
+}
+
+function updateFillRect() {
+  const pct = count / MAX;
+  const bounds = getJarBounds();
+  const totalH = bounds.bottom - bounds.top;
+  const fillH = totalH * pct;
+  const fillY = bounds.bottom - fillH;
+
+  // Update SVG fill rect
+  const svgRect = jarSvg.getBoundingClientRect();
+  const containerRect = jarContainer.getBoundingClientRect();
+  const scaleY = 280 / svgRect.height;
+  const relTop = (fillY + containerRect.top - svgRect.top) * scaleY;
+  const relH = fillH * scaleY;
+
+  fillRect.setAttribute('y', Math.max(44, relTop));
+  fillRect.setAttribute('height', Math.max(0, relH));
+}
+
+// ─── CLICK EFFECTS ────────────────────────────────────────────────────────────
+function spawnRipple(clientX, clientY) {
+  const el = document.createElement('div');
+  el.className = 'ripple';
+  const size = 80;
+  el.style.cssText = `width:${size}px;height:${size}px;left:${clientX - size/2}px;top:${clientY - size/2}px`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 800);
+}
+
+function spawnFloatMarble(clientX, clientY) {
+  const color = MARBLE_COLORS[Math.floor(Math.random() * MARBLE_COLORS.length)];
+  const size = 24 + Math.random() * 12;
+
+  const el = document.createElement('canvas');
+  el.className = 'float-marble';
+  el.width = size * 2;
+  el.height = size * 2;
+  el.style.cssText = `width:${size*2}px;height:${size*2}px;left:${clientX - size}px;top:${clientY - size}px`;
+
+  const ctx = el.getContext('2d');
+  drawMarble(ctx, size, size, size * 0.85, color);
+
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1000);
+}
+
+function spawnSparks(clientX, clientY) {
+  const particles = [];
+  const count2 = 14;
+  for (let i = 0; i < count2; i++) {
+    const angle = (Math.PI * 2 * i) / count2 + Math.random() * 0.4;
+    const speed = 2.5 + Math.random() * 3.5;
+    const color = MARBLE_COLORS[Math.floor(Math.random() * MARBLE_COLORS.length)];
+    particles.push({
+      x: clientX, y: clientY,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 2,
+      life: 1,
+      decay: 0.035 + Math.random() * 0.025,
+      r: 3 + Math.random() * 4,
+      color: color.base
+    });
+  }
+
+  function animate() {
+    // Don't clear — let trail fade naturally
+    sCtx.globalCompositeOperation = 'destination-out';
+    sCtx.fillStyle = 'rgba(0,0,0,0.15)';
+    sCtx.fillRect(0, 0, sparkCanvas.width, sparkCanvas.height);
+    sCtx.globalCompositeOperation = 'source-over';
+
+    let alive = false;
+    particles.forEach(p => {
+      if (p.life <= 0) return;
+      alive = true;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.18; // gravity
+      p.life -= p.decay;
+
+      sCtx.beginPath();
+      sCtx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
+      sCtx.fillStyle = p.color;
+      sCtx.globalAlpha = p.life;
+      sCtx.fill();
+      sCtx.globalAlpha = 1;
+    });
+
+    if (alive) requestAnimationFrame(animate);
+    else sCtx.clearRect(0, 0, sparkCanvas.width, sparkCanvas.height);
+  }
+  animate();
+}
+
+// ─── OVERFLOW ANIMATION ───────────────────────────────────────────────────────
+let overflowParticles = [];
+let overflowAnimating = false;
+
+function startOverflow() {
+  overflowAnimating = true;
+  overflowParticles = [];
+
+  const bounds = getJarBounds();
+  const jarScreenRect = jarContainer.getBoundingClientRect();
+  const jarTop = jarScreenRect.top + bounds.top;
+  const jarLeft = jarScreenRect.left;
+  const jarWidth = bounds.right - bounds.left;
+
+  // Generate streaming marbles
+  function spawnOverflowMarble() {
+    if (!overflowAnimating) return;
+    const color = MARBLE_COLORS[Math.floor(Math.random() * MARBLE_COLORS.length)];
+    const x = jarScreenRect.left + bounds.left + Math.random() * jarWidth;
+    const r = 8 + Math.random() * 10;
+    overflowParticles.push({
+      x, y: jarTop,
+      vx: (Math.random() - 0.5) * 3,
+      vy: -1 - Math.random() * 2,
+      r, color, life: 1,
+      bounced: false
+    });
+    if (overflowParticles.length < 60) {
+      setTimeout(spawnOverflowMarble, 60 + Math.random() * 80);
+    }
+  }
+  spawnOverflowMarble();
+
+  function animateOverflow() {
+    oCtx.clearRect(0, 0, overflowCanvas.width, overflowCanvas.height);
+
+    overflowParticles.forEach(p => {
+      p.vy += 0.4; // gravity
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= 0.008;
+
+      if (p.y > overflowCanvas.height + 20) p.life = 0;
+
+      if (p.life > 0) {
+        oCtx.save();
+        oCtx.globalAlpha = Math.min(1, p.life * 3);
+        drawMarble(oCtx, p.x, p.y, p.r, p.color);
+        oCtx.restore();
+      }
+    });
+
+    overflowParticles = overflowParticles.filter(p => p.life > 0);
+
+    if (overflowAnimating) requestAnimationFrame(animateOverflow);
+    else oCtx.clearRect(0, 0, overflowCanvas.width, overflowCanvas.height);
+  }
+  animateOverflow();
+
+  // Show message after brief delay
+  setTimeout(() => { overflowMsg.classList.add('show'); }, 1200);
+}
+
+function stopOverflow() {
+  overflowAnimating = false;
+  overflowMsg.classList.remove('show');
+  setTimeout(() => oCtx.clearRect(0, 0, overflowCanvas.width, overflowCanvas.height), 500);
+}
+
+// ─── UI UPDATE ────────────────────────────────────────────────────────────────
+function updateUI(animate = false) {
+  countNum.textContent = count;
+
+  if (animate) {
+    countNum.classList.add('pop');
+    setTimeout(() => countNum.classList.remove('pop'), 400);
+  }
+
+  fillBarInner.style.width = (count / MAX * 100) + '%';
+
+  if (count >= MAX) {
+    jarContainer.classList.add('full');
+  } else {
+    jarContainer.classList.remove('full');
+  }
+}
+
+function showMessage() {
+  const msg = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
+  msgText.classList.remove('show');
+  setTimeout(() => {
+    msgText.textContent = msg;
+    msgText.classList.add('show');
+    setTimeout(() => msgText.classList.remove('show'), 2800);
+  }, 100);
+}
+
+// ─── SOUND ────────────────────────────────────────────────────────────────────
+let audioCtx = null;
+let audioBuffer = null;
+let audioLoaded = false;
+
+async function loadAudio() {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const response = await fetch('effect 1.mp3');
+    const arrayBuffer = await response.arrayBuffer();
+    audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    audioLoaded = true;
+  } catch (e) {
+    console.log('Audio not loaded (file may not exist in this preview):', e);
+  }
+}
+
+function playSound() {
+  if (!audioLoaded || !audioBuffer) return;
+  try {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const source = audioCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(audioCtx.destination);
+    source.start(0);
+  } catch (e) {}
+}
+
+// ─── MAIN CLICK HANDLER ──────────────────────────────────────────────────────
+function handleJarClick(e) {
+  e.preventDefault();
+
+  if (count >= MAX) {
+    // Already full — trigger overflow again
+    startOverflow();
+    return;
+  }
+
+  const clientX = e.clientX || (e.touches && e.touches[0].clientX) || window.innerWidth / 2;
+  const clientY = e.clientY || (e.touches && e.touches[0].clientY) || window.innerHeight / 2;
+
+  count++;
+  localStorage.setItem('selfup_count', count);
+
+  playSound();
+  spawnRipple(clientX, clientY);
+  spawnFloatMarble(clientX, clientY);
+  spawnSparks(clientX, clientY);
+  showMessage();
+
+  updateUI(true);
+  drawMarbles();
+
+  if (count >= MAX) {
+    setTimeout(startOverflow, 400);
+  }
+}
+
+jarContainer.addEventListener('click', handleJarClick);
+jarContainer.addEventListener('touchstart', handleJarClick, { passive: false });
+
+// ─── RESET ────────────────────────────────────────────────────────────────────
+resetBtn.addEventListener('click', () => {
+  stopOverflow();
+  count = 0;
+  localStorage.setItem('selfup_count', 0);
+  updateUI(false);
+  setTimeout(drawMarbles, 300);
+});
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+loadAudio();
+
+// Wait for fonts and layout
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    resizeCanvases();
+    updateUI(false);
+    if (count >= MAX) jarContainer.classList.add('full');
+  }, 200);
+});
+
+// Fallback if load already fired
+setTimeout(() => {
+  if (!marbleCanvas.width) {
+    resizeCanvases();
+    updateUI(false);
+  }
+}, 500);
+</script>
+</body>
+</html>
