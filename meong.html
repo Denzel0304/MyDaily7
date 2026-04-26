@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0820">
-<title>N멍</title>
+<title>힐링 애니메이션</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400&family=Noto+Sans+KR:wght@300;400&display=swap');
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -97,9 +97,39 @@
     background:#000; opacity:0; pointer-events:none; z-index:20;
     transition:opacity 0.32s ease;
   }
+  /* ── 시작 화면 ── */
+  #start-screen {
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    background:#000; z-index:100;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:28px;
+    cursor:pointer; -webkit-tap-highlight-color:transparent;
+  }
+  #start-screen .start-title {
+    font-family:'Noto Serif KR',serif; font-size:28px; font-weight:300;
+    color:rgba(255,255,255,0.88); letter-spacing:6px;
+    text-shadow:0 2px 20px rgba(255,255,255,0.15);
+  }
+  #start-screen .start-hint {
+    font-family:'Noto Sans KR',sans-serif; font-size:13px; font-weight:300;
+    color:rgba(255,255,255,0.40); letter-spacing:3px;
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:0.4; }
+    50%      { opacity:0.9; }
+  }
+  #start-screen.hidden {
+    opacity:0; pointer-events:none;
+    transition:opacity 0.8s ease;
+  }
 </style>
 </head>
 <body>
+<div id="start-screen" id="start-screen">
+  <div class="start-title">힐링 애니메이션</div>
+  <div class="start-hint">터치하여 시작</div>
+</div>
 <div id="app">
   <canvas id="c"></canvas>
   <canvas id="leaf-canvas"></canvas>
@@ -113,7 +143,7 @@
               stroke="rgba(255,255,255,0.45)" stroke-width="1" stroke-linecap="round"/>
       </svg>
     </div>
-    <span id="app-name">N멍</span>
+    <span id="app-name">힐링 애니메이션</span>
   </div>
   <div id="scene-label"></div>
   <div id="dots"></div>
@@ -264,7 +294,14 @@ function updateUI(){ buildDots(); } // 숨김 — 위 주석 참고
 
 function changeScene(dir) {
   const nextIdx = (currentIdx + dir + scenes.length) % scenes.length;
-  switchMusic(nextIdx);
+  // 수동 전환: 음악 페이드아웃(5초) 중 1초 후 화면 전환
+  clearFadeTimers();
+  const prev = currentAudio;
+  currentAudio = null;
+  fadeOutAudio(prev, FADE_DURATION, ()=>{
+    playMusicForScene(nextIdx);
+  });
+  // 화면 전환은 0.32초 암전 그대로
   fade.style.opacity='1';
   setTimeout(()=>{
     currentIdx = nextIdx;
@@ -1441,14 +1478,16 @@ function loopMoonCloud() {
 updateUI();
 resize();
 
-// 첫 씬 음악 시작 (자동재생 정책 대응: 첫 터치/클릭 시 재생)
-function startInitialMusic() {
+// 시작 화면 처리
+const startScreen = document.getElementById('start-screen');
+function dismissStartScreen() {
   playMusicForScene(currentIdx);
-  document.removeEventListener('touchstart', startInitialMusic);
-  document.removeEventListener('click', startInitialMusic);
+  startScreen.classList.add('hidden');
+  // 전환 완료 후 DOM에서 제거
+  setTimeout(()=>{ startScreen.remove(); }, 900);
 }
-document.addEventListener('touchstart', startInitialMusic, {once:true, passive:true});
-document.addEventListener('click', startInitialMusic, {once:true});
+startScreen.addEventListener('touchstart', dismissStartScreen, {once:true, passive:true});
+startScreen.addEventListener('click', dismissStartScreen, {once:true});
 
 })();
 </script>
