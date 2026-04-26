@@ -224,7 +224,7 @@ const sceneMusic = [
   'm3.mp3', // 눈 내리는 밤
   'm4.mp3', // 반딧불이
   'm5.mp3', // 벚꽃 비
-  'm6.mp3', // 불꽃놀이
+  null,     // 불꽃놀이 (효과음 전용)
   'm7.mp3', // 빗소리
   'm8.mp3', // 달빛 구름
 ];
@@ -951,6 +951,13 @@ const FW_PALETTES = [
 const FW_SHAPES = ['circle','star','heart','chrysanthemum','willow','ring'];
 
 function explodeShell(x, y) {
+  // 폭죽 효과음 — 터질 때마다 새 Audio 객체로 겹쳐 재생
+  try {
+    const sfx = new Audio('meongmusic/m6.mp3');
+    sfx.volume = 0.35;
+    sfx.play().catch(()=>{});
+  } catch(e) {}
+
   const palette = FW_PALETTES[Math.floor(Math.random()*FW_PALETTES.length)];
   const shape = FW_SHAPES[Math.floor(Math.random()*FW_SHAPES.length)];
   const count = 80 + Math.floor(Math.random()*80);
