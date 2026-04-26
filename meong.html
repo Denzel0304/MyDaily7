@@ -254,6 +254,7 @@ function fadeInAudio(audio, duration) {
   }, interval);
 }
 
+// 자동 전환용: 페이드인으로 시작
 function playMusicForScene(idx) {
   const filename = sceneMusic[idx];
   if(!filename) return;
@@ -263,7 +264,18 @@ function playMusicForScene(idx) {
   currentAudio = audio;
   audio.play().then(()=>{
     fadeInAudio(audio, FADE_DURATION);
-  }).catch(()=>{}); // 파일 없거나 재생 불가 시 조용히 무시
+  }).catch(()=>{});
+}
+
+// 수동 전환용: 즉시 풀볼륨 재생
+function playMusicImmediate(idx) {
+  const filename = sceneMusic[idx];
+  if(!filename) return;
+  const audio = new Audio(MUSIC_BASE + filename);
+  audio.loop = true;
+  audio.volume = 1;
+  currentAudio = audio;
+  audio.play().catch(()=>{});
 }
 
 function switchMusic(nextIdx) {
@@ -294,18 +306,18 @@ function updateUI(){ buildDots(); } // 숨김 — 위 주석 참고
 
 function changeScene(dir) {
   const nextIdx = (currentIdx + dir + scenes.length) % scenes.length;
-  // 수동 전환: 음악 페이드아웃(5초) 중 1초 후 화면 전환
+  // 수동 전환: 페이드 타이머 전부 취소 후 즉시 정지 → 즉시 재생
   clearFadeTimers();
-  const prev = currentAudio;
-  currentAudio = null;
-  fadeOutAudio(prev, FADE_DURATION, ()=>{
-    playMusicForScene(nextIdx);
-  });
-  // 화면 전환은 0.32초 암전 그대로
+  if(currentAudio) {
+    try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(e){}
+    currentAudio = null;
+  }
+  // 화면 전환
   fade.style.opacity='1';
   setTimeout(()=>{
     currentIdx = nextIdx;
     updateUI(); initScene(); fade.style.opacity='0';
+    playMusicImmediate(nextIdx); // 수동: 즉시 풀볼륨 재생
   },320);
 }
 
